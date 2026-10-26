@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# SSL / TLS Private Certificates & Keys
+cert.pem
+key.pem
+certs/
+*.pem
+*.key
+*.crt
+
+# Movie Files (Large media files should not be committed to Git)
+movies/*
+!movies/.gitkeep
+
+# System & OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Feedback storage & Environment
+.env
+feedback.json
+
+# Antigravity & IDE directories
+.gemini/
+.idea/
+.vscode/

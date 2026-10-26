@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0e10">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <title>Stream Room</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="discord-dark">
+
+  <!-- ============================================================ -->
+  <!-- 1. LANDING & JOIN SCREEN (Inspired by Image 2)               -->
+  <!-- ============================================================ -->
+  <div id="joinModal" class="landing-page-wrapper">
+
+    <!-- Top Landing Navigation -->
+    <header class="landing-nav">
+      <div class="landing-nav-brand">
+        <div class="brand-logo-mark">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="20" rx="3"></rect>
+            <line x1="7" y1="2" x2="7" y2="22"></line>
+            <line x1="17" y1="2" x2="17" y2="22"></line>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <line x1="2" y1="7" x2="7" y2="7"></line>
+            <line x1="2" y1="17" x2="7" y2="17"></line>
+            <line x1="17" y1="7" x2="22" y2="7"></line>
+            <line x1="17" y1="17" x2="22" y2="17"></line>
+          </svg>
+        </div>
+        <span class="brand-name">ReelTime</span>
+      </div>
+
+      <div class="landing-nav-actions">
+        <button id="navAboutBtn" class="nav-link-btn" title="The Story Behind ReelTime">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>About the Maker</span>
+        </button>
+
+        <button id="navFeedbackBtn" class="nav-link-btn" title="Give Feedback">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>Give Feedback</span>
+        </button>
+
+        <button id="navSupportBtn" class="nav-link-btn support-highlight" title="Support the Project">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+          <span>Support Me</span>
+        </button>
+
+        <div class="nav-status-pill">
+          <span class="pulsing-green-dot"></span>
+          <span>LIVE SYNC ENGINE</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <main class="landing-hero-container">
+      <!-- Left Column: Headline & Value Prop -->
+      <div class="landing-hero-content">
+        <div class="screening-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#fee75c">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          <span>PRIVATE SCREENING ROOM</span>
+        </div>
+
+        <h1 class="landing-hero-headline">
+          Watch together.<br>
+          Synchronized to <span class="coral-gradient-text">the frame.</span>
+        </h1>
+
+        <p class="landing-hero-description">
+          Spin up a private cinema in seconds. Stream your local movie rips directly from your machine with frame-perfect sync, voice, video, and chat baked in.
+        </p>
+
+        <div class="hero-highlights-row">
+          <div class="highlight-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5865F2" stroke-width="2.2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            <span>Frame-perfect sync</span>
+          </div>
+
+          <div class="highlight-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#57F287" stroke-width="2.2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span>Voice + video chat</span>
+          </div>
+
+          <div class="highlight-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EB459E" stroke-width="2.2">
+              <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"></path>
+              <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"></path>
+              <circle cx="12" cy="12" r="2"></circle>
+              <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"></path>
+              <path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"></path>
+            </svg>
+            <span>Direct LAN & Tailscale ready</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Join / Create Card -->
+      <div class="landing-hero-card-col">
+        <div class="enter-theater-card">
+          <div class="card-title-row">
+            <div class="card-play-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="6 3 20 12 6 21 6 3"></polygon>
+              </svg>
+            </div>
+            <div>
+              <h3>Enter the theater</h3>
+              <p>CREATE OR JOIN A ROOM</p>
+            </div>
+          </div>
+
+          <div class="card-form-body">
+            <div class="card-input-group">
+              <label for="usernameInput">USERNAME</label>
+              <input type="text" id="usernameInput" placeholder="ayushman" maxlength="20" autocomplete="nickname">
+            </div>
+
+            <button id="createRoomBtn" class="btn btn-coral btn-block btn-lg create-room-btn">
+              <span>Create a new room</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+
+            <div class="card-divider-line">
+              <span>OR</span>
+            </div>
+
+            <div class="card-join-row">
+              <div class="join-input-wrap">
+                <input type="text" id="roomInput" placeholder="ROOM CODE — E.G. 12345" maxlength="30">
+                <button id="randomRoomBtn" class="dice-btn" title="Random Room Code">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="2" width="20" height="20" rx="4"></rect>
+                    <circle cx="8" cy="8" r="1.5" fill="currentColor"></circle>
+                    <circle cx="16" cy="16" r="1.5" fill="currentColor"></circle>
+                    <circle cx="16" cy="8" r="1.5" fill="currentColor"></circle>
+                    <circle cx="8" cy="16" r="1.5" fill="currentColor"></circle>
+                  </svg>
+                </button>
+              </div>
+              <button id="joinRoomBtn" class="btn btn-secondary join-btn-submit">Join</button>
+            </div>
+
+            <p class="card-micro-hint">
+              First person in a room is the host and controls the video for everyone.
+            </p>
+
+            <div class="network-badge" id="networkBadge">
+              <span>Connecting to engine...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Footer Bar -->
+    <footer class="landing-footer-bar">
+      <div class="footer-left">
+        <span>REELTIME • PRIVATE SCREENING PLATFORM</span>
+      </div>
+      <div class="footer-center">
+        <span>Crafted by <strong>Ayushman Mitra</strong> • Standard 11, India</span>
+      </div>
+      <div class="footer-right">
+        <button id="footerAboutBtn" class="footer-link">About</button>
+        <button id="footerFeedbackBtn" class="footer-link">Feedback</button>
+        <button id="footerSupportBtn" class="footer-link">Support</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 1.5 ABOUT THE MAKER & STORY PAGE (Matching Images 3, 4, 5)   -->
+  <!-- ============================================================ -->
+  <div id="aboutPage" class="about-page-view hidden">
+    <!-- Top Header -->
+    <header class="about-top-nav">
+      <div class="about-nav-left">
+        <button id="aboutBackBtn" class="btn btn-ghost btn-sm about-back-button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>Back to Theater</span>
+        </button>
+        <div class="about-nav-brand">
+          <span class="brand-name">ReelTime</span>
+        </div>
+      </div>
+      <div class="about-nav-right">
+        <div class="story-tag">
+          <span class="story-dot"></span>
+          <span>THE STORY BEHIND REELTIME</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Story Main Body -->
+    <div class="about-container">
+      <!-- Maker Hero Row -->
+      <section class="about-hero-row">
+        <div class="maker-avatar-wrap">
+          <div class="maker-avatar-ring">
+            <img src="ayushman.png" alt="Ayushman Mitra" class="maker-avatar-img" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%235865F2\'%3E%3Ccircle cx=\'12\' cy=\'8\' r=\'4\'/%3E%3Cpath d=\'M4 20c0-4 4-6 8-6s8 2 8 6\'/%3E%3C/svg%3E'">
+          </div>
+          <span class="maker-pill-badge">THE MAKER</span>
+        </div>
+
+        <div class="maker-info-col">
+          <div class="about-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#fee75c">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            <span>ABOUT THE BUILDER</span>
+          </div>
+
+          <h1 class="maker-title">
+            Hi, I'm <span class="coral-name">Ayushman Mitra</span>.
+          </h1>
+
+          <p class="maker-lead-text">
+            A standard 11 student from India who kept getting locked out of movie nights with friends — so I built the movie night I wanted to be in.
+          </p>
+
+          <div class="maker-badges-row">
+            <div class="info-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+              </svg>
+              <span>Standard 11 • India</span>
+            </div>
+            <div class="info-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span>Building from a bedroom desk</span>
+            </div>
+            <div class="info-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              <span>Making things for friends</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Special Mention Card -->
+      <section class="special-mention-card">
+        <div class="mention-heart-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#eb3b5a" stroke-width="2.2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </div>
+        <div class="mention-body">
+          <span class="mention-tag">SPECIAL MENTION</span>
+          <h3>This idea was sparked by my friend <span class="coral-name">Yashvi Singh</span>.</h3>
+          <p>
+            A lot of the momentum behind ReelTime came from conversations with my friend Yashvi. She was the person who kept pointing out — from a real user's angle — why watching a movie together with friends was still so awkward in 2026, and what she wished a tool like this would just do. That perspective shaped the whole app, so this bit is just to say: thank you, Yashvi.
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 01: The Problem -->
+      <section class="story-section">
+        <div class="section-num-tag">01 • THE PROBLEM</div>
+        <h2 class="section-heading">
+          Watching your <span class="coral-name">own</span> movie with friends is fundamentally broken.
+        </h2>
+        <div class="section-card story-prose-card">
+          <p>
+            Watching high-quality, local movie files (like 2 GB+ <code>.mkv</code> or <code>.mp4</code> rips) remotely with friends is fundamentally broken on the modern web. Traditional streaming architectures force you to upload massive files to a cloud server — which takes hours and incurs heavy server costs.
+          </p>
+          <p>
+            Attempting to stream those heavy files directly browser-to-browser (P2P) overheats mobile devices, drains batteries within an hour, and inevitably crashes Google Chrome due to strict WebAssembly memory limits.
+          </p>
+          <p>
+            Furthermore, modern browsers natively reject complex video containers like <code>.mkv</code>, making standard web-based playback nearly impossible without heavy, CPU-melting transcoding.
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 02: Current Options -->
+      <section class="story-section">
+        <div class="section-num-tag">02 • CURRENT OPTIONS</div>
+        <h2 class="section-heading">
+          And every existing tool asks you to <span class="yellow-name">compromise</span>.
+        </h2>
+
+        <div class="compromise-grid">
+          <div class="compromise-card">
+            <div class="compromise-icon lock-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <div class="compromise-tag">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <span>COMPROMISE</span>
+            </div>
+            <h4>Walled Gardens</h4>
+            <span class="sub-label">TELEPARTY, AMAZON WATCH PARTY, ETC.</span>
+            <p>
+              You are strictly limited to whatever is currently licensed on Netflix, Prime, Hulu. Your own .mkv rip, your indie short film, your school project — none of it is welcome inside those parties.
+            </p>
+          </div>
+
+          <div class="compromise-card">
+            <div class="compromise-icon screen-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+            </div>
+            <div class="compromise-tag">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <span>COMPROMISE</span>
+            </div>
+            <h4>Screen Sharing</h4>
+            <span class="sub-label">DISCORD, ZOOM, GOOGLE MEET</span>
+            <p>
+              The host must record their screen and live-stream it. That means massive upload bandwidth, compression blur, dropped frames, choppy 15fps playback, and audio that drifts a second behind by the third act.
+            </p>
+          </div>
+
+          <div class="compromise-card">
+            <div class="compromise-icon cloud-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="16 16 12 12 8 16"></polyline>
+                <line x1="12" y1="12" x2="12" y2="21"></line>
+                <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
+              </svg>
+            </div>
+            <div class="compromise-tag">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <span>COMPROMISE</span>
+            </div>
+            <h4>Cloud-Sync Sites</h4>
+            <span class="sub-label">UPLOAD-THEN-WATCH SERVICES</span>
+            <p>
+              Everyone waits hours while the host uploads a 3GB file to a third-party server, hits upload limits, and hands their private movie to some anonymous cloud. The party is dead before it starts.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 03: Our Solution -->
+      <section class="story-section">
+        <div class="section-num-tag">03 • OUR SOLUTION</div>
+        <h2 class="section-heading">
+          ReelTime makes the <span class="green-name">host's browser</span> the projector.
+        </h2>
+
+        <div class="section-card solution-card">
+          <p>
+            The movie never has to move. It stays on the host's own machine, plays through their own hardware decoder (which happily eats <code>.mkv</code>, 10-bit HEVC, and every weird codec their OS supports), and only <em>one</em> thing is broadcast to everyone else: the current playhead position and — when the host chooses — a live stream of the frame itself over WebRTC and memory remuxing.
+          </p>
+          <p>
+            Meanwhile, voice, camera, and text chat run peer-to-peer alongside it in the same room, so a movie night ends up feeling like everyone is on the same couch, without ever asking anyone to wait for an upload bar to finish.
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 04: Why We're Different -->
+      <section class="story-section">
+        <div class="section-num-tag">04 • WHY WE'RE DIFFERENT</div>
+        <h2 class="section-heading">
+          Built for <span class="cyan-name">friends</span>, not subscriptions.
+        </h2>
+        <div class="section-card diff-card">
+          <p>
+            ReelTime is 100% free, private, self-hostable, and open source. There are no logins, no paywalls, no bandwidth meters, and no third-party tracking. Just you, your movie, and your friends.
+          </p>
+          <div class="story-action-buttons">
+            <button id="aboutLaunchBtn" class="btn btn-coral btn-lg">Launch Theater Now →</button>
+            <button id="aboutSupportBtn" class="btn btn-secondary btn-lg">Support Ayushman</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 2. MAIN APPLICATION (Matching Image 1 & Image 2)             -->
+  <!-- ============================================================ -->
+  <div id="appContainer" class="app-container hidden">
+
+    <!-- Top Bar (Image 1 top left: Speaker icon + "Stream Room"; top right: Chat icon) -->
+    <header class="top-bar" id="topBar">
+      <div class="top-bar-left">
+        <svg class="speaker-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+        </svg>
+        <span class="room-heading" id="roomTitleDisplay">Stream Room</span>
+        <span class="host-indicator" id="hostPill">
+          <span id="hostNameDisplay">Host</span>
+        </span>
+      </div>
+
+      <div class="top-bar-right">
+        <button id="theaterAboutBtn" class="top-bar-pill-btn" title="The Story Behind ReelTime">
+          About
+        </button>
+        <button id="theaterFeedbackBtn" class="top-bar-pill-btn" title="Give Feedback">
+          Feedback
+        </button>
+        <button id="theaterSupportBtn" class="top-bar-pill-btn support-pill" title="Support the Maker">
+          Support
+        </button>
+        <!-- Chat Bubble Button (Image 1 top right) -->
+        <button id="topChatBtn" class="icon-btn" title="Toggle Chat">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
+          </svg>
+          <span id="chatBadge" class="chat-badge hidden">0</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace (Stage Area + Slide-in Chat) -->
+    <div class="main-workspace" id="mainWorkspace">
+
+      <!-- Theater Center Stage -->
+      <section class="stage-section" id="stageSection">
+
+        <!-- Main Cinema Frame (Image 1 Center) -->
+        <div class="cinema-box" id="cinemaBox">
+          <video id="moviePlayer" preload="auto" playsinline crossorigin="anonymous"></video>
+
+          <!-- Empty Cinema State (Avatar in center when no movie is playing) -->
+          <div id="stagePlaceholder" class="stage-placeholder">
+            <div class="stage-center-avatar" id="stageCenterAvatar">
+              <img id="stageAvatarImg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23949ba4'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Avatar">
+            </div>
+            <button id="openMovieLibraryBtn" class="btn btn-primary host-only-btn load-movie-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"></polygon>
+              </svg>
+              <span>Load Movie from PC</span>
+            </button>
+          </div>
+
+          <!-- Bottom Left Name Badge on Stage (Image 1) -->
+          <div class="stage-bottom-tag" id="stageBottomTag">
+            <svg id="stageMicIcon" class="tag-mic-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.12L12 8.14V5a3 3 0 0 1 3 3v3.12zM4.41 2.86L3 4.27l6 6V11a3 3 0 0 0 3 3c.39 0 .76-.08 1.1-.21l2.45 2.45C14.39 16.73 13.24 17 12 17c-3.87 0-7-3.13-7-7H3a9 9 0 0 0 8 8.94V21h2v-2.06c1.38-.17 2.66-.67 3.75-1.42l2.84 2.84 1.41-1.41L4.41 2.86z"/>
+            </svg>
+            <span id="stageUsername">Stream</span>
+          </div>
+
+          <!-- Tap Unmute Banner for mobile browsers -->
+          <button id="unmuteMovieBanner" class="unmute-banner hidden">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+            </svg>
+            <span>Tap to Enable Audio</span>
+          </button>
+
+          <!-- Cinema Controls Overlay (Auto-Hides) -->
+          <div class="cinema-controls-hud" id="cinemaControls">
+            <div class="hud-timeline-container" id="timelineContainer">
+              <div class="hud-timeline-bar" id="timelineBar">
+                <div class="hud-buffered" id="timelineBuffered"></div>
+                <div class="hud-progress" id="timelineProgress"></div>
+                <div class="hud-thumb" id="timelineThumb"></div>
+              </div>
+              <div class="hud-hover-time" id="timelineHoverTime">00:00</div>
+            </div>
+
+            <div class="hud-row">
+              <div class="hud-left">
+                <button id="playPauseBtn" class="hud-btn" title="Play/Pause">
+                  <svg id="playIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  <svg id="pauseIcon" class="hidden" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                  </svg>
+                </button>
+
+                <div class="hud-time">
+                  <span id="currentTimeDisplay">00:00</span>
+                  <span class="hud-time-slash">/</span>
+                  <span id="durationDisplay">00:00</span>
+                </div>
+              </div>
+
+              <div class="hud-right">
+                <!-- Audio Selector -->
+                <div class="hud-track-group host-only-control" id="audioPickerGroup">
+                  <label for="audioTrackSelect">Audio:</label>
+                  <select id="audioTrackSelect" class="hud-select">
+                    <option value="0">Default</option>
+                  </select>
+                </div>
+
+                <!-- Subtitle Selector -->
+                <div class="hud-track-group host-only-control" id="subtitlePickerGroup">
+                  <label for="subtitleTrackSelect">Subs:</label>
+                  <select id="subtitleTrackSelect" class="hud-select">
+                    <option value="off">Off</option>
+                  </select>
+                </div>
+
+                <!-- Volume Slider -->
+                <div class="hud-volume-group">
+                  <button id="volumeToggleBtn" class="hud-btn">
+                    <svg id="volHighIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                    </svg>
+                    <svg id="volMuteIcon" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                    </svg>
+                  </button>
+                  <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1" class="hud-slider">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Participant Tile Strip (Image 1 Centered beneath stage) -->
+        <div class="participants-tile-area" id="participantStripArea">
+          <div class="participants-row" id="participantStrip">
+            <!-- Dynamic cards inserted here -->
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Discord Chat Sidebar (Matching Image 3) -->
+      <aside class="chat-panel hidden" id="chatSidebar">
+        <div class="chat-panel-header">
+          <div class="chat-panel-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
+            </svg>
+            <span>Stream Room</span>
+          </div>
+          <button id="closeChatBtn" class="chat-close-btn" title="Close Chat">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Chat Messages List (Empty state matches Image 3) -->
+        <div class="chat-messages-scroll" id="chatMessages">
+          <div class="chat-welcome-hero" id="chatWelcomeHero">
+            <div class="welcome-icon-circle">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+              </svg>
+            </div>
+            <h3>Welcome to Stream Room!</h3>
+            <p>This is the start of the Stream Room channel.</p>
+            <button class="btn btn-secondary btn-sm edit-channel-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+              </svg>
+              <span>Edit Channel</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Bottom Chat Input Bar (Matching Image 3) -->
+        <form class="chat-compose-bar" id="chatForm">
+          <div class="chat-pill-input-box">
+            <button type="button" class="chat-action-icon-btn" title="Add file">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+              </svg>
+            </button>
+            <input type="text" id="chatInput" placeholder="Message Stream Room" autocomplete="off">
+            <div class="chat-input-right-icons">
+              <button type="button" class="chat-action-icon-btn" title="Emoji">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
+                </svg>
+              </button>
+              <button type="button" class="chat-action-icon-btn" title="GIF">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M11.5 9H13v6h-1.5zM9 9H6c-.6 0-1 .5-1 1v4c0 .5.4 1 1 1h3c.6 0 1-.5 1-1v-2H8.5v1.5h-2v-3H10V10c0-.5-.4-1-1-1zm10 1.5V9h-4.5v6H16v-2h2v-1.5h-2v-1z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </form>
+      </aside>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- 3. FLOATING ACTION DOCK (Image 1 Bottom Dock)                -->
+    <!-- Auto-hides on 3-second mouse idle (Image 2)                  -->
+    <!-- ============================================================ -->
+    <footer class="dock-wrapper" id="dockWrapper">
+      <div class="dock-container">
+
+        <!-- Left corner: Invite button (Image 1 bottom left) -->
+        <button id="dockInviteBtn" class="corner-icon-btn" title="Copy Invite Link">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+        </button>
+
+        <!-- Center floating action pill dock (Image 1) -->
+        <div class="floating-pill-dock">
+
+          <!-- 1. Mic Button with Chevron -->
+          <div class="split-dock-btn" id="micSplitBtn">
+            <button id="toggleMicBtn" class="pill-btn pill-btn-muted" title="Mute/Unmute">
+              <!-- Mic on icon -->
+              <svg id="micOnIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+              </svg>
+              <!-- Mic off icon (default in Image 1) -->
+              <svg id="micOffIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.12L12 8.14V5a3 3 0 0 1 3 3v3.12zM4.41 2.86L3 4.27l6 6V11a3 3 0 0 0 3 3c.39 0 .76-.08 1.1-.21l2.45 2.45C14.39 16.73 13.24 17 12 17c-3.87 0-7-3.13-7-7H3a9 9 0 0 0 8 8.94V21h2v-2.06c1.38-.17 2.66-.67 3.75-1.42l2.84 2.84 1.41-1.41L4.41 2.86z"/>
+              </svg>
+            </button>
+            <button id="micDeviceDropdownBtn" class="pill-chevron-btn" title="Microphone Settings">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div id="micDeviceMenu" class="device-menu hidden">
+              <div class="device-menu-header">Audio Inputs</div>
+              <div id="micDeviceList" class="device-menu-items"></div>
+            </div>
+          </div>
+
+          <!-- 2. Video Camera Button with Chevron -->
+          <div class="split-dock-btn" id="cameraSplitBtn">
+            <button id="toggleCameraBtn" class="pill-btn pill-btn-off" title="Camera On/Off">
+              <!-- Camera on icon -->
+              <svg id="camOnIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+              </svg>
+              <!-- Camera off icon (default in Image 1) -->
+              <svg id="camOffIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.55-.18L19.73 21 21 19.73 3.27 2zM15 16H6c-.55 0-1-.45-1-1V8.27L12.73 16H15z"/>
+              </svg>
+            </button>
+            <button id="camDeviceDropdownBtn" class="pill-chevron-btn" title="Camera Settings">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div id="camDeviceMenu" class="device-menu hidden">
+              <div class="device-menu-header">Video Devices</div>
+              <div id="camDeviceList" class="device-menu-items"></div>
+            </div>
+          </div>
+
+          <!-- 3. Screen Share / Movie Library Button (Image 1 monitor icon) -->
+          <button id="hostMovieLibraryDockBtn" class="pill-btn" title="Load / Share Movie">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/>
+              <path d="M12.5 14l3.5-3.5-1.41-1.41L13 10.67V8h-2v2.67l-1.59-1.58L8 10.5l3.5 3.5h1z"/>
+            </svg>
+          </button>
+
+          <!-- 4. Grid / Theater Layout Toggle (Image 1 four squares icon) -->
+          <button id="layoutToggleBtn" class="pill-btn" title="Toggle Grid / Theater View">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 3v8h8V3H3zm6 6H5V5h4v4zm-6 4v8h8v-8H3zm6 6H5v-4h4v4zm4-16v8h8V3h-8zm6 6h-4V5h4v4zm-6 4v8h8v-8h-8zm6 6h-4v-4h4v4z"/>
+            </svg>
+          </button>
+
+          <!-- 5. Activity Button (Star) - Removed for now, can be restored anytime -->
+          <!--
+          <button id="activityBtn" class="pill-btn" title="Party Activity">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L9.09 8.26 2 9.27l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7 5.46-4.73-7.09-1.01L12 2z"/>
+            </svg>
+          </button>
+          -->
+
+          <!-- 6. More Options Button (Image 1 three dots) -->
+          <button id="moreOptionsBtn" class="pill-btn" title="More Options">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="2"/>
+              <circle cx="19" cy="12" r="2"/>
+              <circle cx="5" cy="12" r="2"/>
+            </svg>
+          </button>
+
+          <!-- 7. Disconnect Button (Image 1 Red Pill) -->
+          <button id="disconnectBtn" class="pill-btn pill-btn-danger" title="Disconnect">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.99.99 0 0 1 0-1.41C3.28 8.8 7.42 7 12 7s8.72 1.8 11.71 4.67c.39.39.39 1.02 0 1.41l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+            </svg>
+          </button>
+
+        </div>
+
+        <!-- Right corner: Fullscreen toggle button (Image 1 bottom right) -->
+        <button id="theaterFullscreenBtn" class="corner-icon-btn" title="Toggle Cinema Fullscreen">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+          </svg>
+        </button>
+
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 4. MOVIE LIBRARY MODAL (Zero emojis, clean Discord theme)     -->
+  <!-- ============================================================ -->
+  <div id="movieModal" class="modal-overlay hidden">
+    <div class="modal-card modal-large">
+      <div class="modal-header-row">
+        <h3>Host Movie Library</h3>
+        <button id="closeMovieModalBtn" class="modal-x-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-sub-row">
+        <span class="folder-path-text" id="folderHint">Scanning movies/ folder...</span>
+        <button id="refreshMoviesBtn" class="btn btn-secondary btn-sm">Refresh</button>
+      </div>
+
+      <div class="upload-drop-area" id="uploadDropzone">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        <p>Drop movie files here (.mkv, .mp4, .webm)</p>
+        <span>or click to browse your PC</span>
+        <input type="file" id="movieFileInput" accept=".mp4,.mkv,.webm,.mov" style="display: none;">
+        <div id="uploadProgress" class="upload-progress-bar hidden">
+          <div class="upload-progress-fill" id="uploadProgressFill"></div>
+        </div>
+      </div>
+
+      <div class="movie-items-list" id="movieLibraryList">
+        <div class="loading-state">Loading movies...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 5. GIVE FEEDBACK MODAL                                       -->
+  <!-- ============================================================ -->
+  <div id="feedbackModal" class="modal-overlay hidden">
+    <div class="modal-card feedback-modal-card">
+      <div class="modal-header-row">
+        <h3>Give Feedback</h3>
+        <button id="closeFeedbackBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <p class="modal-subtitle-text">
+        Help Ayushman improve ReelTime. Tell us what you like or report any bug!
+      </p>
+
+      <form id="feedbackForm" class="feedback-form">
+        <div class="form-group">
+          <label>FEEDBACK TYPE</label>
+          <div class="category-pills-row">
+            <label class="category-pill-label">
+              <input type="radio" name="feedbackCategory" value="idea" checked>
+              <span>💡 Idea / Feature</span>
+            </label>
+            <label class="category-pill-label">
+              <input type="radio" name="feedbackCategory" value="bug">
+              <span>🐞 Bug Report</span>
+            </label>
+            <label class="category-pill-label">
+              <input type="radio" name="feedbackCategory" value="general">
+              <span>⭐ General</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="feedbackName">YOUR NAME (OPTIONAL)</label>
+          <input type="text" id="feedbackName" placeholder="e.g. Yashvi or Alex">
+        </div>
+
+        <div class="form-group">
+          <label for="feedbackMessage">MESSAGE</label>
+          <textarea id="feedbackMessage" rows="4" placeholder="What's working great? What feels awkward? Tell us everything..." required></textarea>
+        </div>
+
+        <div class="modal-actions-row">
+          <button type="button" id="cancelFeedbackBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="submitFeedbackBtn" class="btn btn-coral">Send Feedback</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 6. SUPPORT ME MODAL (QR Code & UPI)                          -->
+  <!-- ============================================================ -->
+  <div id="supportModal" class="modal-overlay hidden">
+    <div class="modal-card support-modal-card">
+      <div class="modal-header-row">
+        <h3>Support the Maker</h3>
+        <button id="closeSupportBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <p class="modal-subtitle-text">
+        ReelTime was built with care by <strong>Ayushman Mitra</strong> (Standard 11, India). Your support helps keep this platform free, independent, and ad-free!
+      </p>
+
+      <div class="qr-showcase-box">
+        <div class="qr-scanner-frame" id="qrContainer">
+          <!-- Real QR if user drops it into public/support-qr.png, or sleek stylized placeholder -->
+          <img id="supportQrImage" src="support-qr.png" alt="UPI QR Code" class="support-qr-img" onerror="this.style.display='none'; document.getElementById('qrFallbackSpot').style.display='flex';">
+          <div id="qrFallbackSpot" class="qr-fallback-spot" style="display: none;">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--blurple)" stroke-width="1.8">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+              <path d="M7 7h.01M17 7h.01M7 17h.01M17 17h.01"></path>
+            </svg>
+            <span class="qr-scan-text">UPI QR CODE SPOT</span>
+            <span class="qr-hint-text">Drop your QR as <code>public/support-qr.png</code></span>
+          </div>
+          <div class="qr-scan-line"></div>
+        </div>
+
+        <p class="qr-instructions">
+          Scan using Google Pay, PhonePe, Paytm, BHIM, or any banking UPI app.
+        </p>
+
+        <div class="upi-copy-row">
+          <div class="upi-id-box">
+            <span class="upi-label">UPI ID:</span>
+            <span class="upi-value" id="upiValueText">ayushmanmitra@upi</span>
+          </div>
+          <button id="copyUpiBtn" class="btn btn-secondary btn-sm copy-upi-btn" title="Copy UPI ID">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span id="copyUpiText">Copy</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="support-github-cta">
+        <span>⭐ Loving the project? Give it a star on GitHub!</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-shelf"></div>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
