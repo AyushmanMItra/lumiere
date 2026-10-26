@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎬 ReelTime
+# 🎬 Lumière
 ### Watch together. Synchronized to the frame.
 
 A decentralized, private screening platform that turns the host's PC into an on-the-fly streaming engine with frame-accurate playback, multi-track MKV streaming, and WebRTC voice/video for friends.
@@ -16,9 +16,9 @@ A decentralized, private screening platform that turns the host's PC into an on-
 
 ---
 
-## 📖 The Story Behind ReelTime
+## 📖 The Story Behind Lumière
 
-> *"A standard 11 student from India who kept getting locked out of movie nights with friends — so I built the movie night I wanted to be in."*  
+> *"A developer from India who kept getting locked out of movie nights with friends — so I built the movie night I wanted to be in."*  
 > — **Ayushman Mitra (Maker)**
 
 Watching high-quality local movie files (2GB+ `.mkv` or `.mp4` rips) remotely with friends was fundamentally broken:
@@ -26,7 +26,7 @@ Watching high-quality local movie files (2GB+ `.mkv` or `.mp4` rips) remotely wi
 - **Screen Sharing (Discord, Zoom):** Choppy 15fps compression, heavy upload bandwidth overhead, and audio drifting out of sync.
 - **Cloud-Sync Sites:** Waiting hours to upload a 3GB file to third-party servers, only to hit storage limits.
 
-**The Spark:** The momentum behind ReelTime came from conversations between Ayushman and his friend **Yashvi Singh**, who pointed out why watching movies with friends was still awkward in 2026 and what a truly great watch party tool should feel like.
+**The Spark:** The momentum behind Lumière came from conversations between Ayushman and his friend **Yashvi Singh**, who pointed out why watching movies with friends was still awkward in 2026 and what a truly great watch party tool should feel like.
 
 ---
 
@@ -45,6 +45,8 @@ Watching high-quality local movie files (2GB+ `.mkv` or `.mp4` rips) remotely wi
   - Floating dock with mic/camera toggles, device selector, and theater cinema controls.
 - **Built-In Discord Chat:**
   - Collapsible side panel with timestamps and user-colored badges.
+- **Random Alphanumeric Room Codes:**
+  - Fast, clean, shareable 6-character room codes (e.g. `K9X2M4`).
 - **No Logins, No Subscriptions:**
   - Zero accounts, zero analytics, zero ads. Jump in with just a display name and room code.
 
@@ -81,8 +83,8 @@ Watching high-quality local movie files (2GB+ `.mkv` or `.mp4` rips) remotely wi
 
 ### 2. Clone & Install
 ```bash
-git clone https://github.com/<your-username>/reeltime.git
-cd reeltime
+git clone https://github.com/<your-username>/lumiere.git
+cd lumiere
 npm install
 ```
 
@@ -102,7 +104,7 @@ npm start
 Your terminal will display your active connection addresses:
 ```text
 ================================================================
-            🎬 REELTIME PRIVATE CINEMA SERVER
+               🎬 LUMIÈRE PRIVATE CINEMA SERVER
 ================================================================
   [HTTP - Standard Browsing]
   > Local Host PC:     http://localhost:3000
@@ -134,12 +136,13 @@ Your terminal will display your active connection addresses:
 ## 📁 Project Structure
 
 ```text
-reeltime/
+lumiere/
 ├── movies/                 # Put your .mkv, .mp4, and .webm movies here
 │   └── .gitkeep
 ├── public/                 # Modern web interface
 │   ├── app.js              # Cinema sync engine & WebRTC signaling
-│   ├── ayushman.png        # Builder avatar
+│   ├── ayushman.jpg        # Builder avatar
+│   ├── support-qr.png      # UPI QR code
 │   ├── index.html          # Cinematic landing, theater stage & about page
 │   ├── manifest.json       # PWA installation manifest
 │   └── style.css           # Discord-inspired dark cinema theme
@@ -153,8 +156,9 @@ reeltime/
 
 ## 👥 Credits & Acknowledgements
 
-- **Built by:** [Ayushman Mitra](https://github.com/ayushmanmitra) (Standard 11, India)
+- **Built by:** [Ayushman Mitra](https://github.com/AyushmanMItra) (India)
 - **Special Mention:** **Yashvi Singh** for sparking the concept and providing real-user feedback that shaped the product.
+- **Feedback & Contact:** [mitraayushman00@gmail.com](mailto:mitraayushman00@gmail.com)
 
 ---
 

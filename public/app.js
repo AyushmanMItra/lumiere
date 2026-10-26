@@ -171,6 +171,15 @@
     toastContainer: document.getElementById('toastContainer')
   };
 
+  function generateRandomRoomCode() {
+    const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  }
+
   // ==========================================================================
   // INITIALIZATION
   // ==========================================================================
@@ -178,14 +187,14 @@
   async function init() {
     let savedUser = '';
     try {
-      savedUser = localStorage.getItem('reeltime_username');
+      savedUser = localStorage.getItem('lumiere_username') || localStorage.getItem('reeltime_username');
     } catch (e) {}
     el.usernameInput.value = savedUser || 'ayushman';
 
     const hashRoom = window.location.hash.replace('#', '').trim();
     const urlParams = new URLSearchParams(window.location.search);
     const queryRoom = urlParams.get('room');
-    el.roomInput.value = hashRoom || queryRoom || 'reel-101';
+    el.roomInput.value = hashRoom || queryRoom || generateRandomRoomCode();
 
     try {
       const res = await fetch('/api/info');
@@ -249,20 +258,20 @@
 
   async function joinRoom() {
     const username = el.usernameInput.value.trim() || 'ayushman';
-    const roomId = el.roomInput.value.trim() || 'reel-101';
+    const roomId = el.roomInput.value.trim() || generateRandomRoomCode();
 
     state.username = username;
     state.roomId = roomId;
     window.location.hash = roomId;
 
     try {
-      localStorage.setItem('reeltime_username', username);
+      localStorage.setItem('lumiere_username', username);
     } catch (e) {}
 
     el.joinModal.classList.add('hidden');
     if (el.aboutPage) el.aboutPage.classList.add('hidden');
     el.appContainer.classList.remove('hidden');
-    el.roomTitleDisplay.innerText = `ReelTime - ${roomId}`;
+    el.roomTitleDisplay.innerText = `Lumière - ${roomId}`;
     el.stageUsername.innerText = username;
 
     // 1. Initialize Microphone FIRST so tracks are ready when peers connect
@@ -1651,15 +1660,15 @@
   // ==========================================================================
 
   function attachEventListeners() {
-    // Join & Create Room
+    // Join & Create Room (Random Alphanumeric Room Codes)
     if (el.randomRoomBtn) {
       el.randomRoomBtn.onclick = () => {
-        el.roomInput.value = `reel-${Math.floor(100 + Math.random() * 900)}`;
+        el.roomInput.value = generateRandomRoomCode();
       };
     }
     if (el.createRoomBtn) {
       el.createRoomBtn.onclick = () => {
-        el.roomInput.value = `cine-${Math.floor(1000 + Math.random() * 9000)}`;
+        el.roomInput.value = generateRandomRoomCode();
         joinRoom();
       };
     }
@@ -1680,10 +1689,10 @@
 
     if (el.navAboutBtn) el.navAboutBtn.onclick = showAbout;
     if (el.footerAboutBtn) el.footerAboutBtn.onclick = showAbout;
-    if (el.theaterAboutBtn) el.theaterAboutBtn.onclick = showAbout;
     if (el.aboutBackBtn) el.aboutBackBtn.onclick = hideAbout;
     if (el.aboutLaunchBtn) {
-      el.aboutLaunchBtn.onclick = () => {
+      el.aboutLaunchBtn.onclick = (e) => {
+        if (e) e.preventDefault();
         hideAbout();
         window.scrollTo({ top: 0, behavior: 'smooth' });
         if (el.usernameInput) el.usernameInput.focus();
@@ -1700,7 +1709,6 @@
 
     if (el.navFeedbackBtn) el.navFeedbackBtn.onclick = showFeedback;
     if (el.footerFeedbackBtn) el.footerFeedbackBtn.onclick = showFeedback;
-    if (el.theaterFeedbackBtn) el.theaterFeedbackBtn.onclick = showFeedback;
     if (el.closeFeedbackBtn) el.closeFeedbackBtn.onclick = hideFeedback;
     if (el.cancelFeedbackBtn) el.cancelFeedbackBtn.onclick = hideFeedback;
 
@@ -1714,25 +1722,29 @@
 
         if (!message) return;
 
+        // 1. Direct Email link to Ayushman's Gmail: mitraayushman00@gmail.com
+        const mailSubject = encodeURIComponent(`[Lumière Feedback - ${category.toUpperCase()}] from ${name || 'User'}`);
+        const mailBody = encodeURIComponent(`Name: ${name || 'Anonymous'}\nCategory: ${category}\n\nFeedback:\n${message}\n\n-- Sent via Lumière`);
+        const mailtoLink = `mailto:mitraayushman00@gmail.com?subject=${mailSubject}&body=${mailBody}`;
+
         try {
-          const res = await fetch('/api/feedback', {
+          window.open(mailtoLink, '_blank');
+        } catch (err) {
+          window.location.href = mailtoLink;
+        }
+
+        // 2. Also save to server backend
+        try {
+          await fetch('/api/feedback', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, message, category })
+            body: JSON.stringify({ name, message, category, recipient: 'mitraayushman00@gmail.com' })
           });
-          const data = await res.json();
-          if (data.success) {
-            showToast('Thank you! Feedback received.');
-            el.feedbackForm.reset();
-            hideFeedback();
-          } else {
-            showToast(data.error || 'Failed to submit feedback', 'error');
-          }
-        } catch (err) {
-          showToast('Feedback submitted locally! Thank you.');
-          el.feedbackForm.reset();
-          hideFeedback();
-        }
+        } catch (err) {}
+
+        showToast('Feedback delivered to mitraayushman00@gmail.com!');
+        el.feedbackForm.reset();
+        hideFeedback();
       };
     }
 
@@ -1746,8 +1758,12 @@
 
     if (el.navSupportBtn) el.navSupportBtn.onclick = showSupport;
     if (el.footerSupportBtn) el.footerSupportBtn.onclick = showSupport;
-    if (el.theaterSupportBtn) el.theaterSupportBtn.onclick = showSupport;
-    if (el.aboutSupportBtn) el.aboutSupportBtn.onclick = showSupport;
+    if (el.aboutSupportBtn) {
+      el.aboutSupportBtn.onclick = (e) => {
+        if (e) e.preventDefault();
+        showSupport();
+      };
+    }
     if (el.closeSupportBtn) el.closeSupportBtn.onclick = hideSupport;
 
     if (el.copyUpiBtn) {

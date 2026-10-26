@@ -2325,6 +2325,27 @@ body {
   border-color: #eb3b5a;
 }
 
+.feedback-email-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.feedback-gmail-link {
+  color: #eb3b5a;
+  font-weight: 600;
+  text-decoration: underline;
+}
+.feedback-gmail-link:hover {
+  color: #ff4757;
+}
+
 .modal-actions-row {
   display: flex;
   justify-content: flex-end;

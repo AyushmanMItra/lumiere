@@ -741,7 +741,7 @@ function startHttp(port) {
   httpServer.listen(port, '0.0.0.0', () => {
     const ips = getNetworkIps();
     console.log('================================================================');
-    console.log('            🎬 DISCORD-STYLE WATCH PARTY SERVER                 ');
+    console.log('               🎬 LUMIÈRE PRIVATE CINEMA SERVER                 ');
     console.log('================================================================');
     console.log('  [HTTP - Standard Browsing]');
     console.log(`  > Local Host PC:     http://localhost:${port}`);

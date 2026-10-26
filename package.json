@@ -1,11 +1,12 @@
 {
-  "name": "reeltime",
+  "name": "lumiere",
   "version": "1.0.0",
   "description": "Decentralized, frame-accurate private cinema with multi-track MKV streaming and WebRTC voice/video for friends.",
   "main": "server.js",
   "author": "Ayushman Mitra",
   "license": "MIT",
   "keywords": [
+    "lumiere",
     "watchparty",
     "cinema",
     "sync",
