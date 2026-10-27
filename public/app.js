@@ -39,6 +39,14 @@
     ytPlayer: null,
     isYtSyncing: false,
 
+    // Ambiance, Subtitles & Activities State
+    isAmbientOn: true,
+    ambientAnimationId: null,
+    subOffset: 0.0,
+    activePoll: null,
+    activeTrivia: null,
+    participantVolumes: new Map(), // targetId -> number (0-200)
+
     // UI & Inactivity timer (Matching Image 2: hide after 3 seconds)
     chatOpen: false,
     unreadMessages: 0,
@@ -238,6 +246,65 @@
     uploadProgressFill: document.getElementById('uploadProgressFill'),
     movieLibraryList: document.getElementById('movieLibraryList'),
 
+    // Ambiance, Subtitles & Activities
+    ambientGlowCanvas: document.getElementById('ambientGlowCanvas'),
+    ambientToggleBtn: document.getElementById('ambientToggleBtn'),
+    pipBtn: document.getElementById('pipBtn'),
+    speedPickerGroup: document.getElementById('speedPickerGroup'),
+    speedSelect: document.getElementById('speedSelect'),
+
+    subtitleDropOverlay: document.getElementById('subtitleDropOverlay'),
+    subtitleSettingsBtn: document.getElementById('subtitleSettingsBtn'),
+    subtitleModal: document.getElementById('subtitleModal'),
+    closeSubtitleModalBtn: document.getElementById('closeSubtitleModalBtn'),
+    doneSubtitleBtn: document.getElementById('doneSubtitleBtn'),
+    subOffsetDisplay: document.getElementById('subOffsetDisplay'),
+    subOffsetResetBtn: document.getElementById('subOffsetResetBtn'),
+    customSubFileInput: document.getElementById('customSubFileInput'),
+
+    mobileGestureOverlay: document.getElementById('mobileGestureOverlay'),
+    gestureLeftIndicator: document.getElementById('gestureLeftIndicator'),
+    gestureRightIndicator: document.getElementById('gestureRightIndicator'),
+
+    noiseSuppressionToggle: document.getElementById('noiseSuppressionToggle'),
+    echoCancellationToggle: document.getElementById('echoCancellationToggle'),
+
+    activityGroup: document.getElementById('activityGroup'),
+    activityBtn: document.getElementById('activityBtn'),
+    activityMenu: document.getElementById('activityMenu'),
+    menuPollBtn: document.getElementById('menuPollBtn'),
+    menuTriviaBtn: document.getElementById('menuTriviaBtn'),
+    menuSoundboardBtn: document.getElementById('menuSoundboardBtn'),
+
+    pollModal: document.getElementById('pollModal'),
+    createPollForm: document.getElementById('createPollForm'),
+    pollQuestionInput: document.getElementById('pollQuestionInput'),
+    pollOpt1: document.getElementById('pollOpt1'),
+    pollOpt2: document.getElementById('pollOpt2'),
+    pollOpt3: document.getElementById('pollOpt3'),
+    pollOpt4: document.getElementById('pollOpt4'),
+    cancelPollBtn: document.getElementById('cancelPollBtn'),
+    startPollBtn: document.getElementById('startPollBtn'),
+    activePollWidget: document.getElementById('activePollWidget'),
+    closePollWidgetBtn: document.getElementById('closePollWidgetBtn'),
+    pollWidgetQuestion: document.getElementById('pollWidgetQuestion'),
+    pollWidgetOptions: document.getElementById('pollWidgetOptions'),
+    pollTotalVotesText: document.getElementById('pollTotalVotesText'),
+
+    triviaModal: document.getElementById('triviaModal'),
+    closeTriviaModalBtn: document.getElementById('closeTriviaModalBtn'),
+    triviaTimerFill: document.getElementById('triviaTimerFill'),
+    triviaRoundText: document.getElementById('triviaRoundText'),
+    triviaTimerCountdown: document.getElementById('triviaTimerCountdown'),
+    triviaQuestionText: document.getElementById('triviaQuestionText'),
+    triviaOptionsGrid: document.getElementById('triviaOptionsGrid'),
+    triviaFeedback: document.getElementById('triviaFeedback'),
+    triviaScoresList: document.getElementById('triviaScoresList'),
+
+    soundboardModal: document.getElementById('soundboardModal'),
+    closeSoundboardBtn: document.getElementById('closeSoundboardBtn'),
+    doneSoundboardBtn: document.getElementById('doneSoundboardBtn'),
+
     toastContainer: document.getElementById('toastContainer')
   };
 
@@ -384,6 +451,17 @@
         loadMovieInTheater(data.currentMovie, data.audioTrack, data.subtitleTrack, data.currentTime, data.isPlaying);
       } else {
         stopMovieInTheater();
+      }
+
+      if (data.playbackRate && el.moviePlayer) {
+        el.moviePlayer.playbackRate = data.playbackRate;
+        if (el.speedSelect) el.speedSelect.value = String(data.playbackRate);
+      }
+      if (data.activePoll) {
+        renderActivePoll(data.activePoll);
+      }
+      if (data.activeTrivia) {
+        startTriviaRound(data.activeTrivia);
       }
 
       // Connect WebRTC to every existing member in the room
@@ -540,6 +618,46 @@
       applyTrackChanges(audioTrack, subtitleTrack, currentTime, !el.moviePlayer.paused);
       const trackObj = state.audioTracks.find(t => t.trackIndex === audioTrack);
       showToast(`Audio Track: ${trackObj ? trackObj.label : `Track ${audioTrack + 1}`}`);
+    });
+
+    // Playback Speed Change Synchronization
+    s.on('sync-speed-changed', ({ speed }) => {
+      if (el.moviePlayer) el.moviePlayer.playbackRate = speed;
+      if (el.speedSelect) el.speedSelect.value = String(speed);
+      showToast(`Playback speed set to ${speed}x`);
+    });
+
+    // Watch Party Soundboard Broadcast
+    s.on('sync-soundboard', ({ soundId, senderName }) => {
+      playSoundEffect(soundId);
+      showToast(`${senderName} played ${getSoundName(soundId)}`);
+    });
+
+    // Live Room Polls
+    s.on('sync-poll-updated', (poll) => {
+      renderActivePoll(poll);
+    });
+
+    s.on('sync-poll-closed', () => {
+      state.activePoll = null;
+      if (el.activePollWidget) el.activePollWidget.classList.add('hidden');
+    });
+
+    // Cinema Trivia Challenge
+    s.on('sync-trivia-started', (triviaRound) => {
+      startTriviaRound(triviaRound);
+    });
+
+    s.on('sync-trivia-scores', (scores) => {
+      renderTriviaScores(scores);
+    });
+
+    s.on('sync-trivia-next', ({ questionIndex }) => {
+      displayTriviaQuestion(questionIndex);
+    });
+
+    s.on('sync-trivia-ended', ({ scores }) => {
+      finishTriviaRound(scores);
     });
 
     // Smooth Dynamic Rate Steering & Heartbeat
@@ -1639,6 +1757,677 @@
   }
 
   // ==========================================================================
+  // 1. AMBIANCE & VIDEO POLISH (Ambilight, Speed, PiP, Gestures)
+  // ==========================================================================
+
+  function initAmbientGlow() {
+    const canvas = el.ambientGlowCanvas;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width = 48;
+    canvas.height = 27;
+
+    const sampleFrame = () => {
+      if (state.isAmbientOn && el.moviePlayer && !el.moviePlayer.paused && !el.moviePlayer.ended && el.moviePlayer.readyState >= 2) {
+        try {
+          ctx.drawImage(el.moviePlayer, 0, 0, canvas.width, canvas.height);
+        } catch (e) {}
+      }
+      state.ambientAnimationId = requestAnimationFrame(sampleFrame);
+    };
+
+    sampleFrame();
+  }
+
+  function toggleAmbientGlow() {
+    state.isAmbientOn = !state.isAmbientOn;
+    if (el.ambientGlowCanvas) {
+      el.ambientGlowCanvas.classList.toggle('hidden', !state.isAmbientOn);
+    }
+    if (el.ambientToggleBtn) {
+      el.ambientToggleBtn.classList.toggle('active-toggle', state.isAmbientOn);
+    }
+    showToast(state.isAmbientOn ? 'Ambient Glow: ON' : 'Ambient Glow: OFF');
+  }
+
+  function togglePictureInPicture() {
+    if (!document.pictureInPictureEnabled) {
+      showToast('Picture-in-Picture not supported by your browser', 'error');
+      return;
+    }
+    if (document.pictureInPictureElement) {
+      document.exitPictureInPicture().catch(() => {});
+    } else if (el.moviePlayer) {
+      el.moviePlayer.requestPictureInPicture().catch(() => {});
+    }
+  }
+
+  function handleSpeedChange(e) {
+    const speed = typeof e === 'number' ? e : parseFloat(e?.target ? e.target.value : e);
+    if (isNaN(speed)) return;
+    if (el.moviePlayer) {
+      el.moviePlayer.playbackRate = speed;
+    }
+    if (el.speedSelect && el.speedSelect.value !== String(speed)) {
+      el.speedSelect.value = String(speed);
+    }
+    if (state.socket) {
+      state.socket.emit('sync-speed-changed', { roomId: state.roomId, speed });
+    }
+    showToast(`Playback speed: ${speed}x`);
+  }
+
+  function initMobileGestures() {
+    if (!el.cinemaBox) return;
+    let lastTapTime = 0;
+    let lastTapX = 0;
+
+    el.cinemaBox.addEventListener('touchend', (e) => {
+      const currentTime = Date.now();
+      const tapLength = currentTime - lastTapTime;
+      const touch = e.changedTouches[0];
+      if (!touch) return;
+      const rect = el.cinemaBox.getBoundingClientRect();
+      const tapX = touch.clientX - rect.left;
+
+      if (tapLength < 380 && Math.abs(tapX - lastTapX) < 90) {
+        // Double-Tap Detected!
+        e.preventDefault();
+        const boxWidth = rect.width;
+        if (tapX < boxWidth / 3) {
+          // Rewind 10s
+          rewind10Seconds();
+          triggerGestureIndicator('left');
+        } else if (tapX > (2 * boxWidth) / 3) {
+          // Forward 10s
+          forward10Seconds();
+          triggerGestureIndicator('right');
+        }
+      }
+
+      lastTapTime = currentTime;
+      lastTapX = tapX;
+    }, { passive: false });
+  }
+
+  function triggerGestureIndicator(side) {
+    if (!el.mobileGestureOverlay) return;
+    el.mobileGestureOverlay.classList.remove('hidden');
+    const indicator = side === 'left' ? el.gestureLeftIndicator : el.gestureRightIndicator;
+    if (indicator) {
+      indicator.classList.remove('hidden');
+      setTimeout(() => {
+        indicator.classList.add('hidden');
+        el.mobileGestureOverlay?.classList.add('hidden');
+      }, 450);
+    }
+  }
+
+  // ==========================================================================
+  // 2. SUBTITLES & ACCESSIBILITY (Drag-Drop, Offset, Custom Styles)
+  // ==========================================================================
+
+  function initSubtitleDragAndDrop() {
+    const box = el.cinemaBox;
+    if (!box) return;
+
+    box.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      el.subtitleDropOverlay?.classList.remove('hidden');
+    });
+
+    box.addEventListener('dragleave', (e) => {
+      if (e.relatedTarget && box.contains(e.relatedTarget)) return;
+      el.subtitleDropOverlay?.classList.add('hidden');
+    });
+
+    box.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      el.subtitleDropOverlay?.classList.add('hidden');
+
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        loadExternalSubtitleFile(files[0]);
+      }
+    });
+  }
+
+  function loadExternalSubtitleFile(file) {
+    if (!file) return;
+    const name = file.name.toLowerCase();
+    if (!name.endsWith('.srt') && !name.endsWith('.vtt')) {
+      showToast('Please upload a .srt or .vtt subtitle file', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      let content = e.target.result;
+      if (name.endsWith('.srt')) {
+        content = srtToVtt(content);
+      }
+      applyVttSubtitles(content, file.name);
+    };
+    reader.readAsText(file);
+  }
+
+  function srtToVtt(srt) {
+    let vtt = 'WEBVTT\n\n';
+    vtt += srt
+      .replace(/\r\n|\r/g, '\n')
+      .replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2');
+    return vtt;
+  }
+
+  function applyVttSubtitles(vttText, label = 'Custom Subtitle') {
+    const blob = new Blob([vttText], { type: 'text/vtt' });
+    const blobUrl = URL.createObjectURL(blob);
+
+    const oldTracks = el.moviePlayer.querySelectorAll('track[data-custom="true"]');
+    oldTracks.forEach(t => t.remove());
+
+    const track = document.createElement('track');
+    track.kind = 'subtitles';
+    track.label = label;
+    track.srclang = 'en';
+    track.default = true;
+    track.src = blobUrl;
+    track.setAttribute('data-custom', 'true');
+    el.moviePlayer.appendChild(track);
+
+    if (el.subtitleTrackSelect) {
+      const opt = document.createElement('option');
+      opt.value = 'custom';
+      opt.innerText = label;
+      opt.selected = true;
+      el.subtitleTrackSelect.appendChild(opt);
+    }
+
+    showToast(`Loaded: ${label}`);
+  }
+
+  function openSubtitleModal() {
+    if (el.subtitleModal) el.subtitleModal.classList.remove('hidden');
+  }
+
+  function closeSubtitleModal() {
+    if (el.subtitleModal) el.subtitleModal.classList.add('hidden');
+  }
+
+  function adjustSubtitleOffset(delta) {
+    state.subOffset = Math.round((state.subOffset + delta) * 10) / 10;
+    updateSubtitleOffsetUI();
+    try {
+      if (el.moviePlayer && el.moviePlayer.textTracks) {
+        for (let i = 0; i < el.moviePlayer.textTracks.length; i++) {
+          const track = el.moviePlayer.textTracks[i];
+          if (track.cues) {
+            for (let j = 0; j < track.cues.length; j++) {
+              const cue = track.cues[j];
+              cue.startTime = Math.max(0, cue.startTime + delta);
+              cue.endTime = Math.max(0, cue.endTime + delta);
+            }
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  function resetSubtitleOffset() {
+    const delta = -state.subOffset;
+    state.subOffset = 0.0;
+    updateSubtitleOffsetUI();
+    try {
+      if (el.moviePlayer && el.moviePlayer.textTracks) {
+        for (let i = 0; i < el.moviePlayer.textTracks.length; i++) {
+          const track = el.moviePlayer.textTracks[i];
+          if (track.cues) {
+            for (let j = 0; j < track.cues.length; j++) {
+              const cue = track.cues[j];
+              cue.startTime = Math.max(0, cue.startTime + delta);
+              cue.endTime = Math.max(0, cue.endTime + delta);
+            }
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  function updateSubtitleOffsetUI() {
+    if (el.subOffsetDisplay) {
+      el.subOffsetDisplay.textContent = `${state.subOffset > 0 ? '+' : ''}${state.subOffset.toFixed(1)}s`;
+    }
+    applySubtitleStyling();
+  }
+
+  function applySubtitleStyling() {
+    let styleEl = document.getElementById('lumiereCustomSubStyles');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'lumiereCustomSubStyles';
+      document.head.appendChild(styleEl);
+    }
+
+    const sizeBtn = document.querySelector('.sub-style-btn.active[data-style-type="size"]');
+    const colorBtn = document.querySelector('.sub-style-btn.active[data-style-type="color"]');
+    const sizeVal = sizeBtn ? sizeBtn.dataset.val : 'normal';
+    const colorVal = colorBtn ? colorBtn.dataset.val : '#ffffff';
+
+    let fontSize = '20px';
+    if (sizeVal === 'large') fontSize = '26px';
+    if (sizeVal === 'xlarge') fontSize = '32px';
+
+    styleEl.textContent = `
+      ::cue {
+        font-size: ${fontSize} !important;
+        color: ${colorVal} !important;
+        background-color: rgba(0, 0, 0, 0.78) !important;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.9) !important;
+        font-family: inherit !important;
+      }
+    `;
+  }
+
+  // ==========================================================================
+  // 3. VOICE & AUDIO EXPERIENCE (Noise Suppression, Soundboard)
+  // ==========================================================================
+
+  function updateAudioProcessingConstraints() {
+    if (!state.localAudioTrack) return;
+    const noise = !!el.noiseSuppressionToggle?.checked;
+    const echo = !!el.echoCancellationToggle?.checked;
+
+    try {
+      state.localAudioTrack.applyConstraints({
+        noiseSuppression: noise,
+        echoCancellation: echo,
+        autoGainControl: true
+      });
+      showToast(`Audio Processing: Noise (${noise ? 'ON' : 'OFF'}), Echo (${echo ? 'ON' : 'OFF'})`);
+    } catch (e) {
+      console.warn('Error applying audio constraints:', e);
+    }
+  }
+
+  function getSoundName(id) {
+    const names = {
+      airhorn: 'Airhorn 📢',
+      applause: 'Applause 👏',
+      drumroll: 'Drumroll 🥁',
+      sting: 'Dramatic Sting 😱',
+      laugh: 'Laugh Track 😂',
+      rimshot: 'Ba-Dum-Tss 🥁'
+    };
+    return names[id] || id;
+  }
+
+  function playSoundEffect(id) {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = state.audioContext || new AudioCtx();
+      state.audioContext = ctx;
+      if (ctx.state === 'suspended') ctx.resume();
+
+      const now = ctx.currentTime;
+
+      if (id === 'airhorn') {
+        [440, 466].forEach(freq => {
+          for (let i = 0; i < 2; i++) {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq * 1.5, now + i * 0.22);
+            gain.gain.setValueAtTime(0.2, now + i * 0.22);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.22 + 0.18);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + i * 0.22);
+            osc.stop(now + i * 0.22 + 0.2);
+          }
+        });
+      } else if (id === 'applause') {
+        const bufferSize = ctx.sampleRate * 2;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 1.4));
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 1200;
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 1.8);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        noise.start(now);
+      } else if (id === 'drumroll') {
+        for (let i = 0; i < 22; i++) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.frequency.value = 180 + Math.random() * 40;
+          gain.gain.setValueAtTime(0.05 + (i / 22) * 0.18, now + i * 0.075);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.075 + 0.06);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.075);
+          osc.stop(now + i * 0.075 + 0.07);
+        }
+      } else if (id === 'sting') {
+        [220, 261.63, 311.13, 440].forEach(freq => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(0.01, now);
+          gain.gain.linearRampToValueAtTime(0.2, now + 0.2);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 1.6);
+        });
+      } else if (id === 'laugh') {
+        for (let i = 0; i < 5; i++) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(320 + Math.sin(i) * 50, now + i * 0.16);
+          osc.frequency.exponentialRampToValueAtTime(260, now + i * 0.16 + 0.14);
+          gain.gain.setValueAtTime(0.18, now + i * 0.16);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.16 + 0.14);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.16);
+          osc.stop(now + i * 0.16 + 0.15);
+        }
+      } else if (id === 'rimshot') {
+        [0, 0.18].forEach((timeOffset, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.frequency.setValueAtTime(idx === 0 ? 120 : 160, now + timeOffset);
+          gain.gain.setValueAtTime(0.25, now + timeOffset);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + timeOffset + 0.12);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + timeOffset);
+          osc.stop(now + timeOffset + 0.14);
+        });
+        const cymbalTime = now + 0.36;
+        const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.45, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < buffer.length; i++) data[i] = Math.random() * 2 - 1;
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 5000;
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.3, cymbalTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, cymbalTime + 0.4);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        noise.start(cymbalTime);
+      }
+    } catch (e) {
+      console.warn('[Soundboard] Audio error:', e);
+    }
+  }
+
+  // ==========================================================================
+  // 4. ACTIVITIES & SOCIAL (Polls & Movie Trivia Challenge)
+  // ==========================================================================
+
+  function openPollModal() {
+    if (el.pollModal) {
+      el.pollModal.classList.remove('hidden');
+      if (el.pollQuestionInput) {
+        el.pollQuestionInput.value = '';
+        if (el.pollOpt1) el.pollOpt1.value = '';
+        if (el.pollOpt2) el.pollOpt2.value = '';
+        if (el.pollOpt3) el.pollOpt3.value = '';
+        if (el.pollOpt4) el.pollOpt4.value = '';
+        setTimeout(() => el.pollQuestionInput.focus(), 80);
+      }
+    }
+  }
+
+  function closePollModal() {
+    if (el.pollModal) el.pollModal.classList.add('hidden');
+  }
+
+  function handleCreatePoll(e) {
+    if (e) e.preventDefault();
+    const question = el.pollQuestionInput?.value?.trim();
+    const opt1 = el.pollOpt1?.value?.trim();
+    const opt2 = el.pollOpt2?.value?.trim();
+    const opt3 = el.pollOpt3?.value?.trim();
+    const opt4 = el.pollOpt4?.value?.trim();
+
+    if (!question || !opt1 || !opt2) {
+      showToast('Please provide a question and at least 2 options', 'error');
+      return;
+    }
+
+    const options = [opt1, opt2];
+    if (opt3) options.push(opt3);
+    if (opt4) options.push(opt4);
+
+    closePollModal();
+
+    if (state.socket) {
+      state.socket.emit('create-poll', {
+        roomId: state.roomId,
+        question,
+        options
+      });
+    }
+    showToast('Poll launched!');
+  }
+
+  function renderActivePoll(poll) {
+    state.activePoll = poll;
+    if (!el.activePollWidget) return;
+    el.activePollWidget.classList.remove('hidden');
+
+    if (el.pollWidgetQuestion) el.pollWidgetQuestion.textContent = poll.question;
+
+    const totalVotes = poll.options.reduce((sum, o) => sum + (o.votes || 0), 0);
+    if (el.pollTotalVotesText) {
+      el.pollTotalVotesText.textContent = `${totalVotes} vote${totalVotes === 1 ? '' : 's'}`;
+    }
+
+    const myVote = poll.voters ? poll.voters[state.selfId] : undefined;
+
+    if (el.pollWidgetOptions) {
+      el.pollWidgetOptions.innerHTML = '';
+      poll.options.forEach((opt, idx) => {
+        const pct = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
+        const isVoted = myVote === idx;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `poll-opt-btn ${isVoted ? 'voted' : ''}`;
+        btn.innerHTML = `
+          <div class="poll-bar-fill" style="width: ${pct}%"></div>
+          <span class="poll-opt-text">${opt.text}</span>
+          <span class="poll-opt-pct">${pct}% (${opt.votes})</span>
+        `;
+
+        btn.onclick = () => {
+          if (state.socket) {
+            state.socket.emit('vote-poll', { roomId: state.roomId, optionIndex: idx });
+          }
+        };
+
+        el.pollWidgetOptions.appendChild(btn);
+      });
+    }
+  }
+
+  const TRIVIA_BANK = [
+    {
+      q: "Which movie features the famous quote: 'Here's looking at you, kid'?",
+      options: ["Casablanca", "Citizen Kane", "Gone with the Wind", "Sunset Boulevard"],
+      answer: 0
+    },
+    {
+      q: "What is the highest-grossing film of all time (unadjusted for inflation)?",
+      options: ["Titanic", "Avengers: Endgame", "Avatar", "Star Wars: The Force Awakens"],
+      answer: 2
+    },
+    {
+      q: "In 'The Matrix', what color pill does Neo take to wake up in reality?",
+      options: ["Blue", "Red", "Green", "Yellow"],
+      answer: 1
+    },
+    {
+      q: "Which Christopher Nolan movie features dreams nested within dreams?",
+      options: ["Interstellar", "Tenet", "Memento", "Inception"],
+      answer: 3
+    },
+    {
+      q: "Who voiced Woody in the original Pixar movie 'Toy Story' (1995)?",
+      options: ["Tom Hanks", "Tim Allen", "Robin Williams", "Billy Crystal"],
+      answer: 0
+    },
+    {
+      q: "Which movie won the first ever Academy Award for Best Animated Feature?",
+      options: ["Monsters, Inc.", "Shrek", "Ice Age", "Finding Nemo"],
+      answer: 1
+    },
+    {
+      q: "In 'Pulp Fiction', what is the dance performed by Vincent Vega and Mia Wallace?",
+      options: ["The Twist", "The Macarena", "The Charleston", "The Tango"],
+      answer: 0
+    }
+  ];
+
+  let triviaTimerInterval = null;
+
+  function openTriviaModal() {
+    const shuffled = [...TRIVIA_BANK].sort(() => 0.5 - Math.random()).slice(0, 5);
+    const triviaRound = {
+      id: 'trivia_' + Date.now(),
+      questions: shuffled,
+      currentQuestion: 0
+    };
+    if (state.socket) {
+      state.socket.emit('start-trivia', { roomId: state.roomId, triviaRound });
+    }
+  }
+
+  function startTriviaRound(trivia) {
+    state.activeTrivia = trivia;
+    if (el.triviaModal) el.triviaModal.classList.remove('hidden');
+    displayTriviaQuestion(trivia.currentQuestion || 0);
+  }
+
+  function displayTriviaQuestion(idx) {
+    if (!state.activeTrivia || !state.activeTrivia.questions[idx]) return;
+    const qData = state.activeTrivia.questions[idx];
+
+    if (el.triviaRoundText) el.triviaRoundText.textContent = `Question ${idx + 1} of ${state.activeTrivia.questions.length}`;
+    if (el.triviaQuestionText) el.triviaQuestionText.textContent = qData.q;
+    if (el.triviaFeedback) el.triviaFeedback.classList.add('hidden');
+
+    if (el.triviaOptionsGrid) {
+      el.triviaOptionsGrid.innerHTML = '';
+      let hasAnswered = false;
+
+      qData.options.forEach((opt, optIdx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'trivia-opt-btn';
+        btn.textContent = opt;
+
+        btn.onclick = () => {
+          if (hasAnswered) return;
+          hasAnswered = true;
+          const isCorrect = optIdx === qData.answer;
+
+          btn.classList.add(isCorrect ? 'correct' : 'wrong');
+          if (!isCorrect) {
+            const correctBtn = el.triviaOptionsGrid.children[qData.answer];
+            if (correctBtn) correctBtn.classList.add('correct');
+          }
+
+          if (el.triviaFeedback) {
+            el.triviaFeedback.classList.remove('hidden');
+            el.triviaFeedback.textContent = isCorrect ? 'Correct! +10 points' : 'Incorrect!';
+            el.triviaFeedback.style.color = isCorrect ? '#2ecc71' : '#e74c3c';
+          }
+
+          if (state.socket) {
+            state.socket.emit('submit-trivia-answer', {
+              roomId: state.roomId,
+              username: state.username,
+              isCorrect,
+              points: 10
+            });
+          }
+        };
+
+        el.triviaOptionsGrid.appendChild(btn);
+      });
+    }
+
+    let timeLeft = 15;
+    if (el.triviaTimerCountdown) el.triviaTimerCountdown.textContent = '15s';
+    if (el.triviaTimerFill) el.triviaTimerFill.style.width = '100%';
+
+    clearInterval(triviaTimerInterval);
+    triviaTimerInterval = setInterval(() => {
+      timeLeft--;
+      if (el.triviaTimerCountdown) el.triviaTimerCountdown.textContent = `${timeLeft}s`;
+      if (el.triviaTimerFill) el.triviaTimerFill.style.width = `${(timeLeft / 15) * 100}%`;
+
+      if (timeLeft <= 0) {
+        clearInterval(triviaTimerInterval);
+        if (state.isHost) {
+          if (idx + 1 < state.activeTrivia.questions.length) {
+            setTimeout(() => {
+              if (state.socket) state.socket.emit('next-trivia-question', { roomId: state.roomId, questionIndex: idx + 1 });
+            }, 1500);
+          } else {
+            setTimeout(() => {
+              if (state.socket) state.socket.emit('end-trivia', { roomId: state.roomId });
+            }, 2000);
+          }
+        }
+      }
+    }, 1000);
+  }
+
+  function renderTriviaScores(scores) {
+    if (!el.triviaScoresList) return;
+    el.triviaScoresList.innerHTML = '';
+    Object.entries(scores).sort((a, b) => b[1] - a[1]).forEach(([name, pts]) => {
+      const pill = document.createElement('div');
+      pill.className = 'trivia-score-pill';
+      pill.innerHTML = `<strong>${name}:</strong> ${pts} pts`;
+      el.triviaScoresList.appendChild(pill);
+    });
+  }
+
+  function finishTriviaRound(scores) {
+    clearInterval(triviaTimerInterval);
+    if (el.triviaFeedback) {
+      el.triviaFeedback.classList.remove('hidden');
+      el.triviaFeedback.textContent = 'Round Finished! Great game!';
+      el.triviaFeedback.style.color = 'var(--coral)';
+    }
+    renderTriviaScores(scores);
+  }
+
+  // ==========================================================================
   // PARTICIPANT TILE RENDERING (Image 1 Centered beneath stage)
   // ==========================================================================
 
@@ -1713,6 +2502,53 @@
     tile.appendChild(avatar);
     tile.appendChild(video);
     tile.appendChild(bottomBadge);
+
+    // Individual Member Volume Button & Popover (for remote participants)
+    if (!isSelf) {
+      const volBtn = document.createElement('button');
+      volBtn.className = 'tile-vol-btn';
+      volBtn.title = `Adjust volume for ${member.username}`;
+      volBtn.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+        </svg>
+      `;
+
+      const volPopover = document.createElement('div');
+      volPopover.className = 'tile-volume-popover hidden';
+      const initialVol = state.participantVolumes.get(member.id) ?? 100;
+
+      volPopover.innerHTML = `
+        <div class="tile-volume-header">
+          <span>VOLUME</span>
+          <span class="tile-vol-val">${initialVol}%</span>
+        </div>
+        <input type="range" min="0" max="200" step="5" value="${initialVol}" class="tile-vol-slider">
+      `;
+
+      volBtn.onclick = (e) => {
+        e.stopPropagation();
+        document.querySelectorAll('.tile-volume-popover').forEach(p => {
+          if (p !== volPopover) p.classList.add('hidden');
+        });
+        volPopover.classList.toggle('hidden');
+      };
+
+      const slider = volPopover.querySelector('.tile-vol-slider');
+      const valDisplay = volPopover.querySelector('.tile-vol-val');
+      slider.oninput = (e) => {
+        const v = parseInt(e.target.value, 10);
+        valDisplay.innerText = `${v}%`;
+        state.participantVolumes.set(member.id, v);
+        const remoteAudio = document.getElementById(`remote-audio-${member.id}`);
+        if (remoteAudio) {
+          remoteAudio.volume = Math.min(1.0, v / 100);
+        }
+      };
+
+      tile.appendChild(volBtn);
+      tile.appendChild(volPopover);
+    }
 
     // Reattach active video feed (local or remote)
     if (isSelf && state.localVideoTrack && state.isCamOn) {
@@ -3074,6 +3910,8 @@
       el.micDeviceMenu.classList.add('hidden');
       el.camDeviceMenu.classList.add('hidden');
       if (el.moreOptionsMenu) el.moreOptionsMenu.classList.add('hidden');
+      if (el.activityMenu) el.activityMenu.classList.add('hidden');
+      document.querySelectorAll('.tile-volume-popover').forEach(p => p.classList.add('hidden'));
     });
 
     // More Options Button & Dropdown Menu (Screenshare, YouTube, Direct URL)
@@ -3115,6 +3953,138 @@
     if (el.closeUrlBtn) el.closeUrlBtn.onclick = closeUrlModal;
     if (el.cancelUrlBtn) el.cancelUrlBtn.onclick = closeUrlModal;
     if (el.urlForm) el.urlForm.onsubmit = handleUrlSubmit;
+
+    // Activity Button & Menu (Polls, Trivia, Soundboard)
+    if (el.activityBtn) {
+      el.activityBtn.onclick = (e) => {
+        e.stopPropagation();
+        el.activityMenu?.classList.toggle('hidden');
+        el.micDeviceMenu?.classList.add('hidden');
+        el.camDeviceMenu?.classList.add('hidden');
+        el.moreOptionsMenu?.classList.add('hidden');
+      };
+    }
+    if (el.activityMenu) {
+      el.activityMenu.onclick = (e) => e.stopPropagation();
+    }
+    if (el.menuPollBtn) {
+      el.menuPollBtn.onclick = () => {
+        el.activityMenu?.classList.add('hidden');
+        openPollModal();
+      };
+    }
+    if (el.menuTriviaBtn) {
+      el.menuTriviaBtn.onclick = () => {
+        el.activityMenu?.classList.add('hidden');
+        openTriviaModal();
+      };
+    }
+    if (el.menuSoundboardBtn) {
+      el.menuSoundboardBtn.onclick = () => {
+        el.activityMenu?.classList.add('hidden');
+        if (el.soundboardModal) el.soundboardModal.classList.remove('hidden');
+      };
+    }
+
+    // Soundboard Modal
+    if (el.closeSoundboardBtn) {
+      el.closeSoundboardBtn.onclick = () => {
+        el.soundboardModal?.classList.add('hidden');
+      };
+    }
+    if (el.doneSoundboardBtn) {
+      el.doneSoundboardBtn.onclick = () => {
+        el.soundboardModal?.classList.add('hidden');
+      };
+    }
+    document.querySelectorAll('.soundboard-btn').forEach(btn => {
+      btn.onclick = () => {
+        const sound = btn.getAttribute('data-sound');
+        if (sound) {
+          playSoundEffect(sound);
+          if (state.socket) {
+            state.socket.emit('play-soundboard', { roomId: state.roomId, soundId: sound, senderName: state.username });
+          }
+        }
+      };
+    });
+
+    // Subtitle Settings Modal & HUD Controls
+    if (el.subtitleSettingsBtn) el.subtitleSettingsBtn.onclick = openSubtitleModal;
+    if (el.closeSubtitleModalBtn) el.closeSubtitleModalBtn.onclick = closeSubtitleModal;
+    if (el.doneSubtitleBtn) el.doneSubtitleBtn.onclick = closeSubtitleModal;
+
+    document.querySelectorAll('.sub-offset-btn').forEach(btn => {
+      btn.onclick = () => {
+        const delta = parseFloat(btn.getAttribute('data-delta'));
+        if (!isNaN(delta)) adjustSubtitleOffset(delta);
+      };
+    });
+    if (el.subOffsetResetBtn) {
+      el.subOffsetResetBtn.onclick = resetSubtitleOffset;
+    }
+    document.querySelectorAll('.sub-style-btn').forEach(btn => {
+      btn.onclick = () => {
+        const type = btn.getAttribute('data-style-type');
+        if (type) {
+          btn.parentElement?.querySelectorAll(`.sub-style-btn[data-style-type="${type}"]`).forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          applySubtitleStyling();
+        }
+      };
+    });
+    if (el.customSubFileInput) {
+      el.customSubFileInput.onchange = (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+          loadExternalSubtitleFile(file);
+          closeSubtitleModal();
+        }
+      };
+    }
+
+    // Ambiance, Speed Picker & PiP Controls
+    if (el.speedSelect) {
+      el.speedSelect.onchange = handleSpeedChange;
+    }
+    if (el.ambientToggleBtn) {
+      el.ambientToggleBtn.onclick = toggleAmbientGlow;
+    }
+    if (el.pipBtn) {
+      el.pipBtn.onclick = togglePictureInPicture;
+    }
+
+    // Poll Modal & Poll Widget
+    if (el.closePollModalBtn) el.closePollModalBtn.onclick = closePollModal;
+    if (el.cancelPollBtn) el.cancelPollBtn.onclick = closePollModal;
+    if (el.createPollForm) el.createPollForm.onsubmit = handleCreatePoll;
+    if (el.closePollWidgetBtn) {
+      el.closePollWidgetBtn.onclick = () => {
+        if (state.isHost && state.socket) {
+          state.socket.emit('close-poll', { roomId: state.roomId });
+        } else {
+          el.activePollWidget?.classList.add('hidden');
+        }
+      };
+    }
+
+    // Trivia Modal
+    if (el.closeTriviaModalBtn) {
+      el.closeTriviaModalBtn.onclick = () => {
+        if (state.isHost && state.socket) {
+          state.socket.emit('end-trivia', { roomId: state.roomId });
+        }
+        finishTriviaRound();
+      };
+    }
+
+    // Audio Processing Constraints Toggles (Noise Suppression, Echo Cancellation)
+    if (el.noiseSuppressionToggle) {
+      el.noiseSuppressionToggle.onchange = updateAudioProcessingConstraints;
+    }
+    if (el.echoCancellationToggle) {
+      el.echoCancellationToggle.onchange = updateAudioProcessingConstraints;
+    }
 
     // Disconnect
     el.disconnectBtn.onclick = () => {
@@ -3324,6 +4294,18 @@
       if (el.urlModal && !el.urlModal.classList.contains('hidden')) {
         return;
       }
+      if (el.subtitleModal && !el.subtitleModal.classList.contains('hidden')) {
+        return;
+      }
+      if (el.pollModal && !el.pollModal.classList.contains('hidden')) {
+        return;
+      }
+      if (el.triviaModal && !el.triviaModal.classList.contains('hidden')) {
+        return;
+      }
+      if (el.soundboardModal && !el.soundboardModal.classList.contains('hidden')) {
+        return;
+      }
 
       const key = e.key;
       const code = e.code;
@@ -3343,6 +4325,9 @@
       } else if (key === 'm' || key === 'M') {
         e.preventDefault();
         toggleMute();
+      } else if (key === 'p' || key === 'P') {
+        e.preventDefault();
+        togglePictureInPicture();
       } else if (key === 'j' || key === 'J' || key === 'ArrowLeft') {
         e.preventDefault();
         rewind10Seconds();
@@ -3450,6 +4435,10 @@
 
     setupUploadDropzone();
     setupPlayerEvents();
+
+    initAmbientGlow();
+    initMobileGestures();
+    initSubtitleDragAndDrop();
   }
 
   window.addEventListener('DOMContentLoaded', init);

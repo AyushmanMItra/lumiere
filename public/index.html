@@ -457,12 +457,48 @@
       <!-- Theater Center Stage -->
       <section class="stage-section" id="stageSection">
 
+        <!-- Ambient Cinema Glow Canvas (Radiates dynamic blurred color glow behind stage) -->
+        <canvas id="ambientGlowCanvas" class="ambient-glow-canvas"></canvas>
+
         <!-- Main Cinema Frame (Image 1 Center) -->
         <div class="cinema-box" id="cinemaBox">
           <video id="moviePlayer" preload="auto" playsinline crossorigin="anonymous"></video>
           <video id="screenSharePlayer" class="screen-share-player hidden" autoplay playsinline></video>
           <div id="youtubePlayerBox" class="youtube-player-box hidden">
             <div id="youtubeIframe"></div>
+          </div>
+
+          <!-- Drag and Drop Subtitle File Target Overlay -->
+          <div id="subtitleDropOverlay" class="subtitle-drop-overlay hidden">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span>Drop .SRT or .VTT file here to load subtitles</span>
+          </div>
+
+          <!-- Mobile Touch Gesture Skip Feedback Overlay -->
+          <div id="mobileGestureOverlay" class="mobile-gesture-overlay hidden">
+            <div id="gestureLeftIndicator" class="gesture-indicator-side gesture-left hidden">
+              <span class="gesture-pill">-10s</span>
+            </div>
+            <div id="gestureRightIndicator" class="gesture-indicator-side gesture-right hidden">
+              <span class="gesture-pill">+10s</span>
+            </div>
+          </div>
+
+          <!-- Active Room Poll Floating Widget -->
+          <div id="activePollWidget" class="active-poll-widget hidden">
+            <div class="poll-widget-header">
+              <div class="poll-badge-live">LIVE POLL</div>
+              <button type="button" id="closePollWidgetBtn" class="poll-close-btn" title="Dismiss Poll">&times;</button>
+            </div>
+            <h4 id="pollWidgetQuestion" class="poll-widget-question">What movie should we watch?</h4>
+            <div id="pollWidgetOptions" class="poll-widget-options"></div>
+            <div class="poll-widget-footer">
+              <span id="pollTotalVotesText">0 votes</span>
+            </div>
           </div>
 
           <!-- Empty Cinema State (Avatar in center when no movie is playing) -->
@@ -596,7 +632,7 @@
                   </select>
                 </div>
 
-                <!-- Subtitle Selector Pill -->
+                <!-- Subtitle Selector Pill with Settings Button -->
                 <div class="hud-pill-group host-only-control" id="subtitlePickerGroup" title="Select Subtitles">
                   <svg class="hud-pill-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect>
@@ -605,7 +641,48 @@
                   <select id="subtitleTrackSelect" class="hud-select">
                     <option value="off">Off</option>
                   </select>
+                  <button type="button" id="subtitleSettingsBtn" class="hud-sub-gear-btn" title="Subtitle Settings & Timing Delay">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                    </svg>
+                  </button>
                 </div>
+
+                <!-- Playback Speed Selector Pill -->
+                <div class="hud-pill-group host-only-control" id="speedPickerGroup" title="Playback Speed">
+                  <span class="hud-pill-text-icon">⚡</span>
+                  <select id="speedSelect" class="hud-select">
+                    <option value="0.5">0.5x</option>
+                    <option value="0.75">0.75x</option>
+                    <option value="1" selected>1.0x</option>
+                    <option value="1.25">1.25x</option>
+                    <option value="1.5">1.5x</option>
+                    <option value="2">2.0x</option>
+                  </select>
+                </div>
+
+                <!-- Ambient Glow Toggle Button -->
+                <button type="button" id="ambientToggleBtn" class="hud-icon-btn active-toggle" title="Toggle Ambient Cinema Glow">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                  </svg>
+                </button>
+
+                <!-- Picture in Picture (PiP) Button -->
+                <button type="button" id="pipBtn" class="hud-icon-btn" title="Picture in Picture (P)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                    <rect x="12" y="10" width="8" height="7" rx="1" fill="currentColor"></rect>
+                  </svg>
+                </button>
 
                 <!-- Fullscreen Toggle Button -->
                 <button id="hudFullscreenBtn" class="hud-icon-btn" title="Toggle Fullscreen (F)">
@@ -763,6 +840,16 @@
             <div id="micDeviceMenu" class="device-menu hidden">
               <div class="device-menu-header">Audio Inputs</div>
               <div id="micDeviceList" class="device-menu-items"></div>
+              <div class="device-menu-divider"></div>
+              <div class="device-menu-header">Audio Processing</div>
+              <label class="device-menu-toggle-row">
+                <span>Noise Suppression</span>
+                <input type="checkbox" id="noiseSuppressionToggle" checked>
+              </label>
+              <label class="device-menu-toggle-row">
+                <span>Echo Cancellation</span>
+                <input type="checkbox" id="echoCancellationToggle" checked>
+              </label>
             </div>
           </div>
 
@@ -804,14 +891,51 @@
             </svg>
           </button>
 
-          <!-- 5. Activity Button (Star) - Removed for now, can be restored anytime -->
-          <!--
-          <button id="activityBtn" class="pill-btn" title="Party Activity">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L9.09 8.26 2 9.27l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7 5.46-4.73-7.09-1.01L12 2z"/>
-            </svg>
-          </button>
-          -->
+          <!-- 5. Activity Button Group (Star icon: Polls, Trivia, Soundboard) -->
+          <div class="split-dock-btn" id="activityGroup">
+            <button id="activityBtn" class="pill-btn" title="Party Activities & Games">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L9.09 8.26 2 9.27l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7 5.46-4.73-7.09-1.01L12 2z"/>
+              </svg>
+            </button>
+            <div id="activityMenu" class="device-menu more-options-menu hidden">
+              <div class="device-menu-header">Party Activities</div>
+              <div class="device-menu-items">
+                <button type="button" class="more-menu-item" id="menuPollBtn" title="Create Room Poll">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Live Poll</span>
+                    <span class="more-menu-desc">Vote on movies or ask a question</span>
+                  </div>
+                </button>
+                <button type="button" class="more-menu-item" id="menuTriviaBtn" title="Movie Trivia Game">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Movie Trivia</span>
+                    <span class="more-menu-desc">Play 5-round cinema quiz game</span>
+                  </div>
+                </button>
+                <button type="button" class="more-menu-item" id="menuSoundboardBtn" title="Watch Party Soundboard">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Party Soundboard</span>
+                    <span class="more-menu-desc">Airhorn, applause, drumroll, rimshot</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
 
           <!-- 6. More Options Button Group (Screenshare, YouTube, Direct URL) -->
           <div class="split-dock-btn" id="moreOptionsGroup">
@@ -1112,6 +1236,223 @@
           <button type="submit" id="startUrlStreamBtn" class="btn btn-coral">Stream in Room</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 9. SUBTITLE SETTINGS & SYNC DELAY MODAL                      -->
+  <!-- ============================================================ -->
+  <div id="subtitleModal" class="modal-overlay hidden">
+    <div class="modal-card extra-feature-modal-card">
+      <div class="modal-header-row">
+        <div class="modal-title-with-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect>
+            <path d="M7 15h3M7 11h2M14 15h3M14 11h1"></path>
+          </svg>
+          <h3>Subtitle Settings & Timing</h3>
+        </div>
+        <button id="closeSubtitleModalBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="sub-settings-content">
+        <!-- Subtitle Sync Timing Offset -->
+        <div class="form-group">
+          <label>SYNC TIMING OFFSET</label>
+          <div class="sub-offset-control-row">
+            <button type="button" class="btn btn-secondary btn-sm sub-offset-btn" data-delta="-1.0">-1.0s</button>
+            <button type="button" class="btn btn-secondary btn-sm sub-offset-btn" data-delta="-0.5">-0.5s</button>
+            <span id="subOffsetDisplay" class="sub-offset-badge">0.0s</span>
+            <button type="button" class="btn btn-secondary btn-sm sub-offset-btn" data-delta="0.5">+0.5s</button>
+            <button type="button" class="btn btn-secondary btn-sm sub-offset-btn" data-delta="1.0">+1.0s</button>
+            <button type="button" id="subOffsetResetBtn" class="btn btn-secondary btn-sm">Reset</button>
+          </div>
+          <span class="sub-hint-text">Adjust subtitle timing if dialog is ahead or behind the audio.</span>
+        </div>
+
+        <!-- Subtitle Appearance -->
+        <div class="form-group">
+          <label>FONT SIZE</label>
+          <div class="sub-pill-row">
+            <button type="button" class="sub-style-btn active" data-style-type="size" data-val="normal">Normal (18px)</button>
+            <button type="button" class="sub-style-btn" data-style-type="size" data-val="large">Large (24px)</button>
+            <button type="button" class="sub-style-btn" data-style-type="size" data-val="xlarge">Extra Large (30px)</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>TEXT COLOR</label>
+          <div class="sub-pill-row">
+            <button type="button" class="sub-style-btn active" data-style-type="color" data-val="#ffffff">White</button>
+            <button type="button" class="sub-style-btn" data-style-type="color" data-val="#ffd700">Yellow</button>
+            <button type="button" class="sub-style-btn" data-style-type="color" data-val="#00e5ff">Cyan</button>
+            <button type="button" class="sub-style-btn" data-style-type="color" data-val="#69f0ae">Green</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>LOAD CUSTOM SUBTITLE FILE (.SRT / .VTT)</label>
+          <label class="custom-file-upload-btn">
+            <input type="file" id="customSubFileInput" accept=".srt,.vtt">
+            <span>Browse Subtitle File (.srt, .vtt)</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-actions-row">
+        <button type="button" id="doneSubtitleBtn" class="btn btn-coral">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 10. CREATE LIVE POLL MODAL                                   -->
+  <!-- ============================================================ -->
+  <div id="pollModal" class="modal-overlay hidden">
+    <div class="modal-card extra-feature-modal-card">
+      <div class="modal-header-row">
+        <div class="modal-title-with-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <h3>Create Live Room Poll</h3>
+        </div>
+        <button id="closePollModalBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <p class="modal-subtitle-text">
+        Ask room members what to watch next or run a live prediction poll.
+      </p>
+      <form id="createPollForm" class="extra-feature-form">
+        <div class="form-group">
+          <label for="pollQuestionInput">POLL QUESTION</label>
+          <input type="text" id="pollQuestionInput" placeholder="e.g. Which movie should we watch next?" class="form-input" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>OPTIONS (AT LEAST 2)</label>
+          <div class="poll-options-input-list">
+            <input type="text" id="pollOpt1" placeholder="Option 1 (e.g. Inception)" class="form-input" required autocomplete="off">
+            <input type="text" id="pollOpt2" placeholder="Option 2 (e.g. Interstellar)" class="form-input" required autocomplete="off">
+            <input type="text" id="pollOpt3" placeholder="Option 3 (optional)" class="form-input" autocomplete="off">
+            <input type="text" id="pollOpt4" placeholder="Option 4 (optional)" class="form-input" autocomplete="off">
+          </div>
+        </div>
+        <div class="modal-actions-row">
+          <button type="button" id="cancelPollBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="startPollBtn" class="btn btn-coral">Launch Live Poll</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 11. MOVIE TRIVIA GAME MODAL                                  -->
+  <!-- ============================================================ -->
+  <div id="triviaModal" class="modal-overlay hidden">
+    <div class="modal-card trivia-modal-card">
+      <div class="modal-header-row">
+        <div class="modal-title-with-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <h3>Cinema Trivia Challenge</h3>
+        </div>
+        <button id="closeTriviaModalBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="trivia-timer-track">
+        <div id="triviaTimerFill" class="trivia-timer-fill"></div>
+      </div>
+
+      <div class="trivia-game-body" id="triviaGameBody">
+        <div class="trivia-meta-row">
+          <span id="triviaRoundText" class="trivia-round-badge">Question 1 of 5</span>
+          <span id="triviaTimerCountdown" class="trivia-timer-text">15s</span>
+        </div>
+        <h3 id="triviaQuestionText" class="trivia-question-text">Loading question...</h3>
+        <div id="triviaOptionsGrid" class="trivia-options-grid"></div>
+        <div id="triviaFeedback" class="trivia-feedback hidden"></div>
+      </div>
+
+      <div class="trivia-scoreboard-footer">
+        <div class="trivia-scores-header">LIVE SCORES</div>
+        <div id="triviaScoresList" class="trivia-scores-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 12. WATCH PARTY SOUNDBOARD MODAL                             -->
+  <!-- ============================================================ -->
+  <div id="soundboardModal" class="modal-overlay hidden">
+    <div class="modal-card extra-feature-modal-card">
+      <div class="modal-header-row">
+        <div class="modal-title-with-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+          <h3>Party Soundboard</h3>
+        </div>
+        <button id="closeSoundboardBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <p class="modal-subtitle-text">
+        Tap any sound effect to play it instantly for everyone in the watch party!
+      </p>
+
+      <div class="soundboard-grid">
+        <button type="button" class="soundboard-btn" data-sound="airhorn">
+          <span class="soundboard-icon">📢</span>
+          <span class="soundboard-name">Airhorn</span>
+        </button>
+        <button type="button" class="soundboard-btn" data-sound="applause">
+          <span class="soundboard-icon">👏</span>
+          <span class="soundboard-name">Applause</span>
+        </button>
+        <button type="button" class="soundboard-btn" data-sound="drumroll">
+          <span class="soundboard-icon">🥁</span>
+          <span class="soundboard-name">Drumroll</span>
+        </button>
+        <button type="button" class="soundboard-btn" data-sound="sting">
+          <span class="soundboard-icon">😱</span>
+          <span class="soundboard-name">Dramatic</span>
+        </button>
+        <button type="button" class="soundboard-btn" data-sound="laugh">
+          <span class="soundboard-icon">😂</span>
+          <span class="soundboard-name">Laugh Track</span>
+        </button>
+        <button type="button" class="soundboard-btn" data-sound="rimshot">
+          <span class="soundboard-icon">🥁</span>
+          <span class="soundboard-name">Ba-Dum-Tss</span>
+        </button>
+      </div>
+
+      <div class="modal-actions-row">
+        <button type="button" id="doneSoundboardBtn" class="btn btn-secondary">Done</button>
+      </div>
     </div>
   </div>
 

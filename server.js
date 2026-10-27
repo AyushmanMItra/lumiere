@@ -500,6 +500,9 @@ function getOrCreateRoom(roomId) {
       currentMovie: null,
       audioTrack: 0,
       subtitleTrack: null,
+      playbackRate: 1.0,
+      activePoll: null,
+      activeTrivia: null,
       currentTime: 0,
       isPlaying: false,
       lastUpdate: Date.now(),
@@ -556,6 +559,9 @@ io.on('connection', (socket) => {
       screenShare: room.screenShare || null,
       audioTrack: room.audioTrack,
       subtitleTrack: room.subtitleTrack,
+      playbackRate: room.playbackRate || 1.0,
+      activePoll: room.activePoll || null,
+      activeTrivia: room.activeTrivia || null,
       currentTime: estimatedTime,
       isPlaying: room.isPlaying,
       members: Array.from(room.members.values())
@@ -583,6 +589,9 @@ io.on('connection', (socket) => {
       screenShare: room.screenShare || null,
       audioTrack: room.audioTrack,
       subtitleTrack: room.subtitleTrack,
+      playbackRate: room.playbackRate || 1.0,
+      activePoll: room.activePoll || null,
+      activeTrivia: room.activeTrivia || null,
       currentTime: estimatedTime,
       isPlaying: room.isPlaying
     });
@@ -746,6 +755,95 @@ io.on('connection', (socket) => {
     room.lastUpdate = Date.now();
 
     socket.to(roomId).emit('sync-heartbeat', { time, isPlaying });
+  });
+
+  // Playback Speed Change Synchronization
+  socket.on('sync-speed-changed', ({ roomId, speed }) => {
+    const room = rooms.get(roomId);
+    if (!room || !room.members.has(socket.id)) return;
+    room.playbackRate = speed;
+    socket.to(roomId).emit('sync-speed-changed', { speed });
+  });
+
+  // Watch Party Soundboard Broadcast
+  socket.on('play-soundboard', ({ roomId, soundId, senderName }) => {
+    const room = rooms.get(roomId);
+    if (!room || !room.members.has(socket.id)) return;
+    const name = senderName || room.members.get(socket.id)?.username || 'User';
+    io.in(roomId).emit('sync-soundboard', { soundId, senderName: name });
+  });
+
+  // Live Room Polls & Voting
+  socket.on('create-poll', ({ roomId, question, options }) => {
+    const room = rooms.get(roomId);
+    if (!room || !room.members.has(socket.id)) return;
+    const member = room.members.get(socket.id);
+    room.activePoll = {
+      id: 'poll_' + Date.now(),
+      creatorId: socket.id,
+      creatorName: member ? member.username : 'User',
+      question: question.trim(),
+      options: options.map((opt, idx) => ({ id: idx, text: opt.trim(), votes: 0 })),
+      voters: {}
+    };
+    io.in(roomId).emit('sync-poll-updated', room.activePoll);
+  });
+
+  socket.on('vote-poll', ({ roomId, optionIndex }) => {
+    const room = rooms.get(roomId);
+    if (!room || !room.activePoll) return;
+    const poll = room.activePoll;
+    if (poll.voters[socket.id] !== undefined) {
+      const prev = poll.voters[socket.id];
+      if (prev === optionIndex) return;
+      if (poll.options[prev]) poll.options[prev].votes = Math.max(0, poll.options[prev].votes - 1);
+    }
+    poll.voters[socket.id] = optionIndex;
+    if (poll.options[optionIndex]) poll.options[optionIndex].votes++;
+    io.in(roomId).emit('sync-poll-updated', poll);
+  });
+
+  socket.on('close-poll', ({ roomId }) => {
+    const room = rooms.get(roomId);
+    if (!room) return;
+    room.activePoll = null;
+    io.in(roomId).emit('sync-poll-closed');
+  });
+
+  // Movie Trivia Game
+  socket.on('start-trivia', ({ roomId, triviaRound }) => {
+    const room = rooms.get(roomId);
+    if (!room || !room.members.has(socket.id)) return;
+    room.activeTrivia = {
+      ...triviaRound,
+      scores: {}
+    };
+    io.in(roomId).emit('sync-trivia-started', room.activeTrivia);
+  });
+
+  socket.on('submit-trivia-answer', ({ roomId, username, isCorrect, points }) => {
+    const room = rooms.get(roomId);
+    if (!room || !room.activeTrivia) return;
+    if (!room.activeTrivia.scores) room.activeTrivia.scores = {};
+    if (isCorrect) {
+      room.activeTrivia.scores[username] = (room.activeTrivia.scores[username] || 0) + (points || 10);
+    }
+    io.in(roomId).emit('sync-trivia-scores', room.activeTrivia.scores);
+  });
+
+  socket.on('next-trivia-question', ({ roomId, questionIndex }) => {
+    const room = rooms.get(roomId);
+    if (!room || !room.activeTrivia) return;
+    room.activeTrivia.currentQuestion = questionIndex;
+    io.in(roomId).emit('sync-trivia-next', { questionIndex });
+  });
+
+  socket.on('end-trivia', ({ roomId }) => {
+    const room = rooms.get(roomId);
+    if (!room) return;
+    const finalScores = room.activeTrivia?.scores || {};
+    room.activeTrivia = null;
+    io.in(roomId).emit('sync-trivia-ended', { scores: finalScores });
   });
 
   // 3. User Voice / Mic / Cam Status Updates
