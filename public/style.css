@@ -2008,11 +2008,11 @@ body {
    ========================================================================== */
 
 .top-bar {
-  transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), margin-top 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .dock-wrapper {
-  transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), margin-bottom 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .idle-hidden,
@@ -2020,7 +2020,6 @@ body {
   opacity: 0 !important;
   pointer-events: none !important;
   transform: translateY(100%) !important;
-  margin-bottom: -80px !important;
 }
 
 .top-bar.idle-hidden,
@@ -2028,7 +2027,11 @@ body {
   opacity: 0 !important;
   pointer-events: none !important;
   transform: translateY(-100%) !important;
-  margin-top: -48px !important;
+}
+
+/* When the panel drops down on idle, the movie screen and video collectively drop DOWN into the center */
+.idle-mode .stage-cinema-group {
+  transform: translateY(28px);
 }
 
 .idle-mode .cinema-controls-hud {
@@ -2932,19 +2935,9 @@ body {
     will-change: transform;
   }
 
-  /* When after 3 seconds of inactivity the panel drops down, the movie screen and video also drop down to be collectively in the centre of the screen */
+  /* When after 3 seconds of inactivity the panel drops down, the movie screen and video drop DOWN into the center */
   .idle-mode .stage-cinema-group {
-    transform: translateY(calc(50dvh - 50% - 6px));
-  }
-
-  .idle-hidden,
-  .idle-mode .dock-wrapper {
-    margin-bottom: -64px !important;
-  }
-
-  .top-bar.idle-hidden,
-  .idle-mode .top-bar {
-    margin-top: -44px !important;
+    transform: translateY(clamp(50px, 12vh, 100px));
   }
 
   /* Cinema Stage fills mobile width in natural 16:9 ratio */
@@ -3180,14 +3173,8 @@ body {
     gap: 12px;
   }
 
-  .idle-hidden,
-  .idle-mode .dock-wrapper {
-    margin-bottom: -44px !important;
-  }
-
-  .top-bar.idle-hidden,
-  .idle-mode .top-bar {
-    margin-top: -34px !important;
+  .idle-mode .stage-cinema-group {
+    transform: translateY(10px);
   }
 
   /* Compact dock in landscape */
