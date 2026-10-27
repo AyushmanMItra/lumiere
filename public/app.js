@@ -548,6 +548,7 @@
         }
         state.pendingIceCandidates.delete(senderId);
 
+        preferH264Codecs(pc);
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         s.emit('webrtc-answer', { targetId: senderId, answer });
@@ -778,6 +779,28 @@
     if (avatar) avatar.classList.remove('hidden');
   }
 
+  function preferH264Codecs(pc) {
+    if (!RTCRtpReceiver.getCapabilities) return;
+    try {
+      const transceivers = pc.getTransceivers ? pc.getTransceivers() : [];
+      const videoTransceiver = transceivers.find(t => (t.receiver?.track?.kind === 'video') || (t.sender?.track?.kind === 'video'));
+      if (videoTransceiver && 'setCodecPreferences' in videoTransceiver) {
+        const caps = RTCRtpReceiver.getCapabilities('video');
+        if (caps && caps.codecs) {
+          const codecs = caps.codecs;
+          const h264 = codecs.filter(c => c.mimeType.toLowerCase() === 'video/h264');
+          const vp8 = codecs.filter(c => c.mimeType.toLowerCase() === 'video/vp8');
+          const others = codecs.filter(c => c.mimeType.toLowerCase() !== 'video/h264' && c.mimeType.toLowerCase() !== 'video/vp8');
+          if (h264.length > 0) {
+            videoTransceiver.setCodecPreferences([...h264, ...vp8, ...others]);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[WebRTC] Error setting codec preferences:', e);
+    }
+  }
+
   function getOrCreatePeerConnection(targetId) {
     if (state.peerConnections.has(targetId)) {
       return state.peerConnections.get(targetId);
@@ -799,6 +822,8 @@
     } else {
       try { pc.addTransceiver('video', { direction: 'sendrecv' }); } catch (e) {}
     }
+
+    preferH264Codecs(pc);
 
     // Send ICE candidates
     pc.onicecandidate = (e) => {
@@ -875,6 +900,7 @@
   async function initiateCall(targetId) {
     const pc = getOrCreatePeerConnection(targetId);
     try {
+      preferH264Codecs(pc);
       const offer = await pc.createOffer({
         offerToReceiveAudio: true,
         offerToReceiveVideo: true
@@ -949,18 +975,23 @@
 
             if (videoTransceiver && videoTransceiver.sender) {
               await videoTransceiver.sender.replaceTrack(videoTrack);
+              videoTransceiver.direction = 'sendrecv';
             } else {
               const videoSender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
               if (videoSender) {
                 await videoSender.replaceTrack(videoTrack);
               } else {
                 pc.addTrack(videoTrack, new MediaStream([videoTrack]));
-                if (pc.signalingState === 'stable') {
-                  const offer = await pc.createOffer();
-                  await pc.setLocalDescription(offer);
-                  state.socket.emit('webrtc-offer', { targetId, offer });
-                }
               }
+            }
+
+            preferH264Codecs(pc);
+
+            // Renegotiate offer so phone receives video SSRC & initializes H.264 hardware decoder
+            if (pc.signalingState === 'stable') {
+              const offer = await pc.createOffer();
+              await pc.setLocalDescription(offer);
+              state.socket.emit('webrtc-offer', { targetId, offer });
             }
           } catch (e) {
             console.warn('[WebRTC] Error updating video track with ' + targetId, e);
@@ -1154,10 +1185,22 @@
       if (member.isCamOn) {
         const stream = getRemoteVideoStream(member.id);
         if (stream) {
-          attachRemoteVideo(member.id, stream);
+          video.muted = true;
+          video.defaultMuted = true;
+          video.playsInline = true;
+          video.autoplay = true;
+          video.setAttribute('muted', '');
+          video.setAttribute('playsinline', '');
+          video.setAttribute('webkit-playsinline', '');
+          video.setAttribute('autoplay', '');
+          video.srcObject = stream;
+          video.classList.remove('hidden');
+          avatar.classList.add('hidden');
+          video.play().catch(() => {});
         }
       } else {
-        detachRemoteVideo(member.id);
+        video.classList.add('hidden');
+        avatar.classList.remove('hidden');
       }
     }
 
