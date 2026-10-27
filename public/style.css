@@ -845,29 +845,93 @@ body {
 /* Mobile responsiveness for Cinema Controls HUD */
 @media (max-width: 680px) {
   .cinema-controls-hud {
-    padding: 18px 12px 10px;
+    padding: 10px 10px 6px;
+    gap: 4px;
+    background: linear-gradient(to top, rgba(6, 7, 10, 0.98) 0%, rgba(6, 7, 10, 0.82) 65%, transparent 100%);
+  }
+  .hud-timeline-container {
+    padding: 3px 0;
+  }
+  .hud-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
   }
   .hud-left {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
     gap: 6px;
   }
   .hud-right {
-    gap: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .hud-circle-btn {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+  .hud-circle-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+  .hud-volume-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
   }
   .hud-slider {
     display: none;
   }
+  .hud-time {
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.85);
+    font-variant-numeric: tabular-nums;
+  }
   .hud-pill-group {
-    padding: 3px 6px;
+    padding: 2px 5px;
+    gap: 3px;
+    height: 25px;
+    font-size: 10px;
+    border-radius: 6px;
+  }
+  .hud-pill-icon {
+    width: 11px;
+    height: 11px;
   }
   .hud-select {
-    max-width: 72px;
-    font-size: 11px;
+    max-width: 65px;
+    font-size: 10px;
+    padding: 0 2px;
+  }
+  .hud-icon-btn {
+    width: 28px;
+    height: 28px;
+    padding: 3px;
+    flex-shrink: 0;
+    border-radius: 6px;
+  }
+  .hud-icon-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+  .hud-sub-gear-btn {
+    padding: 2px;
   }
   .stage-bottom-tag {
-    top: 10px;
-    left: 10px;
-    padding: 4px 8px;
-    font-size: 11px;
+    top: 8px;
+    left: 8px;
+    padding: 3px 6px;
+    font-size: 10px;
   }
 }
 
@@ -2805,27 +2869,83 @@ body {
    7. MOBILE & TABLET RESPONSIVENESS
    ========================================================================== */
 
+/* Mobile Portrait Layout */
 @media (max-width: 768px) {
-  .stage-section {
-    padding: 6px 10px 10px;
+  html, body, .app-container {
+    overflow-x: hidden;
+    width: 100vw;
   }
 
+  .top-bar {
+    height: 44px;
+    padding: 0 12px;
+  }
+
+  .room-heading {
+    font-size: 15px;
+  }
+
+  .stage-section {
+    padding: 6px 8px 10px;
+    justify-content: flex-start; /* Clean top-anchor under top-bar, no dead black voids */
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    gap: 12px;
+  }
+
+  /* Cinema Stage fills mobile width in natural 16:9 ratio */
   .cinema-stage-wrapper {
-    max-height: calc(100% - 110px);
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 44vh;
+    margin: 0 auto;
+    flex-shrink: 0;
   }
 
   .cinema-box {
-    max-height: calc(100% - 110px);
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
   }
 
+  .ambient-glow-canvas {
+    top: -12px;
+    left: -12px;
+    right: -12px;
+    bottom: -12px;
+    width: calc(100% + 24px);
+    height: calc(100% + 24px);
+    filter: blur(36px) saturate(2);
+    opacity: 0.65;
+  }
+
+  /* Participant cards directly below the video in a neat 2-column wrapped grid */
   .participants-tile-area {
-    margin-top: 6px;
+    width: 100%;
+    margin-top: 4px;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+
+  .participants-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 4px;
+    flex-wrap: wrap;
+    max-width: 100%;
   }
 
   .participant-tile {
-    flex: 0 0 130px;
-    width: 130px;
-    height: 85px;
+    flex: 0 1 calc(50% - 6px);
+    max-width: 180px;
+    min-width: 130px;
+    height: 94px;
+    border-radius: 8px;
   }
 
   .tile-avatar-center {
@@ -2834,24 +2954,51 @@ body {
     font-size: 16px;
   }
 
+  .tile-name-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  /* Floating Pill Dock: centered, spacious, no squished buttons */
   .dock-wrapper {
-    height: 68px;
+    height: 64px;
     padding: 0 12px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 0));
+  }
+
+  .dock-container {
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* Hide redundant corner buttons on mobile to free up space for pill dock */
+  #dockInviteBtn,
+  #theaterFullscreenBtn {
+    display: none !important;
   }
 
   .floating-pill-dock {
-    gap: 8px;
-    padding: 4px 8px;
+    gap: 6px;
+    padding: 4px 10px;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
 
   .pill-btn {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
   }
 
-  .corner-icon-btn {
-    width: 38px;
-    height: 38px;
+  .pill-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .pill-chevron-btn {
+    width: 14px;
+    height: 36px;
   }
 
   .chat-panel {
@@ -2861,6 +3008,145 @@ body {
     height: 100vh;
     height: 100dvh;
     z-index: 1000;
+  }
+}
+
+/* Mobile Landscape Layout (Phone turned sideways - Image 1 fix) */
+@media (max-height: 520px) and (orientation: landscape) {
+  .top-bar {
+    height: 34px;
+    padding: 0 12px;
+  }
+
+  .speaker-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .room-heading {
+    font-size: 13px;
+  }
+
+  .stage-section {
+    padding: 2px 10px;
+    flex-direction: row !important; /* Video on left/center, participants in column on right! */
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    overflow: hidden;
+  }
+
+  /* Video fills available height prominently */
+  .cinema-stage-wrapper {
+    height: calc(100vh - 86px);
+    max-height: calc(100% - 4px);
+    width: auto;
+    aspect-ratio: 16 / 9;
+    max-width: calc(100% - 145px);
+    margin: 0;
+    flex-shrink: 1;
+  }
+
+  .cinema-box {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+  }
+
+  /* Participants stacked neatly in a compact right column (NEVER covered by dock!) */
+  .participants-tile-area {
+    margin-top: 0;
+    max-height: calc(100vh - 86px);
+    width: 125px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0;
+  }
+
+  .participants-row {
+    flex-direction: column;
+    gap: 6px;
+    padding: 2px;
+    width: 100%;
+    max-height: 100%;
+  }
+
+  .participant-tile {
+    width: 100%;
+    flex: 0 0 62px;
+    height: 62px;
+    border-radius: 8px;
+  }
+
+  .tile-avatar-center {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+  }
+
+  .tile-name-badge {
+    font-size: 9px;
+    padding: 1px 4px;
+    bottom: 2px;
+    left: 3px;
+  }
+
+  /* Compact dock in landscape */
+  .dock-wrapper {
+    height: 44px;
+    padding: 0 8px;
+    padding-bottom: max(3px, env(safe-area-inset-bottom, 0));
+  }
+
+  .dock-container {
+    justify-content: center;
+    width: 100%;
+  }
+
+  #dockInviteBtn,
+  #theaterFullscreenBtn {
+    display: none !important;
+  }
+
+  .floating-pill-dock {
+    padding: 2px 6px;
+    gap: 5px;
+    border-radius: 12px;
+  }
+
+  .pill-btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .pill-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .pill-chevron-btn {
+    width: 11px;
+    height: 30px;
+  }
+
+  /* In landscape mobile HUD: single compact row since width is 800px+ */
+  .hud-row {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+  }
+
+  .hud-left {
+    width: auto !important;
+    gap: 6px !important;
+  }
+
+  .hud-right {
+    width: auto !important;
+    gap: 4px !important;
   }
 }
 

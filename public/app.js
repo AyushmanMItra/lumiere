@@ -1883,7 +1883,7 @@
       } else {
         // Single Tap Detected on Cinema Screen (Mobile / Touch Devices)
         // Toggle the Cinema HUD visibility so mobile users can easily access and tap all controls
-        if (el.cinemaControls) {
+        if (el.cinemaControls && state.currentMovie) {
           e.preventDefault(); // Prevents accidental movie pause on mobile
           const isCurrentlyActive = el.cinemaControls.classList.contains('active');
           if (isCurrentlyActive) {
