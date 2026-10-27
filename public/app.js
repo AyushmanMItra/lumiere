@@ -328,7 +328,7 @@
     try {
       savedUser = localStorage.getItem('lumiere_username') || localStorage.getItem('reeltime_username');
     } catch (e) {}
-    el.usernameInput.value = savedUser || 'ayushman';
+    el.usernameInput.value = savedUser || '';
 
     const hashRoom = window.location.hash.replace('#', '').trim();
     const urlParams = new URLSearchParams(window.location.search);
@@ -404,7 +404,8 @@
   // ==========================================================================
 
   async function joinRoom() {
-    const username = el.usernameInput.value.trim() || 'ayushman';
+    const defaultGuestName = 'Guest ' + Math.floor(100 + Math.random() * 900);
+    const username = el.usernameInput.value.trim() || defaultGuestName;
     const roomId = el.roomInput.value.trim() || generateRandomRoomCode();
 
     state.username = username;
@@ -2684,7 +2685,7 @@
   function updateHostStatusUI() {
     const hostMember = Array.from(state.members.values()).find(m => m.isHost);
     el.hostNameDisplay.innerText = hostMember
-      ? (hostMember.id === state.selfId ? 'You (Host)' : hostMember.username)
+      ? (hostMember.id === state.selfId ? 'You (Host)' : `Host: ${hostMember.username}`)
       : 'Host';
 
     document.querySelectorAll('.host-only-control, .host-only-btn').forEach(btn => {
