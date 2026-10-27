@@ -142,6 +142,11 @@
     volHighIcon: document.getElementById('volHighIcon'),
     volMuteIcon: document.getElementById('volMuteIcon'),
     volumeSlider: document.getElementById('volumeSlider'),
+    cinemaVolumeMeter: document.getElementById('cinemaVolumeMeter'),
+    meterVolHighIcon: document.getElementById('meterVolHighIcon'),
+    meterVolMuteIcon: document.getElementById('meterVolMuteIcon'),
+    meterBarFill: document.getElementById('meterBarFill'),
+    meterValueText: document.getElementById('meterValueText'),
     hudFullscreenBtn: document.getElementById('hudFullscreenBtn'),
     hudFullscreenExpand: document.getElementById('hudFullscreenExpand'),
     hudFullscreenCompress: document.getElementById('hudFullscreenCompress'),
@@ -2084,6 +2089,12 @@
   // ==========================================================================
 
   function attachEventListeners() {
+    // Volume Slider & Visual Initialization
+    if (el.volumeSlider) {
+      el.volumeSlider.value = 100;
+      el.volumeSlider.style.setProperty('--vol-fill', '100%');
+    }
+
     // Join & Create Room (Random Alphanumeric Room Codes)
     if (el.randomRoomBtn) {
       el.randomRoomBtn.onclick = () => {
@@ -2292,21 +2303,92 @@
       }
     });
 
-    // Mute / Unmute Helper
-    const toggleMute = () => {
-      if (!el.moviePlayer) return;
-      el.moviePlayer.muted = !el.moviePlayer.muted;
-      if (el.moviePlayer.muted) {
+    // ==========================================================================
+    // CINEMA VOLUME & MUTE CONTROLLER (Synchronized HUD & Top-Right Meter)
+    // ==========================================================================
+    let volumeMeterTimeout = null;
+    let lastVolumePct = 100;
+
+    function showCinemaVolumeMeter(pct, isMuted) {
+      if (!el.cinemaVolumeMeter) return;
+      if (isMuted || pct === 0) {
+        el.meterVolHighIcon?.classList.add('hidden');
+        el.meterVolMuteIcon?.classList.remove('hidden');
+        if (el.meterValueText) el.meterValueText.innerText = 'Muted';
+        if (el.meterBarFill) el.meterBarFill.style.width = '0%';
+      } else {
+        el.meterVolHighIcon?.classList.remove('hidden');
+        el.meterVolMuteIcon?.classList.add('hidden');
+        if (el.meterValueText) el.meterValueText.innerText = `${pct}%`;
+        if (el.meterBarFill) el.meterBarFill.style.width = `${pct}%`;
+      }
+
+      el.cinemaVolumeMeter.classList.remove('hidden');
+      el.cinemaVolumeMeter.classList.remove('fade-out');
+
+      clearTimeout(volumeMeterTimeout);
+      volumeMeterTimeout = setTimeout(() => {
+        if (el.cinemaVolumeMeter) {
+          el.cinemaVolumeMeter.classList.add('fade-out');
+          setTimeout(() => {
+            if (el.cinemaVolumeMeter && el.cinemaVolumeMeter.classList.contains('fade-out')) {
+              el.cinemaVolumeMeter.classList.add('hidden');
+              el.cinemaVolumeMeter.classList.remove('fade-out');
+            }
+          }, 250);
+        }
+      }, 1300);
+    }
+
+    function updateVolumeUI(pct, isMuted, showHUD = true) {
+      const isEffectivelyMuted = isMuted || pct === 0;
+      if (el.volumeSlider) {
+        el.volumeSlider.style.setProperty('--vol-fill', (isEffectivelyMuted ? 0 : pct) + '%');
+      }
+      if (isEffectivelyMuted) {
         el.volHighIcon?.classList.add('hidden');
         el.volMuteIcon?.classList.remove('hidden');
-        showToast('Muted');
       } else {
         el.volHighIcon?.classList.remove('hidden');
         el.volMuteIcon?.classList.add('hidden');
-        showToast('Unmuted');
       }
-      if (el.volumeSlider) {
-        el.volumeSlider.value = el.moviePlayer.muted ? 0 : Math.round(el.moviePlayer.volume * 100);
+      if (showHUD) {
+        showCinemaVolumeMeter(pct, isEffectivelyMuted);
+      }
+    }
+
+    function setVolume(pct, updateSlider = true, showHUD = true) {
+      if (!el.moviePlayer) return;
+      pct = Math.max(0, Math.min(100, Math.round(pct)));
+      if (pct > 0) {
+        lastVolumePct = pct;
+        el.moviePlayer.muted = false;
+        el.moviePlayer.volume = pct / 100;
+      } else {
+        el.moviePlayer.muted = true;
+        el.moviePlayer.volume = 0;
+      }
+
+      if (updateSlider && el.volumeSlider) {
+        el.volumeSlider.value = pct;
+      }
+      updateVolumeUI(pct, el.moviePlayer.muted, showHUD);
+    }
+
+    const toggleMute = () => {
+      if (!el.moviePlayer) return;
+      const isMuting = !el.moviePlayer.muted;
+      el.moviePlayer.muted = isMuting;
+      if (isMuting) {
+        const cur = parseInt(el.volumeSlider?.value, 10);
+        if (!isNaN(cur) && cur > 0) lastVolumePct = cur;
+        if (el.volumeSlider) {
+          el.volumeSlider.value = 0;
+        }
+        updateVolumeUI(0, true, true);
+      } else {
+        const restorePct = lastVolumePct > 0 ? lastVolumePct : 50;
+        setVolume(restorePct, true, true);
       }
     };
     if (el.volumeToggleBtn) el.volumeToggleBtn.onclick = toggleMute;
@@ -2382,23 +2464,21 @@
       } else if (key === 'ArrowUp') {
         e.preventDefault();
         if (el.moviePlayer) {
-          el.moviePlayer.muted = false;
-          el.moviePlayer.volume = Math.min(1, Math.round((el.moviePlayer.volume + 0.05) * 100) / 100);
-          if (el.volumeSlider) el.volumeSlider.value = Math.round(el.moviePlayer.volume * 100);
-          el.volHighIcon?.classList.remove('hidden');
-          el.volMuteIcon?.classList.add('hidden');
-          showToast(`Volume ${Math.round(el.moviePlayer.volume * 100)}%`);
+          let curPct = el.moviePlayer.muted ? 0 : Math.round(el.moviePlayer.volume * 100);
+          if (el.moviePlayer.muted && lastVolumePct > 0) {
+            curPct = lastVolumePct;
+          }
+          setVolume(Math.min(100, curPct + 5), true, true);
         }
       } else if (key === 'ArrowDown') {
         e.preventDefault();
         if (el.moviePlayer) {
-          el.moviePlayer.volume = Math.max(0, Math.round((el.moviePlayer.volume - 0.05) * 100) / 100);
-          if (el.volumeSlider) el.volumeSlider.value = Math.round(el.moviePlayer.volume * 100);
-          if (el.moviePlayer.volume === 0) {
-            el.volHighIcon?.classList.add('hidden');
-            el.volMuteIcon?.classList.remove('hidden');
+          if (el.moviePlayer.muted) {
+            showCinemaVolumeMeter(0, true);
+          } else {
+            let curPct = Math.round(el.moviePlayer.volume * 100);
+            setVolume(Math.max(0, curPct - 5), true, true);
           }
-          showToast(`Volume ${Math.round(el.moviePlayer.volume * 100)}%`);
         }
       }
     });
@@ -2416,6 +2496,9 @@
       });
       if (el.moviePlayer) {
         el.moviePlayer.muted = false;
+        let curPct = parseInt(el.volumeSlider?.value, 10);
+        if (isNaN(curPct) || curPct === 0) curPct = lastVolumePct || 100;
+        setVolume(curPct, true, false);
         if (el.moviePlayer.paused && state.currentMovie) {
           el.moviePlayer.play().catch(() => {});
         }
@@ -2458,19 +2541,13 @@
       });
     };
 
-    // Volume
-    el.volumeSlider.oninput = () => {
-      el.moviePlayer.volume = el.volumeSlider.value;
-      if (el.moviePlayer.volume === 0) {
-        el.volHighIcon.classList.add('hidden');
-        el.volMuteIcon.classList.remove('hidden');
-      } else {
-        el.volHighIcon.classList.remove('hidden');
-        el.volMuteIcon.classList.add('hidden');
-      }
-    };
-
-    el.volumeToggleBtn.onclick = toggleMute;
+    // Volume Slider Drag / Input
+    if (el.volumeSlider) {
+      el.volumeSlider.oninput = () => {
+        const pct = parseInt(el.volumeSlider.value, 10);
+        setVolume(pct, false, true);
+      };
+    }
 
     // Modal
     el.closeMovieModalBtn.onclick = closeMovieModal;

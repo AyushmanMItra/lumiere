@@ -440,6 +440,68 @@ body {
   flex-shrink: 0;
 }
 
+/* ==========================================================================
+   TOP RIGHT CINEMA VOLUME HUD INDICATOR (In-sync overlay)
+   ========================================================================== */
+.cinema-volume-meter {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: rgba(16, 17, 21, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(229, 169, 60, 0.4);
+  border-radius: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 14px rgba(229, 169, 60, 0.15);
+  color: #fff;
+  z-index: 70;
+  pointer-events: none;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  user-select: none;
+}
+
+.cinema-volume-meter.fade-out {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.96);
+}
+
+.cinema-volume-meter svg {
+  color: #e5a93c;
+  flex-shrink: 0;
+}
+
+.meter-bar-track {
+  width: 72px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.meter-bar-fill {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #e5a93c, #ffc86b);
+  border-radius: 3px;
+  transition: width 0.08s ease-out;
+}
+
+.meter-value {
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 42px;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
 .tag-mic-icon.active {
   color: #57F287;
 }
@@ -698,15 +760,15 @@ body {
   width: 64px;
   height: 4px;
   -webkit-appearance: none;
-  background: rgba(255, 255, 255, 0.25);
+  background: linear-gradient(to right, #e5a93c 0%, #e5a93c var(--vol-fill, 100%), rgba(255, 255, 255, 0.25) var(--vol-fill, 100%), rgba(255, 255, 255, 0.25) 100%);
   border-radius: 3px;
   outline: none;
   cursor: pointer;
-  transition: width 0.2s ease, background 0.2s ease;
+  transition: width 0.2s ease;
 }
 
 .hud-slider:hover {
-  background: rgba(255, 255, 255, 0.38);
+  background: linear-gradient(to right, #ffc86b 0%, #ffc86b var(--vol-fill, 100%), rgba(255, 255, 255, 0.38) var(--vol-fill, 100%), rgba(255, 255, 255, 0.38) 100%);
 }
 
 .hud-slider::-webkit-slider-thumb {
