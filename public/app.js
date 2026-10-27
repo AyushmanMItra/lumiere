@@ -2174,18 +2174,23 @@
 
     // Fullscreen (Cinema Box ONLY - hides participant bar and docks)
     const toggleCinemaFullscreen = () => {
-      const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
       if (!isFull) {
-        if (el.cinemaBox.requestFullscreen) {
-          el.cinemaBox.requestFullscreen().catch(() => {});
-        } else if (el.cinemaBox.webkitRequestFullscreen) {
-          el.cinemaBox.webkitRequestFullscreen();
+        const box = el.cinemaBox || document.documentElement;
+        if (box.requestFullscreen) {
+          box.requestFullscreen().catch(() => {});
+        } else if (box.webkitRequestFullscreen) {
+          box.webkitRequestFullscreen();
+        } else if (box.msRequestFullscreen) {
+          box.msRequestFullscreen();
         }
       } else {
         if (document.exitFullscreen) {
           document.exitFullscreen().catch(() => {});
         } else if (document.webkitExitFullscreen) {
           document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
         }
       }
     };
@@ -2201,56 +2206,114 @@
       }
     });
 
-    // Rewind / Forward 10 Seconds
-    if (el.rewind10Btn) {
-      el.rewind10Btn.onclick = () => {
-        if (!state.isHost) {
-          showToast('Only Host can seek');
-          return;
-        }
-        const cur = getEffectiveCurrentTime();
-        const newTime = Math.max(0, cur - 10);
-        seekMovie(newTime);
-        state.socket.emit('host-seek', { roomId: state.roomId, time: newTime });
-        showToast('Rewound 10s');
-      };
-    }
+    // Mute / Unmute Helper
+    const toggleMute = () => {
+      if (!el.moviePlayer) return;
+      el.moviePlayer.muted = !el.moviePlayer.muted;
+      if (el.moviePlayer.muted) {
+        el.volHighIcon?.classList.add('hidden');
+        el.volMuteIcon?.classList.remove('hidden');
+        showToast('Muted');
+      } else {
+        el.volHighIcon?.classList.remove('hidden');
+        el.volMuteIcon?.classList.add('hidden');
+        showToast('Unmuted');
+      }
+      if (el.volumeSlider) {
+        el.volumeSlider.value = el.moviePlayer.muted ? 0 : Math.round(el.moviePlayer.volume * 100);
+      }
+    };
+    if (el.volumeToggleBtn) el.volumeToggleBtn.onclick = toggleMute;
 
-    if (el.forward10Btn) {
-      el.forward10Btn.onclick = () => {
-        if (!state.isHost) {
-          showToast('Only Host can seek');
-          return;
-        }
-        const cur = getEffectiveCurrentTime();
-        const dur = getEffectiveDuration();
-        const newTime = dur > 0 ? Math.min(dur, cur + 10) : cur + 10;
-        seekMovie(newTime);
+    // Rewind / Forward 10 Seconds Helpers
+    const rewind10Seconds = () => {
+      if (!state.isHost) {
+        showToast('Only Host can seek');
+        return;
+      }
+      const cur = getEffectiveCurrentTime();
+      const newTime = Math.max(0, cur - 10);
+      seekMovie(newTime);
+      if (state.socket) {
         state.socket.emit('host-seek', { roomId: state.roomId, time: newTime });
-        showToast('Forwarded 10s');
-      };
-    }
+      }
+      showToast('Rewound 10s');
+    };
 
-    // Keyboard Shortcuts (Space, F, M, Left, Right)
+    const forward10Seconds = () => {
+      if (!state.isHost) {
+        showToast('Only Host can seek');
+        return;
+      }
+      const cur = getEffectiveCurrentTime();
+      const dur = getEffectiveDuration();
+      const newTime = dur > 0 ? Math.min(dur, cur + 10) : cur + 10;
+      seekMovie(newTime);
+      if (state.socket) {
+        state.socket.emit('host-seek', { roomId: state.roomId, time: newTime });
+      }
+      showToast('Forwarded 10s');
+    };
+
+    if (el.rewind10Btn) el.rewind10Btn.onclick = rewind10Seconds;
+    if (el.forward10Btn) el.forward10Btn.onclick = forward10Seconds;
+
+    // Keyboard Shortcuts (Space/K, F, M, J/Left, L/Right, Up/Down)
     window.addEventListener('keydown', (e) => {
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
-      if (el.roomView.classList.contains('hidden')) return;
+      const activeEl = document.activeElement;
+      if (activeEl && (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName) || activeEl.isContentEditable)) {
+        return;
+      }
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName) || e.target?.isContentEditable) {
+        return;
+      }
+      if (!el.appContainer || el.appContainer.classList.contains('hidden')) {
+        return;
+      }
+      if (el.movieModal && !el.movieModal.classList.contains('hidden')) {
+        return;
+      }
 
-      if (e.code === 'Space' || e.key === 'k') {
+      const key = e.key;
+      const code = e.code;
+
+      if (code === 'Space' || key === ' ' || key === 'k' || key === 'K') {
         e.preventDefault();
+        if (activeEl && activeEl.tagName === 'BUTTON') activeEl.blur();
         handlePlayPauseToggle();
-      } else if (e.key === 'f' || e.key === 'F') {
+      } else if (key === 'f' || key === 'F') {
         e.preventDefault();
         toggleCinemaFullscreen();
-      } else if (e.key === 'm' || e.key === 'M') {
+      } else if (key === 'm' || key === 'M') {
         e.preventDefault();
-        el.volumeToggleBtn.click();
-      } else if (e.key === 'ArrowLeft' || e.key === 'j') {
+        toggleMute();
+      } else if (key === 'j' || key === 'J' || key === 'ArrowLeft') {
         e.preventDefault();
-        if (el.rewind10Btn) el.rewind10Btn.click();
-      } else if (e.key === 'ArrowRight' || e.key === 'l') {
+        rewind10Seconds();
+      } else if (key === 'l' || key === 'L' || key === 'ArrowRight') {
         e.preventDefault();
-        if (el.forward10Btn) el.forward10Btn.click();
+        forward10Seconds();
+      } else if (key === 'ArrowUp') {
+        e.preventDefault();
+        if (el.moviePlayer) {
+          el.moviePlayer.muted = false;
+          el.moviePlayer.volume = Math.min(1, Math.round((el.moviePlayer.volume + 0.05) * 100) / 100);
+          if (el.volumeSlider) el.volumeSlider.value = Math.round(el.moviePlayer.volume * 100);
+          el.volHighIcon?.classList.remove('hidden');
+          el.volMuteIcon?.classList.add('hidden');
+          showToast(`Volume ${Math.round(el.moviePlayer.volume * 100)}%`);
+        }
+      } else if (key === 'ArrowDown') {
+        e.preventDefault();
+        if (el.moviePlayer) {
+          el.moviePlayer.volume = Math.max(0, Math.round((el.moviePlayer.volume - 0.05) * 100) / 100);
+          if (el.volumeSlider) el.volumeSlider.value = Math.round(el.moviePlayer.volume * 100);
+          if (el.moviePlayer.volume === 0) {
+            el.volHighIcon?.classList.add('hidden');
+            el.volMuteIcon?.classList.remove('hidden');
+          }
+          showToast(`Volume ${Math.round(el.moviePlayer.volume * 100)}%`);
+        }
       }
     });
 
@@ -2316,16 +2379,7 @@
       }
     };
 
-    el.volumeToggleBtn.onclick = () => {
-      el.moviePlayer.muted = !el.moviePlayer.muted;
-      if (el.moviePlayer.muted) {
-        el.volHighIcon.classList.add('hidden');
-        el.volMuteIcon.classList.remove('hidden');
-      } else {
-        el.volHighIcon.classList.remove('hidden');
-        el.volMuteIcon.classList.add('hidden');
-      }
-    };
+    el.volumeToggleBtn.onclick = toggleMute;
 
     // Modal
     el.closeMovieModalBtn.onclick = closeMovieModal;
