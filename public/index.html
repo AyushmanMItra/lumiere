@@ -283,55 +283,33 @@
         </div>
       </section>
 
-      <!-- Section 01: The Problem -->
+      <!-- Section 01: The Hard Truth -->
       <section class="story-section">
-        <div class="section-num-tag">01 • THE PROBLEM</div>
+        <div class="section-num-tag">01 • THE HARD TRUTH</div>
         <h2 class="section-heading">
-          Watching your <span class="coral-name">own</span> movie with friends is fundamentally broken.
+          Web browsers were never built to be <span class="coral-name">VLC</span>.
         </h2>
         <div class="section-card story-prose-card">
           <p>
-            Watching high-quality, local movie files (like 2 GB+ <code>.mkv</code> or <code>.mp4</code> rips) remotely with friends is fundamentally broken on the modern web. Traditional streaming architectures force you to upload massive files to a cloud server — which takes hours and incurs heavy server costs.
+            Most high-definition media libraries rely on <code>.mkv</code> (Matroska) containers and multi-channel surround sound like 5.1 AC3, Dolby Digital, or DTS. But modern web browsers (Chrome, Safari, Firefox) legally and technically refuse to decode Matroska files or proprietary audio codecs natively due to patent constraints. Drop an <code>.mkv</code> rip into a browser, and it either fails to open or plays in total silence.
           </p>
           <p>
-            Attempting to stream those heavy files directly browser-to-browser (P2P) overheats mobile devices, drains batteries within an hour, and inevitably crashes Google Chrome due to strict WebAssembly memory limits.
+            The conventional cloud workaround is equally impractical. A standard 1080p movie rip is 2 GB to 8 GB. On typical residential upload connections (10–25 Mbps), uploading that single file to a cloud host takes 30 to 60+ minutes before a watch party can even begin.
           </p>
           <p>
-            Furthermore, modern browsers natively reject complex video containers like <code>.mkv</code>, making standard web-based playback nearly impossible without heavy, CPU-melting transcoding.
+            Attempting to decode these heavy containers purely client-side through in-browser WebAssembly decoders causes severe CPU utilization, thermal throttling on laptops and phones, and quickly crashes browser tabs once memory consumption hits V8 heap limits.
           </p>
         </div>
       </section>
 
       <!-- Section 02: Current Options -->
       <section class="story-section">
-        <div class="section-num-tag">02 • CURRENT OPTIONS</div>
+        <div class="section-num-tag">02 • THE COMPROMISE TRAP</div>
         <h2 class="section-heading">
-          And every existing tool asks you to <span class="yellow-name">compromise</span>.
+          Every existing workaround breaks the <span class="yellow-name">experience</span>.
         </h2>
 
         <div class="compromise-grid">
-          <div class="compromise-card">
-            <div class="compromise-icon lock-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-              </svg>
-            </div>
-            <div class="compromise-tag">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                <line x1="12" y1="9" x2="12" y2="13"></line>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-              </svg>
-              <span>COMPROMISE</span>
-            </div>
-            <h4>Walled Gardens</h4>
-            <span class="sub-label">TELEPARTY, AMAZON WATCH PARTY, ETC.</span>
-            <p>
-              You are strictly limited to whatever is currently licensed on Netflix, Prime, Hulu. Your own .mkv rip, your indie short film, your school project — none of it is welcome inside those parties.
-            </p>
-          </div>
-
           <div class="compromise-card">
             <div class="compromise-icon screen-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -351,7 +329,29 @@
             <h4>Screen Sharing</h4>
             <span class="sub-label">DISCORD, ZOOM, GOOGLE MEET</span>
             <p>
-              The host must record their screen and live-stream it. That means massive upload bandwidth, compression blur, dropped frames, choppy 15fps playback, and audio that drifts a second behind by the third act.
+              Real-time screen capture re-encodes the host's desktop under aggressive bitrate limits. Dark scenes dissolve into blocky compression artifacts, framerates drop to 15–30 fps, and audio clocks gradually drift out of sync by 1–3 seconds. Viewers have zero personal control over volume or subtitles.
+            </p>
+          </div>
+
+          <div class="compromise-card">
+            <div class="compromise-icon lock-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <div class="compromise-tag">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <span>COMPROMISE</span>
+            </div>
+            <h4>Walled Gardens</h4>
+            <span class="sub-label">TELEPARTY, SCENER, STREAMING APPS</span>
+            <p>
+              Strictly confined to commercial catalogs like Netflix or Disney+. You cannot watch personal media, downloaded films, or indie projects. Every participant must maintain their own paid subscription, and third-party extensions frequently break when platforms update their web players.
             </p>
           </div>
 
@@ -371,41 +371,47 @@
               </svg>
               <span>COMPROMISE</span>
             </div>
-            <h4>Cloud-Sync Sites</h4>
-            <span class="sub-label">UPLOAD-THEN-WATCH SERVICES</span>
+            <h4>Dedicated Media Servers</h4>
+            <span class="sub-label">PLEX, JELLYFIN, CLOUD HOSTS</span>
             <p>
-              Everyone waits hours while the host uploads a 3GB file to a third-party server, hits upload limits, and hands their private movie to some anonymous cloud. The party is dead before it starts.
+              Setting up a self-hosted media server requires complex router port forwarding, static DNS or reverse proxies, and dedicated hardware encoding to handle simultaneous transcode streams. It turns a casual movie night into a network administration task.
             </p>
           </div>
         </div>
       </section>
 
-      <!-- Section 03: Our Solution -->
+      <!-- Section 03: The Architecture -->
       <section class="story-section">
-        <div class="section-num-tag">03 • OUR SOLUTION</div>
+        <div class="section-num-tag">03 • THE ARCHITECTURE</div>
         <h2 class="section-heading">
-          Lumière makes the <span class="green-name">host's browser</span> the projector.
+          Host-side remuxing with <span class="green-name">zero-loss</span> stream copy.
         </h2>
 
         <div class="section-card solution-card">
           <p>
-            The movie never has to move. It stays on the host's own machine, plays through their own hardware decoder (which happily eats <code>.mkv</code>, 10-bit HEVC, and every weird codec their OS supports), and only <em>one</em> thing is broadcast to everyone else: the current playhead position and — when the host chooses — a live stream of the frame itself over WebRTC and memory remuxing.
+            Lumière eliminates cloud uploads entirely. The movie file stays on the host machine. For native web formats (<code>.mp4</code> and <code>.webm</code>), Lumière serves byte-range streams via HTTP 206 for immediate scrubbing and zero transcoding overhead.
           </p>
           <p>
-            Meanwhile, voice, camera, and text chat run peer-to-peer alongside it in the same room, so a movie night ends up feeling like everyone is on the same couch, without ever asking anyone to wait for an upload bar to finish.
+            For complex <code>.mkv</code> files or multi-channel audio tracks, the host's background engine uses stream copy (<code>-c:v copy</code>) via a bundled FFmpeg worker. The video stream passes through untouched in 100% of its original picture clarity with zero video re-encoding. Only incompatible audio tracks (like 5.1 DTS or AC3) are normalized into stereo AAC on the fly, consuming negligible CPU (under 3%). The output is streamed in real time as fragmented MP4 chunks directly into peers' players.
+          </p>
+          <p>
+            Playback synchronization is coordinated through lightweight Socket.IO heartbeats with automated clock-drift correction, keeping everyone within milliseconds of the host's playhead without streaming heavy screen pixels.
           </p>
         </div>
       </section>
 
-      <!-- Section 04: Why We're Different -->
+      <!-- Section 04: The Philosophy -->
       <section class="story-section">
-        <div class="section-num-tag">04 • WHY WE'RE DIFFERENT</div>
+        <div class="section-num-tag">04 • THE PHILOSOPHY</div>
         <h2 class="section-heading">
-          Built for <span class="cyan-name">friends</span>, not subscriptions.
+          Self-hosted, private, and built for <span class="cyan-name">friends</span>.
         </h2>
         <div class="section-card diff-card">
           <p>
-            Lumière is 100% free, private, self-hostable, and open source. There are no logins, no paywalls, no bandwidth meters, and no third-party tracking. Just you, your movie, and your friends.
+            Lumière is an open-source, self-hosted web tool, not a commercial SaaS startup with recurring subscription tiers. There are no user logins, no centralized databases, no bandwidth meters, and no third-party telemetry tracking your viewing habits.
+          </p>
+          <p>
+            It connects directly across your local Wi-Fi or securely over private encrypted mesh networks like Tailscale and WireGuard. Voice chat, webcams, and live reactions run on an isolated peer-to-peer WebRTC layer, so a network fluctuation in someone's voice chat never buffers or interrupts the movie stream.
           </p>
         </div>
       </section>
