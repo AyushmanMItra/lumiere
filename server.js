@@ -388,6 +388,7 @@ app.get('/api/stream', (req, res) => {
     ];
 
     if (startTime > 0) {
+      inputOptions.push('-noaccurate_seek');
       command.seekInput(startTime);
     }
 
@@ -407,12 +408,20 @@ app.get('/api/stream', (req, res) => {
       outputOptions.push('-bsf:v h264_metadata=video_full_range_flag=0');
     }
 
+    // Audio filter:
+    // When playing from start (startTime === 0), use first_pts=0 to preserve initial container offsets.
+    // When seeking (startTime > 0), do NOT use first_pts=0 because -noaccurate_seek already snaps
+    // both streams to the keyframe and first_pts=0 would inject seconds of silence!
+    const audioFilter = (startTime > 0)
+      ? 'aresample=async=1'
+      : 'aresample=async=1:first_pts=0';
+
     outputOptions.push(
       '-c:a aac',
       '-b:a 192k',
       '-ac 2',
       '-ar 48000',
-      '-af aresample=async=1:first_pts=0',
+      `-af ${audioFilter}`,
       '-avoid_negative_ts make_zero',
       '-movflags frag_keyframe+empty_moov+default_base_moof',
       '-flush_packets 1',
