@@ -382,13 +382,20 @@
       clearTimeout(state.idleTimeout);
       // After 3 seconds of inactivity, smoothly drop panels (Image 3)
       state.idleTimeout = setTimeout(() => {
-        if (!state.chatOpen && el.movieModal.classList.contains('hidden')) {
+        const isAnyMenuOpen = (el.moreOptionsMenu && !el.moreOptionsMenu.classList.contains('hidden')) ||
+                              (el.activityMenu && !el.activityMenu.classList.contains('hidden')) ||
+                              (el.micDeviceMenu && !el.micDeviceMenu.classList.contains('hidden')) ||
+                              (el.camDeviceMenu && !el.camDeviceMenu.classList.contains('hidden'));
+
+        if (!state.chatOpen && el.movieModal.classList.contains('hidden') && !isAnyMenuOpen) {
           el.appContainer.classList.add('idle-mode');
           el.topBar.classList.add('idle-hidden');
           el.dockWrapper.classList.add('idle-hidden');
         }
       }, 3000);
     };
+
+    state.resetIdleTimer = resetIdleTimer;
 
     window.addEventListener('mousemove', resetIdleTimer);
     window.addEventListener('mousedown', resetIdleTimer);
@@ -3951,95 +3958,116 @@
     // Mic & Camera
     el.toggleMicBtn.onclick = toggleMicrophone;
     el.toggleCameraBtn.onclick = toggleCamera;
-    el.micDeviceDropdownBtn.onclick = (e) => {
-      e.stopPropagation();
-      el.micDeviceMenu.classList.toggle('hidden');
-      el.camDeviceMenu.classList.add('hidden');
+    // Helper to bind both click and touchend cleanly without double-triggering
+    const bindTap = (button, callback) => {
+      if (!button) return;
+      let lastTapTime = 0;
+      const handler = (e) => {
+        const now = Date.now();
+        if (now - lastTapTime < 300) return; // Prevent double trigger from touchend + synthetic click
+        lastTapTime = now;
+        if (e.stopPropagation) e.stopPropagation();
+        if (e.cancelable && e.type === 'touchend') e.preventDefault();
+        callback(e);
+      };
+      button.addEventListener('click', handler);
+      button.addEventListener('touchend', handler, { passive: false });
     };
-    el.camDeviceDropdownBtn.onclick = (e) => {
-      e.stopPropagation();
-      el.camDeviceMenu.classList.toggle('hidden');
-      el.micDeviceMenu.classList.add('hidden');
+
+    const toggleDeviceMenu = (menuToOpen, menusToClose) => {
+      if (!menuToOpen) return;
+      const isCurrentlyHidden = menuToOpen.classList.contains('hidden');
+      menusToClose.forEach(m => m?.classList.add('hidden'));
+      if (isCurrentlyHidden) {
+        menuToOpen.classList.remove('hidden');
+        if (state.resetIdleTimer) state.resetIdleTimer();
+      } else {
+        menuToOpen.classList.add('hidden');
+        if (state.resetIdleTimer) state.resetIdleTimer();
+      }
     };
-    document.addEventListener('click', () => {
-      el.micDeviceMenu.classList.add('hidden');
-      el.camDeviceMenu.classList.add('hidden');
-      if (el.moreOptionsMenu) el.moreOptionsMenu.classList.add('hidden');
-      if (el.activityMenu) el.activityMenu.classList.add('hidden');
+
+    // Outside tap listener to dismiss dropdowns
+    const handleOutsideMenuTap = (e) => {
+      if (e && e.target && e.target.closest && e.target.closest('.device-menu, .split-dock-btn, .pill-btn, .pill-chevron-btn')) {
+        return;
+      }
+      el.micDeviceMenu?.classList.add('hidden');
+      el.camDeviceMenu?.classList.add('hidden');
+      el.moreOptionsMenu?.classList.add('hidden');
+      el.activityMenu?.classList.add('hidden');
       document.querySelectorAll('.tile-volume-popover').forEach(p => p.classList.add('hidden'));
-    });
+    };
+    document.addEventListener('click', handleOutsideMenuTap);
+    document.addEventListener('touchend', handleOutsideMenuTap, { passive: true });
 
-    // More Options Button & Dropdown Menu (Screenshare, YouTube, Direct URL)
-    if (el.moreOptionsBtn) {
-      el.moreOptionsBtn.onclick = (e) => {
-        e.stopPropagation();
-        el.moreOptionsMenu?.classList.toggle('hidden');
-        el.micDeviceMenu?.classList.add('hidden');
-        el.camDeviceMenu?.classList.add('hidden');
-      };
-    }
+    // Prevent clicks/touches inside menus from bubbling up and closing the menu
     if (el.moreOptionsMenu) {
-      el.moreOptionsMenu.onclick = (e) => e.stopPropagation();
-    }
-    if (el.menuScreenshareBtn) {
-      el.menuScreenshareBtn.onclick = () => {
-        el.moreOptionsMenu?.classList.add('hidden');
-        toggleScreenShare();
-      };
-    }
-    if (el.menuYouTubeBtn) {
-      el.menuYouTubeBtn.onclick = () => {
-        el.moreOptionsMenu?.classList.add('hidden');
-        openYouTubeModal();
-      };
-    }
-    if (el.menuUrlBtn) {
-      el.menuUrlBtn.onclick = () => {
-        el.moreOptionsMenu?.classList.add('hidden');
-        openUrlModal();
-      };
-    }
-
-    // Extra Feature Modals (YouTube & URL)
-    if (el.closeYouTubeBtn) el.closeYouTubeBtn.onclick = closeYouTubeModal;
-    if (el.cancelYouTubeBtn) el.cancelYouTubeBtn.onclick = closeYouTubeModal;
-    if (el.youtubeForm) el.youtubeForm.onsubmit = handleYouTubeSubmit;
-
-    if (el.closeUrlBtn) el.closeUrlBtn.onclick = closeUrlModal;
-    if (el.cancelUrlBtn) el.cancelUrlBtn.onclick = closeUrlModal;
-    if (el.urlForm) el.urlForm.onsubmit = handleUrlSubmit;
-
-    // Activity Button & Menu (Polls, Trivia, Soundboard)
-    if (el.activityBtn) {
-      el.activityBtn.onclick = (e) => {
-        e.stopPropagation();
-        el.activityMenu?.classList.toggle('hidden');
-        el.micDeviceMenu?.classList.add('hidden');
-        el.camDeviceMenu?.classList.add('hidden');
-        el.moreOptionsMenu?.classList.add('hidden');
-      };
+      el.moreOptionsMenu.addEventListener('click', (e) => e.stopPropagation());
+      el.moreOptionsMenu.addEventListener('touchend', (e) => e.stopPropagation(), { passive: true });
     }
     if (el.activityMenu) {
-      el.activityMenu.onclick = (e) => e.stopPropagation();
+      el.activityMenu.addEventListener('click', (e) => e.stopPropagation());
+      el.activityMenu.addEventListener('touchend', (e) => e.stopPropagation(), { passive: true });
     }
-    if (el.menuPollBtn) {
-      el.menuPollBtn.onclick = () => {
-        el.activityMenu?.classList.add('hidden');
-        openPollModal();
-      };
+    if (el.micDeviceMenu) {
+      el.micDeviceMenu.addEventListener('click', (e) => e.stopPropagation());
+      el.micDeviceMenu.addEventListener('touchend', (e) => e.stopPropagation(), { passive: true });
     }
-    if (el.menuTriviaBtn) {
-      el.menuTriviaBtn.onclick = () => {
-        el.activityMenu?.classList.add('hidden');
-        openTriviaModal();
-      };
+    if (el.camDeviceMenu) {
+      el.camDeviceMenu.addEventListener('click', (e) => e.stopPropagation());
+      el.camDeviceMenu.addEventListener('touchend', (e) => e.stopPropagation(), { passive: true });
     }
-    if (el.menuSoundboardBtn) {
-      el.menuSoundboardBtn.onclick = () => {
-        el.activityMenu?.classList.add('hidden');
-        if (el.soundboardModal) el.soundboardModal.classList.remove('hidden');
-      };
-    }
+
+    // Mic & Camera Dropdown Chevrons
+    bindTap(el.micDeviceDropdownBtn, () => {
+      toggleDeviceMenu(el.micDeviceMenu, [el.camDeviceMenu, el.activityMenu, el.moreOptionsMenu]);
+    });
+    bindTap(el.camDeviceDropdownBtn, () => {
+      toggleDeviceMenu(el.camDeviceMenu, [el.micDeviceMenu, el.activityMenu, el.moreOptionsMenu]);
+    });
+
+    // Star / Activity Button
+    bindTap(el.activityBtn, () => {
+      toggleDeviceMenu(el.activityMenu, [el.moreOptionsMenu, el.micDeviceMenu, el.camDeviceMenu]);
+    });
+
+    // Three Dots / More Options Button
+    bindTap(el.moreOptionsBtn, () => {
+      toggleDeviceMenu(el.moreOptionsMenu, [el.activityMenu, el.micDeviceMenu, el.camDeviceMenu]);
+    });
+
+    // Activity Menu Items (Poll, Trivia, Soundboard)
+    bindTap(el.menuPollBtn, () => {
+      el.activityMenu?.classList.add('hidden');
+      openPollModal();
+    });
+    bindTap(el.menuTriviaBtn, () => {
+      el.activityMenu?.classList.add('hidden');
+      openTriviaModal();
+    });
+    bindTap(el.menuSoundboardBtn, () => {
+      el.activityMenu?.classList.add('hidden');
+      if (el.soundboardModal) el.soundboardModal.classList.remove('hidden');
+    });
+
+    // More Options Menu Items (Ambient Glow, Screenshare, YouTube, Direct URL)
+    bindTap(el.menuAmbientGlowBtn, () => {
+      toggleAmbientGlow();
+      el.moreOptionsMenu?.classList.add('hidden');
+    });
+    bindTap(el.menuScreenshareBtn, () => {
+      el.moreOptionsMenu?.classList.add('hidden');
+      toggleScreenShare();
+    });
+    bindTap(el.menuYouTubeBtn, () => {
+      el.moreOptionsMenu?.classList.add('hidden');
+      openYouTubeModal();
+    });
+    bindTap(el.menuUrlBtn, () => {
+      el.moreOptionsMenu?.classList.add('hidden');
+      openUrlModal();
+    });
 
     // Soundboard Modal
     if (el.closeSoundboardBtn) {
@@ -4105,12 +4133,7 @@
     if (el.ambientToggleBtn) {
       el.ambientToggleBtn.onclick = toggleAmbientGlow;
     }
-    if (el.menuAmbientGlowBtn) {
-      el.menuAmbientGlowBtn.onclick = () => {
-        toggleAmbientGlow();
-        el.moreOptionsMenu?.classList.add('hidden');
-      };
-    }
+    // menuAmbientGlowBtn is already bound via bindTap above
     if (el.pipBtn) {
       el.pipBtn.onclick = togglePictureInPicture;
     }

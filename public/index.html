@@ -473,8 +473,11 @@
       <!-- Theater Center Stage -->
       <section class="stage-section" id="stageSection">
 
-        <!-- Cinema Stage Wrapper (Houses ambient glow canvas strictly behind cinema box) -->
-        <div class="cinema-stage-wrapper" id="cinemaStageWrapper">
+        <!-- Stage Cinema Group: wraps cinema stage + participants so they collectively drop down in idle mode -->
+        <div class="stage-cinema-group" id="stageCinemaGroup">
+
+          <!-- Cinema Stage Wrapper (Houses ambient glow canvas strictly behind cinema box) -->
+          <div class="cinema-stage-wrapper" id="cinemaStageWrapper">
           <!-- Ambient Cinema Glow Canvas (Radiates dynamic blurred color glow strictly behind stage) -->
           <canvas id="ambientGlowCanvas" class="ambient-glow-canvas"></canvas>
 
@@ -723,6 +726,8 @@
             <!-- Dynamic cards inserted here -->
           </div>
         </div>
+
+        </div> <!-- /.stage-cinema-group -->
 
       </section>
 

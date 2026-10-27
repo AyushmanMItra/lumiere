@@ -312,6 +312,23 @@ body {
   overflow: hidden;
 }
 
+/* Stage Cinema Group (Wraps cinema stage wrapper + participants so they collectively drop down in idle mode) */
+.stage-cinema-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 1160px;
+  position: relative;
+  transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: transform;
+}
+
+.is-grid-view .stage-cinema-group {
+  display: contents !important;
+}
+
 /* Cinema Stage Wrapper (Wraps Ambient Glow canvas + Cinema Box) */
 .cinema-stage-wrapper {
   width: 100%;
@@ -1145,6 +1162,11 @@ body {
   transform: scale(0.95);
 }
 
+.pill-btn svg,
+.pill-btn svg * {
+  pointer-events: none;
+}
+
 /* Muted / Red State (Image 1 mic button) */
 .pill-btn-muted {
   background-color: rgba(218, 55, 60, 0.2);
@@ -1187,16 +1209,16 @@ body {
 /* Device Dropdown Menu */
 .device-menu {
   position: absolute;
-  bottom: 58px;
+  bottom: calc(100% + 14px);
   left: 50%;
   transform: translateX(-50%);
   width: 240px;
   background-color: var(--bg-tertiary);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-md);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
   padding: 8px 0;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .device-menu-header {
@@ -1985,23 +2007,28 @@ body {
    IDLE AUTO-HIDE (Matching Image 3: Controls drop after 3s idle)
    ========================================================================== */
 
-.top-bar,
+.top-bar {
+  transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), margin-top 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
 .dock-wrapper {
-  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), margin-bottom 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .idle-hidden,
 .idle-mode .dock-wrapper {
   opacity: 0 !important;
   pointer-events: none !important;
-  transform: translateY(24px) !important;
+  transform: translateY(100%) !important;
+  margin-bottom: -80px !important;
 }
 
 .top-bar.idle-hidden,
 .idle-mode .top-bar {
   opacity: 0 !important;
   pointer-events: none !important;
-  transform: translateY(-20px) !important;
+  transform: translateY(-100%) !important;
+  margin-top: -48px !important;
 }
 
 .idle-mode .cinema-controls-hud {
@@ -2894,6 +2921,32 @@ body {
     gap: 12px;
   }
 
+  .stage-cinema-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+    transform: translateY(0);
+    transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform;
+  }
+
+  /* When after 3 seconds of inactivity the panel drops down, the movie screen and video also drop down to be collectively in the centre of the screen */
+  .idle-mode .stage-cinema-group {
+    transform: translateY(calc(50dvh - 50% - 6px));
+  }
+
+  .idle-hidden,
+  .idle-mode .dock-wrapper {
+    margin-bottom: -64px !important;
+  }
+
+  .top-bar.idle-hidden,
+  .idle-mode .top-bar {
+    margin-top: -44px !important;
+  }
+
   /* Cinema Stage fills mobile width in natural 16:9 ratio */
   .cinema-stage-wrapper {
     width: 100%;
@@ -2981,8 +3034,7 @@ body {
     gap: 6px;
     padding: 4px 10px;
     max-width: 100%;
-    overflow-x: auto;
-    scrollbar-width: none;
+    overflow: visible !important;
   }
 
   .pill-btn {
@@ -2994,11 +3046,35 @@ body {
   .pill-btn svg {
     width: 18px;
     height: 18px;
+    pointer-events: none;
   }
 
   .pill-chevron-btn {
     width: 14px;
     height: 36px;
+  }
+
+  /* Position menus cleanly so they never clip off the screen */
+  #activityMenu,
+  #moreOptionsMenu {
+    left: auto !important;
+    right: -4px !important;
+    transform: none !important;
+    bottom: calc(100% + 14px) !important;
+    width: 270px !important;
+    max-width: calc(100vw - 20px) !important;
+    z-index: 1000 !important;
+  }
+
+  #micDeviceMenu,
+  #camDeviceMenu {
+    left: -4px !important;
+    right: auto !important;
+    transform: none !important;
+    bottom: calc(100% + 14px) !important;
+    width: 250px !important;
+    max-width: calc(100vw - 20px) !important;
+    z-index: 1000 !important;
   }
 
   .chat-panel {
@@ -3094,6 +3170,26 @@ body {
     left: 3px;
   }
 
+  .stage-cinema-group {
+    display: flex;
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    gap: 12px;
+  }
+
+  .idle-hidden,
+  .idle-mode .dock-wrapper {
+    margin-bottom: -44px !important;
+  }
+
+  .top-bar.idle-hidden,
+  .idle-mode .top-bar {
+    margin-top: -34px !important;
+  }
+
   /* Compact dock in landscape */
   .dock-wrapper {
     height: 44px;
@@ -3115,6 +3211,7 @@ body {
     padding: 2px 6px;
     gap: 5px;
     border-radius: 12px;
+    overflow: visible !important;
   }
 
   .pill-btn {
@@ -3125,11 +3222,37 @@ body {
   .pill-btn svg {
     width: 15px;
     height: 15px;
+    pointer-events: none;
   }
 
   .pill-chevron-btn {
     width: 11px;
     height: 30px;
+  }
+
+  /* Dropdown Menus in Landscape */
+  #activityMenu,
+  #moreOptionsMenu {
+    left: auto !important;
+    right: 0 !important;
+    transform: none !important;
+    bottom: calc(100% + 10px) !important;
+    max-height: calc(100vh - 56px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    z-index: 1000 !important;
+  }
+
+  #micDeviceMenu,
+  #camDeviceMenu {
+    left: 0 !important;
+    right: auto !important;
+    transform: none !important;
+    bottom: calc(100% + 10px) !important;
+    max-height: calc(100vh - 56px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    z-index: 1000 !important;
   }
 
   /* In landscape mobile HUD: single compact row since width is 800px+ */
