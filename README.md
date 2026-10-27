@@ -23,7 +23,7 @@ A decentralized, private screening platform that turns the host's PC into an on-
 
 Watching high-quality local movie files (2GB+ `.mkv` or `.mp4` rips) remotely with friends was fundamentally broken:
 - **Walled Gardens (Teleparty, Amazon Watch Party):** Restricted strictly to licensed Netflix/Prime catalogs. Your own `.mkv` rips or school films aren't allowed.
-- **Screen Sharing (Discord, Zoom):** Choppy 15fps compression, heavy upload bandwidth overhead, and audio drifting out of sync.
+- **Traditional Screen Sharing (Zoom, Google Meet):** Choppy 15fps compression, heavy upload bandwidth overhead, and audio drifting out of sync.
 - **Cloud-Sync Sites:** Waiting hours to upload a 3GB file to third-party servers, only to hit storage limits.
 
 **The Spark:** The momentum behind Lumière came from conversations between Ayushman and his friend **Yashvi Singh**, who pointed out why watching movies with friends was still awkward in 2026 and what a truly great watch party tool should feel like.
@@ -40,13 +40,11 @@ Watching high-quality local movie files (2GB+ `.mkv` or `.mp4` rips) remotely wi
 - **Frame-Perfect Playback Synchronization:**
   - Micro-drift rate steering (adjusts member playback rate between `0.92x` and `1.08x` with pitch preservation) to eliminate stutter.
   - Disrupted member auto-resync upon tab refocus or network reconnect.
-- **Discord-Themed Voice & Video Stage:**
+- **Live Voice & Video Stage:**
   - Full-mesh WebRTC voice and camera feeds with real-time speaking detection (green ring glow).
   - Floating dock with mic/camera toggles, device selector, and theater cinema controls.
-- **Built-In Discord Chat:**
+- **Built-In Real-Time Chat:**
   - Collapsible side panel with timestamps and user-colored badges.
-- **Random Alphanumeric Room Codes:**
-  - Fast, clean, shareable 6-character room codes (e.g. `K9X2M4`).
 - **No Logins, No Subscriptions:**
   - Zero accounts, zero analytics, zero ads. Jump in with just a display name and room code.
 
@@ -71,7 +69,7 @@ Watching high-quality local movie files (2GB+ `.mkv` or `.mp4` rips) remotely wi
 ```
 
 - **Backend:** Node.js, Express, Socket.io, `fluent-ffmpeg`, `@ffmpeg-installer`, `@ffprobe-installer`
-- **Frontend:** HTML5 Video, WebRTC (`RTCPeerConnection`), Canvas Web Audio API, Vanilla CSS (Discord Cinema Dark)
+- **Frontend:** HTML5 Video, WebRTC (`RTCPeerConnection`), Canvas Web Audio API, Vanilla CSS (Modern Cinema Dark)
 - **Networking:** Local Wi-Fi + Tailscale VPN Mesh
 
 ---
@@ -145,7 +143,7 @@ lumiere/
 │   ├── support-qr.png      # UPI QR code
 │   ├── index.html          # Cinematic landing, theater stage & about page
 │   ├── manifest.json       # PWA installation manifest
-│   └── style.css           # Discord-inspired dark cinema theme
+│   └── style.css           # Modern dark cinema theme
 ├── cert.pem / key.pem      # Auto-generated self-signed SSL for WebRTC
 ├── package.json
 ├── server.js               # Express, Socket.io, FFmpeg streaming pipeline
