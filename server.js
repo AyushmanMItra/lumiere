@@ -243,6 +243,18 @@ app.post('/api/feedback', (req, res) => {
   }
 });
 
+// 3.6 Official Maker Support & Anti-Fraud Verification
+app.get('/api/support-info', (req, res) => {
+  res.json({
+    verified: true,
+    maker: 'Ayushman Mitra',
+    github: 'https://github.com/AyushmanMItra',
+    upiId: 'ayushmanmitra@upi',
+    officialQrUrl: 'https://raw.githubusercontent.com/AyushmanMItra/lumiere/main/public/support-qr.png',
+    tamperProtected: true
+  });
+});
+
 // 4. Probe Movie (Audio tracks, Subtitles & Seekability)
 app.get('/api/probe', (req, res) => {
   const filename = req.query.file;

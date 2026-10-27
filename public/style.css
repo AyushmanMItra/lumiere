@@ -4342,6 +4342,41 @@ body {
   gap: 4px;
 }
 
+.maker-verified-seal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(87, 242, 135, 0.08);
+  border: 1px solid rgba(87, 242, 135, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #e0e0e0;
+}
+
+.maker-verified-seal a {
+  color: #57F287;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.maker-verified-seal a:hover {
+  text-decoration: underline;
+}
+
+.upi-security-notice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: #57F287;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
 .support-github-cta {
   text-align: center;
   font-size: 12px;

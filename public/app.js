@@ -4009,9 +4009,55 @@
       };
     }
 
+    // ==========================================================================
+    // ANTI-FRAUD IMMUTABLE MAKER SECURITY BINDING
+    // ==========================================================================
+    const OFFICIAL_MAKER_SECURITY = Object.freeze({
+      makerName: 'Ayushman Mitra',
+      githubUser: 'AyushmanMItra',
+      upiId: 'ayushmanmitra@upi',
+      officialQrUrl: 'https://raw.githubusercontent.com/AyushmanMItra/lumiere/main/public/support-qr.png',
+      localQrFallback: 'support-qr.png'
+    });
+
+    const initUpiAntiTamperGuard = () => {
+      const upiDisplay = document.getElementById('upiValueText');
+      const qrImg = document.getElementById('supportQrImage');
+      if (!upiDisplay && !qrImg) return;
+
+      const enforce = () => {
+        if (upiDisplay && upiDisplay.innerText !== OFFICIAL_MAKER_SECURITY.upiId) {
+          upiDisplay.innerText = OFFICIAL_MAKER_SECURITY.upiId;
+        }
+        if (qrImg && qrImg.src !== OFFICIAL_MAKER_SECURITY.officialQrUrl && !qrImg.src.endsWith(OFFICIAL_MAKER_SECURITY.localQrFallback)) {
+          qrImg.src = OFFICIAL_MAKER_SECURITY.officialQrUrl;
+        }
+      };
+
+      enforce();
+
+      const supportModal = document.getElementById('supportModal');
+      if (supportModal && window.MutationObserver) {
+        const observer = new MutationObserver(() => enforce());
+        observer.observe(supportModal, { childList: true, subtree: true, characterData: true, attributes: true });
+      }
+    };
+    initUpiAntiTamperGuard();
+
     // Support Modal & Copy UPI
     const showSupport = () => {
-      if (el.supportModal) el.supportModal.classList.remove('hidden');
+      if (el.supportModal) {
+        const upiDisplay = document.getElementById('upiValueText');
+        if (upiDisplay) upiDisplay.innerText = OFFICIAL_MAKER_SECURITY.upiId;
+
+        const qrImg = document.getElementById('supportQrImage');
+        if (qrImg) {
+          qrImg.src = OFFICIAL_MAKER_SECURITY.officialQrUrl;
+          qrImg.onerror = () => { qrImg.src = OFFICIAL_MAKER_SECURITY.localQrFallback; };
+        }
+
+        el.supportModal.classList.remove('hidden');
+      }
     };
     const hideSupport = () => {
       if (el.supportModal) el.supportModal.classList.add('hidden');
@@ -4029,15 +4075,16 @@
 
     if (el.copyUpiBtn) {
       el.copyUpiBtn.onclick = () => {
-        const upiText = document.getElementById('upiValueText')?.innerText || 'ayushmanmitra@upi';
+        // Anti-Fraud: Always copy directly from the frozen constant, never trust mutable DOM
+        const upiText = OFFICIAL_MAKER_SECURITY.upiId;
         navigator.clipboard?.writeText(upiText).then(() => {
-          showToast('UPI ID copied to clipboard!');
+          showToast('Verified Maker UPI ID copied to clipboard!');
           const copyLabel = document.getElementById('copyUpiText');
           if (copyLabel) {
             copyLabel.innerText = 'Copied!';
             setTimeout(() => { copyLabel.innerText = 'Copy'; }, 2000);
           }
-        }).catch(() => prompt('UPI ID:', upiText));
+        }).catch(() => prompt('Verified UPI ID:', upiText));
       };
     }
 
