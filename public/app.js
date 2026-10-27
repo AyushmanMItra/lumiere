@@ -426,8 +426,11 @@
     el.roomTitleDisplay.innerText = `Lumière - ${roomId}`;
     el.stageUsername.innerText = username;
 
-    // 1. Initialize Microphone FIRST so tracks are ready when peers connect
-    await initLocalMedia();
+    // 1. Start in clean media playback mode (no eager mic capture holding phone in Call/Earpiece mode)
+    state.isMicMuted = true;
+    state.localAudioTrack = null;
+    state.localStream = null;
+    enumerateMediaDevices().catch(() => {});
 
     // 2. Connect Socket.io
     if (!state.socket) {
@@ -892,39 +895,93 @@
            window.location.hostname === '127.0.0.1';
   }
 
-  async function initLocalMedia() {
+  async function enableMicrophone() {
     if (!isSecureConnection()) {
-      showToast('Camera & Mic require HTTPS (Port 3443)', 'error');
-      return;
+      showToast('Microphone requires HTTPS (Port 3443)', 'error');
+      return false;
     }
 
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return false;
+
+      const audioConstraints = {
+        echoCancellation: !!el.echoCancellationToggle ? el.echoCancellationToggle.checked : true,
+        noiseSuppression: !!el.noiseSuppressionToggle ? el.noiseSuppressionToggle.checked : true,
+        autoGainControl: true
+      };
+      if (state.selectedMicDeviceId) {
+        audioConstraints.deviceId = { exact: state.selectedMicDeviceId };
+      }
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        audio: audioConstraints,
         video: false
       });
 
       state.localStream = stream;
       state.localAudioTrack = stream.getAudioTracks()[0];
-      // Start in muted state matching Image 1
       if (state.localAudioTrack) {
-        state.localAudioTrack.enabled = !state.isMicMuted;
+        state.localAudioTrack.enabled = true;
       }
 
       setupSpeakingDetector(stream);
-      enumerateMediaDevices();
-      console.log('[Media] Microphone ready');
+      enumerateMediaDevices().catch(() => {});
+
+      // Attach track to all existing WebRTC peer connections
+      for (const pc of state.peerConnections.values()) {
+        const senders = pc.getSenders();
+        const audioSender = senders.find(s => s.track && s.track.kind === 'audio') ||
+                            senders.find(s => !s.track);
+        if (audioSender) {
+          audioSender.replaceTrack(state.localAudioTrack).catch(() => {});
+        } else {
+          try { pc.addTrack(state.localAudioTrack, stream); } catch (e) {}
+        }
+      }
+      console.log('[Media] Microphone activated on-demand');
+      return true;
     } catch (err) {
-      console.warn('Microphone init:', err.message);
+      console.warn('Microphone activation failed:', err.message);
+      showToast('Could not access microphone', 'error');
+      return false;
     }
+  }
+
+  function disableMicrophone() {
+    if (state.localAudioTrack) {
+      try {
+        state.localAudioTrack.enabled = false;
+        state.localAudioTrack.stop(); // Stops hardware recording immediately, releasing phone from Call Mode!
+      } catch (e) {}
+      state.localAudioTrack = null;
+    }
+
+    if (state.localStream) {
+      try {
+        state.localStream.getTracks().forEach(t => t.stop());
+      } catch (e) {}
+      state.localStream = null;
+    }
+
+    teardownSpeakingDetector();
+
+    // Detach track from all existing peer connections so silent audio is not held
+    for (const pc of state.peerConnections.values()) {
+      const senders = pc.getSenders();
+      const audioSender = senders.find(s => s.track && s.track.kind === 'audio');
+      if (audioSender) {
+        audioSender.replaceTrack(null).catch(() => {});
+      }
+    }
+    console.log('[Media] Microphone stopped and hardware released (Normal Media mode active)');
   }
 
   function setupSpeakingDetector(stream) {
     try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      state.audioContext = audioCtx;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const audioCtx = new AudioCtx();
+      state.speakingAudioContext = audioCtx;
       const analyser = audioCtx.createAnalyser();
       analyser.fftSize = 512;
       const source = audioCtx.createMediaStreamSource(stream);
@@ -954,6 +1011,23 @@
         }
       }, 100);
     } catch (e) {}
+  }
+
+  function teardownSpeakingDetector() {
+    if (state.speakingInterval) {
+      clearInterval(state.speakingInterval);
+      state.speakingInterval = null;
+    }
+    if (state.isSpeaking) {
+      state.isSpeaking = false;
+      setLocalSpeaking(false);
+    }
+    if (state.speakingAudioContext) {
+      try {
+        state.speakingAudioContext.close().catch(() => {});
+      } catch (e) {}
+      state.speakingAudioContext = null;
+    }
   }
 
   function setLocalSpeaking(isSpeaking) {
@@ -1080,7 +1154,7 @@
     state.peerConnections.set(targetId, pc);
 
     // Add audio track or audio transceiver
-    if (state.localAudioTrack) {
+    if (state.localAudioTrack && !state.isMicMuted) {
       try { pc.addTrack(state.localAudioTrack, state.localStream || new MediaStream([state.localAudioTrack])); } catch (e) {}
     } else {
       try { pc.addTransceiver('audio', { direction: 'sendrecv' }); } catch (e) {}
@@ -1139,6 +1213,9 @@
           a.autoplay = true;
           a.playsInline = true;
           a.setAttribute('playsinline', '');
+          if (typeof a.setSinkId === 'function') {
+            a.setSinkId('').catch(() => {});
+          }
           document.body.appendChild(a);
         }
         a.srcObject = (e.streams && e.streams[0]) ? e.streams[0] : new MediaStream([e.track]);
@@ -1361,15 +1438,16 @@
   }
 
   // Toggle Microphone
-  function toggleMicrophone() {
-    state.isMicMuted = !state.isMicMuted;
-
-    if (state.localAudioTrack) {
-      state.localAudioTrack.enabled = !state.isMicMuted;
-    } else if (state.localStream) {
-      state.localStream.getAudioTracks().forEach(t => {
-        t.enabled = !state.isMicMuted;
-      });
+  async function toggleMicrophone() {
+    if (state.isMicMuted) {
+      // User tapped to UNMUTE -> activate microphone on-demand
+      const ok = await enableMicrophone();
+      if (!ok) return;
+      state.isMicMuted = false;
+    } else {
+      // User tapped to MUTE -> release microphone hardware immediately so phone stays in Media Loudspeaker mode
+      disableMicrophone();
+      state.isMicMuted = true;
     }
 
     if (state.isMicMuted) {
@@ -1397,6 +1475,8 @@
     if (state.socket) {
       state.socket.emit('update-mic-status', { roomId: state.roomId, isMuted: state.isMicMuted });
     }
+
+    showToast(state.isMicMuted ? 'Microphone Muted (Media Speaker Active)' : 'Microphone Active');
   }
 
   // ==========================================================================
@@ -2861,6 +2941,9 @@
 
       el.moviePlayer.setAttribute('data-stream-file', movie.url);
       el.moviePlayer.setAttribute('data-stream-src', movie.url);
+      if (typeof el.moviePlayer.setSinkId === 'function') {
+        el.moviePlayer.setSinkId('').catch(() => {});
+      }
       el.moviePlayer.src = movie.url;
 
       const onUrlMeta = () => {
@@ -2959,6 +3042,9 @@
       el.moviePlayer.setAttribute('data-stream-file', state.currentMovie.filename);
       el.moviePlayer.setAttribute('data-stream-audio', String(audioTrack));
       el.moviePlayer.setAttribute('data-stream-src', streamUrl);
+      if (typeof el.moviePlayer.setSinkId === 'function') {
+        el.moviePlayer.setSinkId('').catch(() => {});
+      }
       el.moviePlayer.src = streamUrl;
 
       const onMetadata = () => {
@@ -3787,18 +3873,27 @@
           item.className = 'device-opt';
           item.innerText = d.label || `Microphone ${el.micDeviceList.children.length + 1}`;
           item.onclick = async () => {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: d.deviceId } } });
-            const track = stream.getAudioTracks()[0];
-            if (state.localStream) {
-              const old = state.localStream.getAudioTracks()[0];
-              if (old) { state.localStream.removeTrack(old); old.stop(); }
-              state.localStream.addTrack(track);
-              for (const pc of state.peerConnections.values()) {
-                const s = pc.getSenders().find(snd => snd.track && snd.track.kind === 'audio');
-                if (s) s.replaceTrack(track);
-              }
+            state.selectedMicDeviceId = d.deviceId;
+            if (!state.isMicMuted) {
+              try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                  audio: { deviceId: { exact: d.deviceId } },
+                  video: false
+                });
+                const track = stream.getAudioTracks()[0];
+                if (state.localStream) {
+                  const old = state.localStream.getAudioTracks()[0];
+                  if (old) { state.localStream.removeTrack(old); old.stop(); }
+                  state.localStream.addTrack(track);
+                  for (const pc of state.peerConnections.values()) {
+                    const s = pc.getSenders().find(snd => snd.track && snd.track.kind === 'audio');
+                    if (s) s.replaceTrack(track);
+                  }
+                }
+                state.localAudioTrack = track;
+                setupSpeakingDetector(state.localStream);
+              } catch (e) {}
             }
-            setupSpeakingDetector(state.localStream);
             el.micDeviceMenu.classList.add('hidden');
           };
           el.micDeviceList.appendChild(item);
@@ -4467,6 +4562,9 @@
         }
       });
       if (el.moviePlayer) {
+        if (typeof el.moviePlayer.setSinkId === 'function') {
+          el.moviePlayer.setSinkId('').catch(() => {});
+        }
         el.moviePlayer.muted = false;
         let curPct = parseInt(el.volumeSlider?.value, 10);
         if (isNaN(curPct) || curPct === 0) curPct = lastVolumePct || 100;
@@ -4557,6 +4655,10 @@
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     });
   }
+
+  window.addEventListener('beforeunload', () => {
+    try { disableMicrophone(); } catch (e) {}
+  });
 
   window.addEventListener('DOMContentLoaded', init);
 })();
