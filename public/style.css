@@ -312,15 +312,29 @@ body {
   overflow: hidden;
 }
 
-/* Main Cinema Frame (Matching the red outline: grand cinema stage) */
-.cinema-box {
+/* Cinema Stage Wrapper (Wraps Ambient Glow canvas + Cinema Box) */
+.cinema-stage-wrapper {
   width: 100%;
   max-width: 1160px;
   aspect-ratio: 16 / 9;
   max-height: calc(100vh - 250px);
-  background-color: var(--bg-stage);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 1;
+  margin: 0 auto;
+}
+
+/* Main Cinema Frame (Matching the red outline: grand cinema stage) */
+.cinema-box {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #000;
   border-radius: 12px;
   position: relative;
+  z-index: 2; /* CRITICAL: Stacked on top of ambient glow canvas (z-index: 0) */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -336,6 +350,8 @@ body {
   object-fit: contain;
   background-color: #000;
   border-radius: 12px;
+  position: relative;
+  z-index: 2;
   /* Deep cinema black calibration (eliminates washed-out greyish YUV mismatch on mobile/browsers) */
   filter: contrast(1.04) brightness(0.98);
 }
@@ -1292,18 +1308,20 @@ body {
   margin-top: 14px;
 }
 
-/* Ambient Cinema Glow Canvas (Ambilight) */
+/* Ambient Cinema Glow Canvas (Ambilight - Strictly BEHIND cinema box) */
 .ambient-glow-canvas {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 104%;
-  height: 104%;
-  filter: blur(52px) saturate(1.8) opacity(0.65);
+  top: -24px;
+  left: -32px;
+  right: -32px;
+  bottom: -24px;
+  width: calc(100% + 64px);
+  height: calc(100% + 48px);
+  filter: blur(52px) saturate(2.4) brightness(1.1);
+  opacity: 0.72;
   pointer-events: none;
-  z-index: 1;
-  border-radius: 20px;
+  z-index: 0; /* Behind .cinema-box (z-index: 2) */
+  border-radius: 28px;
   transition: opacity 0.4s ease;
 }
 
@@ -1398,6 +1416,26 @@ body {
 
 .hud-icon-btn.active-toggle {
   color: var(--coral, #eb459e);
+  background: rgba(235, 69, 158, 0.15);
+  border-radius: 6px;
+}
+
+.more-status-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 10px;
+  margin-left: 6px;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  transition: all 0.2s ease;
+}
+
+.more-status-badge.badge-active {
+  background: var(--coral, #eb459e);
+  color: #fff;
 }
 
 /* Device Menu Audio Processing Toggle Rows */
@@ -2459,12 +2497,24 @@ body {
   overflow-y: auto !important;
 }
 
-.is-grid-view .cinema-box {
+.is-grid-view .cinema-stage-wrapper {
   flex: 1 1 450px !important;
   max-width: 580px !important;
   max-height: 360px !important;
   height: 280px !important;
   aspect-ratio: auto !important;
+}
+
+.is-grid-view .cinema-box {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  aspect-ratio: auto !important;
+}
+
+.is-grid-view .ambient-glow-canvas {
+  display: none !important;
 }
 
 .is-grid-view .participants-tile-area {
@@ -2758,6 +2808,10 @@ body {
 @media (max-width: 768px) {
   .stage-section {
     padding: 6px 10px 10px;
+  }
+
+  .cinema-stage-wrapper {
+    max-height: calc(100% - 110px);
   }
 
   .cinema-box {

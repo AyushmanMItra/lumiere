@@ -457,11 +457,13 @@
       <!-- Theater Center Stage -->
       <section class="stage-section" id="stageSection">
 
-        <!-- Ambient Cinema Glow Canvas (Radiates dynamic blurred color glow behind stage) -->
-        <canvas id="ambientGlowCanvas" class="ambient-glow-canvas"></canvas>
+        <!-- Cinema Stage Wrapper (Houses ambient glow canvas strictly behind cinema box) -->
+        <div class="cinema-stage-wrapper" id="cinemaStageWrapper">
+          <!-- Ambient Cinema Glow Canvas (Radiates dynamic blurred color glow strictly behind stage) -->
+          <canvas id="ambientGlowCanvas" class="ambient-glow-canvas"></canvas>
 
-        <!-- Main Cinema Frame (Image 1 Center) -->
-        <div class="cinema-box" id="cinemaBox">
+          <!-- Main Cinema Frame (Image 1 Center) -->
+          <div class="cinema-box" id="cinemaBox">
           <video id="moviePlayer" preload="auto" playsinline crossorigin="anonymous"></video>
           <video id="screenSharePlayer" class="screen-share-player hidden" autoplay playsinline></video>
           <div id="youtubePlayerBox" class="youtube-player-box hidden">
@@ -697,6 +699,7 @@
             </div>
           </div>
         </div>
+      </div>
 
         <!-- Participant Tile Strip (Image 1 Centered beneath stage) -->
         <div class="participants-tile-area" id="participantStripArea">
@@ -949,6 +952,23 @@
             <div id="moreOptionsMenu" class="device-menu more-options-menu hidden">
               <div class="device-menu-header">More Stream Options</div>
               <div class="device-menu-items">
+                <button type="button" class="more-menu-item" id="menuAmbientGlowBtn" title="Toggle Ambient Cinema Glow">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Ambient Lighting <span id="moreMenuAmbientStatus" class="more-status-badge badge-active">ON</span></span>
+                    <span class="more-menu-desc">Dynamic cinema backglow</span>
+                  </div>
+                </button>
                 <button type="button" class="more-menu-item" id="menuScreenshareBtn" title="Share Screen">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>

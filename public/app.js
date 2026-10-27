@@ -194,6 +194,8 @@
     moreOptionsGroup: document.getElementById('moreOptionsGroup'),
     moreOptionsBtn: document.getElementById('moreOptionsBtn'),
     moreOptionsMenu: document.getElementById('moreOptionsMenu'),
+    menuAmbientGlowBtn: document.getElementById('menuAmbientGlowBtn'),
+    moreMenuAmbientStatus: document.getElementById('moreMenuAmbientStatus'),
     menuScreenshareBtn: document.getElementById('menuScreenshareBtn'),
     menuScreenshareText: document.getElementById('menuScreenshareText'),
     menuYouTubeBtn: document.getElementById('menuYouTubeBtn'),
@@ -342,6 +344,14 @@
     } catch (e) {
       el.networkBadge.innerText = 'Connected';
     }
+
+    try {
+      const savedAmbient = localStorage.getItem('lumiere_ambient');
+      if (savedAmbient !== null) {
+        state.isAmbientOn = (savedAmbient === '1');
+      }
+    } catch (e) {}
+    updateAmbientGlowUI();
 
     attachEventListeners();
     setupIdleDetection(); // 3-second auto-hide feature (Image 2)
@@ -1760,6 +1770,22 @@
   // 1. AMBIANCE & VIDEO POLISH (Ambilight, Speed, PiP, Gestures)
   // ==========================================================================
 
+  function updateAmbientGlowUI() {
+    if (el.ambientGlowCanvas) {
+      el.ambientGlowCanvas.classList.toggle('hidden', !state.isAmbientOn);
+    }
+    if (el.ambientToggleBtn) {
+      el.ambientToggleBtn.classList.toggle('active-toggle', state.isAmbientOn);
+      el.ambientToggleBtn.title = state.isAmbientOn
+        ? 'Ambient Cinema Glow: ON (Click to turn off)'
+        : 'Ambient Cinema Glow: OFF (Click to turn on)';
+    }
+    if (el.moreMenuAmbientStatus) {
+      el.moreMenuAmbientStatus.innerText = state.isAmbientOn ? 'ON' : 'OFF';
+      el.moreMenuAmbientStatus.classList.toggle('badge-active', state.isAmbientOn);
+    }
+  }
+
   function initAmbientGlow() {
     const canvas = el.ambientGlowCanvas;
     if (!canvas) return;
@@ -1768,26 +1794,31 @@
     canvas.height = 27;
 
     const sampleFrame = () => {
-      if (state.isAmbientOn && el.moviePlayer && !el.moviePlayer.paused && !el.moviePlayer.ended && el.moviePlayer.readyState >= 2) {
-        try {
-          ctx.drawImage(el.moviePlayer, 0, 0, canvas.width, canvas.height);
-        } catch (e) {}
+      if (state.isAmbientOn) {
+        if (el.moviePlayer && !el.moviePlayer.paused && !el.moviePlayer.ended && el.moviePlayer.readyState >= 2) {
+          try {
+            ctx.drawImage(el.moviePlayer, 0, 0, canvas.width, canvas.height);
+          } catch (e) {}
+        } else if (el.screenSharePlayer && !el.screenSharePlayer.paused && el.screenSharePlayer.readyState >= 2) {
+          try {
+            ctx.drawImage(el.screenSharePlayer, 0, 0, canvas.width, canvas.height);
+          } catch (e) {}
+        }
       }
       state.ambientAnimationId = requestAnimationFrame(sampleFrame);
     };
 
+    updateAmbientGlowUI();
     sampleFrame();
   }
 
   function toggleAmbientGlow() {
     state.isAmbientOn = !state.isAmbientOn;
-    if (el.ambientGlowCanvas) {
-      el.ambientGlowCanvas.classList.toggle('hidden', !state.isAmbientOn);
-    }
-    if (el.ambientToggleBtn) {
-      el.ambientToggleBtn.classList.toggle('active-toggle', state.isAmbientOn);
-    }
-    showToast(state.isAmbientOn ? 'Ambient Glow: ON' : 'Ambient Glow: OFF');
+    try {
+      localStorage.setItem('lumiere_ambient', state.isAmbientOn ? '1' : '0');
+    } catch (e) {}
+    updateAmbientGlowUI();
+    showToast(state.isAmbientOn ? 'Ambient Lighting: ON' : 'Ambient Lighting: OFF');
   }
 
   function togglePictureInPicture() {
@@ -1821,8 +1852,14 @@
     if (!el.cinemaBox) return;
     let lastTapTime = 0;
     let lastTapX = 0;
+    let hudHideTimeout = null;
 
     el.cinemaBox.addEventListener('touchend', (e) => {
+      // If user tapped a button, select, or scrubber inside the cinema box, let it interact normally
+      if (e.target.closest('button, select, input, a, .hud-timeline-container, .device-menu, .active-poll-widget')) {
+        return;
+      }
+
       const currentTime = Date.now();
       const tapLength = currentTime - lastTapTime;
       const touch = e.changedTouches[0];
@@ -1842,6 +1879,23 @@
           // Forward 10s
           forward10Seconds();
           triggerGestureIndicator('right');
+        }
+      } else {
+        // Single Tap Detected on Cinema Screen (Mobile / Touch Devices)
+        // Toggle the Cinema HUD visibility so mobile users can easily access and tap all controls
+        if (el.cinemaControls) {
+          e.preventDefault(); // Prevents accidental movie pause on mobile
+          const isCurrentlyActive = el.cinemaControls.classList.contains('active');
+          if (isCurrentlyActive) {
+            el.cinemaControls.classList.remove('active');
+            clearTimeout(hudHideTimeout);
+          } else {
+            el.cinemaControls.classList.add('active');
+            clearTimeout(hudHideTimeout);
+            hudHideTimeout = setTimeout(() => {
+              if (el.cinemaControls) el.cinemaControls.classList.remove('active');
+            }, 4000);
+          }
         }
       }
 
@@ -4050,6 +4104,12 @@
     if (el.ambientToggleBtn) {
       el.ambientToggleBtn.onclick = toggleAmbientGlow;
     }
+    if (el.menuAmbientGlowBtn) {
+      el.menuAmbientGlowBtn.onclick = () => {
+        toggleAmbientGlow();
+        el.moreOptionsMenu?.classList.add('hidden');
+      };
+    }
     if (el.pipBtn) {
       el.pipBtn.onclick = togglePictureInPicture;
     }
@@ -4328,6 +4388,9 @@
       } else if (key === 'p' || key === 'P') {
         e.preventDefault();
         togglePictureInPicture();
+      } else if (key === 'a' || key === 'A') {
+        e.preventDefault();
+        toggleAmbientGlow();
       } else if (key === 'j' || key === 'J' || key === 'ArrowLeft') {
         e.preventDefault();
         rewind10Seconds();
