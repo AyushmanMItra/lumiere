@@ -57,9 +57,23 @@ try {
       key: fs.readFileSync(keyPath, 'utf8')
     };
     console.log('[SSL] HTTPS certificates loaded successfully.');
+  } else {
+    console.log('[SSL] Generating self-signed certificates for HTTPS...');
+    const pems = selfsigned.generate([{ name: 'commonName', value: 'localhost' }], { days: 365 });
+    try {
+      fs.writeFileSync(certPath, pems.cert, 'utf8');
+      fs.writeFileSync(keyPath, pems.private, 'utf8');
+    } catch (writeErr) {
+      console.warn('[SSL Notice] Could not save cert files to disk, using in-memory SSL:', writeErr.message);
+    }
+    sslCredentials = {
+      cert: pems.cert,
+      key: pems.private
+    };
+    console.log('[SSL] Generated self-signed certificates successfully.');
   }
 } catch (e) {
-  console.warn('[SSL Warning] Could not load SSL certificates:', e.message);
+  console.warn('[SSL Warning] Could not load or generate SSL certificates:', e.message);
 }
 
 // Create HTTP and HTTPS Servers
@@ -467,10 +481,18 @@ app.get('/api/subtitles', (req, res) => {
       '-f webvtt'
     ])
     .on('error', (err) => {
-      console.warn('[Subtitle Stream Error]', err.message);
+      if (!err.message.includes('Output stream closed') && !err.message.includes('SIGKILL')) {
+        console.warn('[Subtitle Stream Error]', err.message);
+      }
     });
 
   command.pipe(res);
+
+  req.on('close', () => {
+    try {
+      command.kill('SIGKILL');
+    } catch (e) {}
+  });
 });
 
 // ------------------------------------------------------------------
@@ -918,14 +940,17 @@ io.on('connection', (socket) => {
   socket.on('send-chat', ({ roomId, text }) => {
     const room = rooms.get(roomId);
     if (!room || !room.members.has(socket.id)) return;
+    if (typeof text !== 'string') return;
+    const cleanText = text.trim();
+    if (!cleanText) return;
 
     const member = room.members.get(socket.id);
     const msg = {
       id: Date.now() + Math.random().toString(36).substr(2, 4),
       senderId: socket.id,
-      username: member.username,
-      color: member.color,
-      text: text.trim(),
+      username: member ? member.username : 'User',
+      color: member ? member.color : '#5865F2',
+      text: cleanText.slice(0, 500),
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
@@ -938,10 +963,11 @@ io.on('connection', (socket) => {
     if (!room || !room.members.has(socket.id)) return;
 
     const member = room.members.get(socket.id);
-    const senderName = username || (member ? member.username : 'Viewer');
+    const senderName = (typeof username === 'string' && username.trim()) ? username.trim().slice(0, 32) : (member ? member.username : 'Viewer');
+    const safeEmoji = (typeof emoji === 'string' && emoji.trim()) ? emoji.trim().slice(0, 10) : '❤️';
 
     io.in(roomId).emit('reaction-burst', {
-      emoji: emoji || '❤️',
+      emoji: safeEmoji,
       username: senderName,
       senderId: socket.id
     });
@@ -976,12 +1002,14 @@ io.on('connection', (socket) => {
           newHostName: nextHost.username
         });
         console.log(`[Room ${currentRoomId}] New host elected: ${nextHost.username}`);
-      } else {
-        // Room empty, clean up
-        rooms.delete(currentRoomId);
-        console.log(`[Room ${currentRoomId}] Room closed (empty).`);
-        return;
       }
+    }
+
+    // Unconditional empty room cleanup to prevent memory leaks
+    if (room.members.size === 0) {
+      rooms.delete(currentRoomId);
+      console.log(`[Room ${currentRoomId}] Room closed (empty).`);
+      return;
     }
 
     io.in(currentRoomId).emit('member-left', { id: socket.id });

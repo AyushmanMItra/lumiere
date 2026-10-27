@@ -93,14 +93,12 @@
     aboutPage: document.getElementById('aboutPage'),
     navAboutBtn: document.getElementById('navAboutBtn'),
     footerAboutBtn: document.getElementById('footerAboutBtn'),
-    theaterAboutBtn: document.getElementById('theaterAboutBtn'),
     aboutBackBtn: document.getElementById('aboutBackBtn'),
     aboutLaunchBtn: document.getElementById('aboutLaunchBtn'),
 
     feedbackModal: document.getElementById('feedbackModal'),
     navFeedbackBtn: document.getElementById('navFeedbackBtn'),
     footerFeedbackBtn: document.getElementById('footerFeedbackBtn'),
-    theaterFeedbackBtn: document.getElementById('theaterFeedbackBtn'),
     closeFeedbackBtn: document.getElementById('closeFeedbackBtn'),
     cancelFeedbackBtn: document.getElementById('cancelFeedbackBtn'),
     feedbackForm: document.getElementById('feedbackForm'),
@@ -108,7 +106,6 @@
     supportModal: document.getElementById('supportModal'),
     navSupportBtn: document.getElementById('navSupportBtn'),
     footerSupportBtn: document.getElementById('footerSupportBtn'),
-    theaterSupportBtn: document.getElementById('theaterSupportBtn'),
     aboutSupportBtn: document.getElementById('aboutSupportBtn'),
     closeSupportBtn: document.getElementById('closeSupportBtn'),
     copyUpiBtn: document.getElementById('copyUpiBtn'),
@@ -382,12 +379,12 @@
       clearTimeout(state.idleTimeout);
       // After 3 seconds of inactivity, smoothly drop panels (Image 3)
       state.idleTimeout = setTimeout(() => {
-        const isAnyMenuOpen = (el.moreOptionsMenu && !el.moreOptionsMenu.classList.contains('hidden')) ||
-                              (el.activityMenu && !el.activityMenu.classList.contains('hidden')) ||
+        const isAnyModalOpen = Boolean(document.querySelector('.modal-overlay:not(.hidden)'));
+        const isAnyMenuOpen = Boolean(document.querySelector('.action-sheet-dropdown:not(.hidden)')) ||
                               (el.micDeviceMenu && !el.micDeviceMenu.classList.contains('hidden')) ||
                               (el.camDeviceMenu && !el.camDeviceMenu.classList.contains('hidden'));
 
-        if (!state.chatOpen && el.movieModal.classList.contains('hidden') && !isAnyMenuOpen) {
+        if (!state.chatOpen && !isAnyModalOpen && !isAnyMenuOpen) {
           el.appContainer.classList.add('idle-mode');
           el.topBar.classList.add('idle-hidden');
           el.dockWrapper.classList.add('idle-hidden');
@@ -1801,23 +1798,27 @@
     canvas.width = 48;
     canvas.height = 27;
 
-    const sampleFrame = () => {
-      if (state.isAmbientOn) {
-        if (el.moviePlayer && !el.moviePlayer.paused && !el.moviePlayer.ended && el.moviePlayer.readyState >= 2) {
-          try {
-            ctx.drawImage(el.moviePlayer, 0, 0, canvas.width, canvas.height);
-          } catch (e) {}
-        } else if (el.screenSharePlayer && !el.screenSharePlayer.paused && el.screenSharePlayer.readyState >= 2) {
-          try {
-            ctx.drawImage(el.screenSharePlayer, 0, 0, canvas.width, canvas.height);
-          } catch (e) {}
-        }
-      }
+    let lastSampleTime = 0;
+    const sampleFrame = (timestamp) => {
       state.ambientAnimationId = requestAnimationFrame(sampleFrame);
+
+      if (!state.isAmbientOn || document.hidden) return;
+      if (timestamp && (timestamp - lastSampleTime < 50)) return; // Cap sampling at ~20fps to conserve mobile battery
+      lastSampleTime = timestamp || 0;
+
+      if (el.moviePlayer && !el.moviePlayer.paused && !el.moviePlayer.ended && el.moviePlayer.readyState >= 2) {
+        try {
+          ctx.drawImage(el.moviePlayer, 0, 0, canvas.width, canvas.height);
+        } catch (e) {}
+      } else if (el.screenSharePlayer && !el.screenSharePlayer.paused && el.screenSharePlayer.readyState >= 2) {
+        try {
+          ctx.drawImage(el.screenSharePlayer, 0, 0, canvas.width, canvas.height);
+        } catch (e) {}
+      }
     };
 
     updateAmbientGlowUI();
-    sampleFrame();
+    sampleFrame(0);
   }
 
   function toggleAmbientGlow() {
@@ -3265,7 +3266,14 @@
     if (state.chatOpen) {
       state.unreadMessages = 0;
       el.chatBadge.classList.add('hidden');
-      el.chatInput.focus();
+      if (window.innerWidth > 768 && !window.matchMedia('(pointer: coarse)').matches) {
+        el.chatInput.focus();
+      }
+      requestAnimationFrame(() => {
+        el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+      });
+    } else {
+      if (el.chatSidebar) el.chatSidebar.style.height = '';
     }
   }
 
@@ -3277,7 +3285,9 @@
     state.socket.emit('send-chat', { roomId: state.roomId, text });
 
     el.chatInput.value = '';
-    el.chatInput.focus();
+    if (window.innerWidth > 768 && !window.matchMedia('(pointer: coarse)').matches) {
+      el.chatInput.focus();
+    }
   }
 
   function appendChatMessage(msg) {
@@ -3303,7 +3313,9 @@
     `;
 
     el.chatMessages.appendChild(item);
-    el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+    requestAnimationFrame(() => {
+      el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+    });
   }
 
   function escapeHtml(str) {
@@ -4526,6 +4538,17 @@
     initAmbientGlow();
     initMobileGestures();
     initSubtitleDragAndDrop();
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => {
+        if (state.chatOpen && window.innerWidth <= 768 && el.chatSidebar) {
+          el.chatSidebar.style.height = `${window.visualViewport.height}px`;
+          if (el.chatMessages) {
+            el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+          }
+        }
+      });
+    }
   }
 
   // Register PWA Service Worker for mobile standalone display (removes address bar when installed)
