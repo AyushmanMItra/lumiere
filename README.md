@@ -83,7 +83,7 @@ Watching high-quality local movie files (2GB+ `.mkv` or `.mp4` rips) remotely wi
 
 ### 2. Clone & Install
 ```bash
-git clone https://github.com/<your-username>/lumiere.git
+git clone https://github.com/AyushmanMItra/lumiere.git
 cd lumiere
 npm install
 ```
