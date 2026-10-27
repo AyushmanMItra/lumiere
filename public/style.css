@@ -395,31 +395,67 @@ body {
 }
 
 /* Stage Bottom Left Name Tag (Image 1) */
+/* ==========================================================================
+   STAGE BROADCASTER BADGE (Top-Left Pill, clean and separated from controls)
+   ========================================================================== */
 .stage-bottom-tag {
   position: absolute;
-  bottom: 14px;
-  left: 14px;
-  background-color: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(6px);
-  color: var(--text-white);
-  padding: 5px 10px;
-  border-radius: var(--radius-sm);
-  display: flex;
+  top: 16px;
+  left: 16px;
+  background-color: rgba(15, 17, 23, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 12px;
   font-weight: 600;
-  z-index: 5;
+  letter-spacing: 0.2px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  z-index: 6;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.stage-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #57F287;
+  box-shadow: 0 0 8px rgba(87, 242, 135, 0.9);
+  animation: livePillPulse 2s infinite ease-in-out;
+}
+
+@keyframes livePillPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.85); }
 }
 
 .tag-mic-icon {
   color: var(--red);
+  flex-shrink: 0;
+}
+
+.tag-mic-icon.active {
+  color: #57F287;
+}
+
+.stage-username-text {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Tap to unmute banner */
 .unmute-banner {
   position: absolute;
   top: 16px;
+  right: 16px;
   background-color: var(--blurple);
   color: #fff;
   border: none;
@@ -442,20 +478,23 @@ body {
   100% { transform: scale(1); }
 }
 
-/* Cinema Controls HUD (Auto-Hides) */
+/* ==========================================================================
+   CINEMA CONTROLS HUD (Modern Cinema Scrubber & Controls)
+   ========================================================================== */
 .cinema-controls-hud {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
-  padding: 16px 20px 10px;
+  background: linear-gradient(to top, rgba(6, 7, 10, 0.96) 0%, rgba(6, 7, 10, 0.72) 48%, rgba(6, 7, 10, 0.2) 80%, transparent 100%);
+  padding: 24px 22px 14px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s ease;
+  transform: translateY(6px);
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 8;
   border-radius: 0 0 12px 12px;
 }
@@ -464,11 +503,13 @@ body {
 .cinema-controls-hud.active {
   opacity: 1;
   pointer-events: auto;
+  transform: translateY(0);
 }
 
+/* Timeline Scrubber Container */
 .hud-timeline-container {
   width: 100%;
-  padding: 10px 0;
+  padding: 8px 0;
   cursor: pointer;
   position: relative;
   touch-action: none;
@@ -476,15 +517,15 @@ body {
 
 .hud-timeline-bar {
   width: 100%;
-  height: 5px;
-  background-color: rgba(255, 255, 255, 0.25);
-  border-radius: 3px;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
   position: relative;
-  transition: height 0.15s ease;
+  transition: height 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .hud-timeline-container:hover .hud-timeline-bar {
-  height: 8px;
+  height: 7px;
 }
 
 .hud-buffered {
@@ -494,7 +535,8 @@ body {
   height: 100%;
   width: 0%;
   background-color: rgba(255, 255, 255, 0.35);
-  border-radius: 3px;
+  border-radius: 4px;
+  transition: width 0.2s linear;
 }
 
 .hud-progress {
@@ -503,8 +545,9 @@ body {
   left: 0;
   height: 100%;
   width: 0%;
-  background-color: var(--blurple);
-  border-radius: 3px;
+  background: linear-gradient(90deg, #E5A93C 0%, #F5C767 100%);
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(229, 169, 60, 0.6);
 }
 
 .hud-thumb {
@@ -513,103 +556,241 @@ body {
   left: 0%;
   width: 14px;
   height: 14px;
-  border-radius: var(--radius-full);
-  background-color: #fff;
+  border-radius: 50%;
+  background-color: #ffffff;
+  box-shadow: 0 0 12px rgba(229, 169, 60, 0.9), 0 2px 6px rgba(0, 0, 0, 0.6);
   transform: translate(-50%, -50%) scale(0);
-  transition: transform 0.15s ease;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
 }
 
 .hud-timeline-container:hover .hud-thumb {
   transform: translate(-50%, -50%) scale(1);
 }
 
+/* Hover time tooltip */
 .hud-hover-time {
   position: absolute;
-  top: -24px;
+  top: -28px;
   transform: translateX(-50%);
-  background-color: rgba(0, 0, 0, 0.85);
-  padding: 2px 6px;
-  border-radius: 4px;
+  background-color: rgba(15, 17, 23, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 3px 8px;
+  border-radius: 5px;
   font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: #fff;
   display: none;
   pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
+/* Controls Row */
 .hud-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
 }
 
-.hud-left, .hud-right {
+.hud-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
-.hud-btn {
-  background: none;
-  border: none;
-  color: #fff;
-  cursor: pointer;
+.hud-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Play/Pause Circular Glass Button */
+.hud-circle-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
-  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
 }
 
-.hud-time {
-  font-size: 13px;
-  color: #fff;
-  display: flex;
-  gap: 4px;
-  font-variant-numeric: tabular-nums;
-}
-.hud-time-slash {
-  color: var(--text-muted);
+.hud-circle-btn:hover {
+  background: rgba(229, 169, 60, 0.25);
+  border-color: rgba(229, 169, 60, 0.55);
+  color: #E5A93C;
+  transform: scale(1.06);
+  box-shadow: 0 0 14px rgba(229, 169, 60, 0.45);
 }
 
-.hud-track-group {
+.hud-circle-btn:active {
+  transform: scale(0.94);
+}
+
+/* Secondary Icon Buttons (Rewind 10, Forward 10, Volume, Fullscreen) */
+.hud-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-muted);
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
 }
 
-.hud-select {
-  background-color: rgba(30, 31, 34, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: var(--text-white);
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  outline: none;
+.hud-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  transform: scale(1.06);
 }
 
+.hud-icon-btn:active {
+  transform: scale(0.94);
+}
+
+/* Time Display */
+.hud-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+  user-select: none;
+  margin-left: 4px;
+}
+
+.hud-time-slash {
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 400;
+  margin: 0 2px;
+}
+
+#durationDisplay {
+  color: rgba(255, 255, 255, 0.65);
+  font-weight: 500;
+}
+
+/* Volume Slider Group */
 .hud-volume-group {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .hud-slider {
-  width: 65px;
+  width: 64px;
   height: 4px;
   -webkit-appearance: none;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
   outline: none;
+  cursor: pointer;
+  transition: width 0.2s ease, background 0.2s ease;
 }
+
+.hud-slider:hover {
+  background: rgba(255, 255, 255, 0.38);
+}
+
 .hud-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 12px;
   height: 12px;
-  border-radius: var(--radius-full);
-  background: #fff;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
   cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.hud-slider:hover::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+
+/* Audio & Subtitle Glassmorphic Dropdown Pills */
+.hud-pill-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: 4px 10px;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+}
+
+.hud-pill-group:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.hud-pill-icon {
+  color: rgba(255, 255, 255, 0.75);
+  flex-shrink: 0;
+}
+
+.hud-select {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  padding-right: 4px;
+}
+
+.hud-select option {
+  background-color: #1e1f24;
+  color: #ffffff;
+}
+
+/* Mobile responsiveness for Cinema Controls HUD */
+@media (max-width: 680px) {
+  .cinema-controls-hud {
+    padding: 18px 12px 10px;
+  }
+  .hud-left {
+    gap: 6px;
+  }
+  .hud-right {
+    gap: 6px;
+  }
+  .hud-slider {
+    display: none;
+  }
+  .hud-pill-group {
+    padding: 3px 6px;
+  }
+  .hud-select {
+    max-width: 72px;
+    font-size: 11px;
+  }
+  .stage-bottom-tag {
+    top: 10px;
+    left: 10px;
+    padding: 4px 8px;
+    font-size: 11px;
+  }
 }
 
 /* ==========================================================================
@@ -931,13 +1112,17 @@ body {
   pointer-events: none !important;
 }
 
-/* In idle state (Image 3), tags collapse to show only the mic icon */
-.idle-mode .stage-username,
+/* In idle state, cinema overlays smoothly fade out for an immersive full-screen movie experience */
+.idle-mode .stage-bottom-tag {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-8px) !important;
+}
+
 .idle-mode .tile-username {
   display: none !important;
 }
 
-.idle-mode .stage-bottom-tag,
 .idle-mode .tile-bottom-badge {
   padding: 5px 6px !important;
   border-radius: 6px !important;

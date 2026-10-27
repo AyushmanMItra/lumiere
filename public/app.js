@@ -115,6 +115,8 @@
     playPauseBtn: document.getElementById('playPauseBtn'),
     playIcon: document.getElementById('playIcon'),
     pauseIcon: document.getElementById('pauseIcon'),
+    rewind10Btn: document.getElementById('rewind10Btn'),
+    forward10Btn: document.getElementById('forward10Btn'),
     currentTimeDisplay: document.getElementById('currentTimeDisplay'),
     durationDisplay: document.getElementById('durationDisplay'),
 
@@ -127,6 +129,9 @@
     volHighIcon: document.getElementById('volHighIcon'),
     volMuteIcon: document.getElementById('volMuteIcon'),
     volumeSlider: document.getElementById('volumeSlider'),
+    hudFullscreenBtn: document.getElementById('hudFullscreenBtn'),
+    hudFullscreenExpand: document.getElementById('hudFullscreenExpand'),
+    hudFullscreenCompress: document.getElementById('hudFullscreenCompress'),
 
     participantStrip: document.getElementById('participantStrip'),
 
@@ -1835,8 +1840,8 @@
     }
 
     // Fullscreen (Cinema Box ONLY - hides participant bar and docks)
-    el.theaterFullscreenBtn.onclick = () => {
-      const isFull = document.fullscreenElement || document.webkitFullscreenElement;
+    const toggleCinemaFullscreen = () => {
+      const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
       if (!isFull) {
         if (el.cinemaBox.requestFullscreen) {
           el.cinemaBox.requestFullscreen().catch(() => {});
@@ -1851,6 +1856,70 @@
         }
       }
     };
+
+    if (el.theaterFullscreenBtn) el.theaterFullscreenBtn.onclick = toggleCinemaFullscreen;
+    if (el.hudFullscreenBtn) el.hudFullscreenBtn.onclick = toggleCinemaFullscreen;
+
+    document.addEventListener('fullscreenchange', () => {
+      const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      if (el.hudFullscreenExpand && el.hudFullscreenCompress) {
+        el.hudFullscreenExpand.classList.toggle('hidden', isFull);
+        el.hudFullscreenCompress.classList.toggle('hidden', !isFull);
+      }
+    });
+
+    // Rewind / Forward 10 Seconds
+    if (el.rewind10Btn) {
+      el.rewind10Btn.onclick = () => {
+        if (!state.isHost) {
+          showToast('Only Host can seek');
+          return;
+        }
+        const cur = getEffectiveCurrentTime();
+        const newTime = Math.max(0, cur - 10);
+        seekMovie(newTime);
+        state.socket.emit('host-seek', { roomId: state.roomId, time: newTime });
+        showToast('Rewound 10s');
+      };
+    }
+
+    if (el.forward10Btn) {
+      el.forward10Btn.onclick = () => {
+        if (!state.isHost) {
+          showToast('Only Host can seek');
+          return;
+        }
+        const cur = getEffectiveCurrentTime();
+        const dur = getEffectiveDuration();
+        const newTime = dur > 0 ? Math.min(dur, cur + 10) : cur + 10;
+        seekMovie(newTime);
+        state.socket.emit('host-seek', { roomId: state.roomId, time: newTime });
+        showToast('Forwarded 10s');
+      };
+    }
+
+    // Keyboard Shortcuts (Space, F, M, Left, Right)
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+      if (el.roomView.classList.contains('hidden')) return;
+
+      if (e.code === 'Space' || e.key === 'k') {
+        e.preventDefault();
+        handlePlayPauseToggle();
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleCinemaFullscreen();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        el.volumeToggleBtn.click();
+      } else if (e.key === 'ArrowLeft' || e.key === 'j') {
+        e.preventDefault();
+        if (el.rewind10Btn) el.rewind10Btn.click();
+      } else if (e.key === 'ArrowRight' || e.key === 'l') {
+        e.preventDefault();
+        if (el.forward10Btn) el.forward10Btn.click();
+      }
+    });
 
     // Unmute Banner & Audio Unlock
     const unlockAudio = () => {
