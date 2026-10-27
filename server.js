@@ -299,6 +299,25 @@ app.get('/api/probe', (req, res) => {
   });
 });
 
+// Lightweight codec cache to avoid repeated ffprobe calls
+const mediaCodecCache = new Map();
+
+function getVideoCodecInfo(filePath, callback) {
+  if (mediaCodecCache.has(filePath)) {
+    return callback(null, mediaCodecCache.get(filePath));
+  }
+  ffmpeg.ffprobe(filePath, (err, meta) => {
+    if (err) return callback(err, null);
+    const vStream = (meta.streams || []).find(s => s.codec_type === 'video');
+    const info = {
+      codec: vStream ? vStream.codec_name : null,
+      colorRange: vStream ? vStream.color_range : null
+    };
+    mediaCodecCache.set(filePath, info);
+    callback(null, info);
+  });
+}
+
 // 5. Video Stream Endpoint (with multi-audio track mapping & live MKV streaming)
 app.get('/api/stream', (req, res) => {
   const filename = req.query.file;
@@ -360,23 +379,35 @@ app.get('/api/stream', (req, res) => {
     'Connection': 'keep-alive'
   });
 
-  const command = ffmpeg(safePath);
+  getVideoCodecInfo(safePath, (err, codecInfo) => {
+    const vCodec = codecInfo ? codecInfo.codec : null;
+    const command = ffmpeg(safePath);
 
-  const inputOptions = [
-    '-fflags +genpts+discardcorrupt'
-  ];
+    const inputOptions = [
+      '-fflags +genpts+discardcorrupt'
+    ];
 
-  if (startTime > 0) {
-    command.seekInput(startTime);
-  }
+    if (startTime > 0) {
+      command.seekInput(startTime);
+    }
 
-  command.inputOptions(inputOptions);
+    command.inputOptions(inputOptions);
 
-  command
-    .outputOptions([
+    const outputOptions = [
       '-map 0:V:0',
       `-map 0:a:${audioIndex}?`,
-      '-c:v copy',
+      '-c:v copy'
+    ];
+
+    // Hardware acceleration and color range tags for mobile/cross-platform players
+    if (vCodec === 'hevc') {
+      outputOptions.push('-tag:v hvc1');
+      outputOptions.push('-bsf:v hevc_metadata=video_full_range_flag=0');
+    } else if (vCodec === 'h264') {
+      outputOptions.push('-bsf:v h264_metadata=video_full_range_flag=0');
+    }
+
+    outputOptions.push(
       '-c:a aac',
       '-b:a 192k',
       '-ac 2',
@@ -384,24 +415,29 @@ app.get('/api/stream', (req, res) => {
       '-af aresample=async=1:first_pts=0',
       '-avoid_negative_ts make_zero',
       '-movflags frag_keyframe+empty_moov+default_base_moof',
+      '-flush_packets 1',
       '-f mp4'
-    ])
-    .on('start', (cmdLine) => {
-      console.log(`[Stream Started] File: ${path.basename(safePath)}, Audio: ${audioIndex}, Start: ${startTime}s`);
-    })
-    .on('error', (err) => {
-      if (!err.message.includes('Output stream closed') && !err.message.includes('SIGKILL')) {
-        console.warn('[Stream Notice]', err.message);
-      }
+    );
+
+    command
+      .outputOptions(outputOptions)
+      .on('start', (cmdLine) => {
+        console.log(`[Stream Started] File: ${path.basename(safePath)}, Audio: ${audioIndex}, Start: ${startTime}s, Codec: ${vCodec}`);
+      })
+      .on('error', (err) => {
+        if (!err.message.includes('Output stream closed') && !err.message.includes('SIGKILL')) {
+          console.warn('[Stream Notice]', err.message);
+        }
+      });
+
+    const ffmpegStream = command.pipe();
+    ffmpegStream.pipe(res);
+
+    req.on('close', () => {
+      try {
+        command.kill('SIGKILL');
+      } catch (e) {}
     });
-
-  const ffmpegStream = command.pipe();
-  ffmpegStream.pipe(res);
-
-  req.on('close', () => {
-    try {
-      command.kill('SIGKILL');
-    } catch (e) {}
   });
 });
 

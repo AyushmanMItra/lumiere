@@ -336,6 +336,8 @@ body {
   object-fit: contain;
   background-color: #000;
   border-radius: 12px;
+  /* Deep cinema black calibration (eliminates washed-out greyish YUV mismatch on mobile/browsers) */
+  filter: contrast(1.04) brightness(0.98);
 }
 
 /* Stage Placeholder (Avatar in center when no movie is playing - Image 1) */

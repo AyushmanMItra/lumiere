@@ -402,25 +402,26 @@
         return;
       }
 
-      // 3. Dynamic Playback Rate Catchup
+      // 3. Dynamic Playback Rate Catchup (works across all native MP4 and live MKV streams)
       // positive drift = member is BEHIND host
       // negative drift = member is AHEAD of host
       const cur = getEffectiveCurrentTime();
       const drift = time - cur;
 
-      if (Math.abs(drift) > 2.5) {
+      if (Math.abs(drift) > 3.5) {
         // Severe drift: seek once and enter cooldown
         console.log(`[Sync] Large drift detected (${drift.toFixed(2)}s). Resyncing...`);
         seekMovie(time);
-      } else if (!state.isLiveStream) {
-        // Behind by 0.35s - 2.5s: gently speed up to 1.06x (imperceptible smooth catchup)
-        if (drift > 0.35) {
+      } else {
+        // Smooth Catchup: gently adjust rate without interrupting stream buffer
+        if (drift > 0.25) {
+          // Member is slightly behind: accelerate to 1.06x to smoothly close the gap
           el.moviePlayer.playbackRate = 1.06;
-        } else if (drift < -0.35) {
-          // Ahead by 0.35s - 2.5s: gently slow down to 0.95x
+        } else if (drift < -0.25) {
+          // Member is slightly ahead: gently decelerate to 0.95x
           el.moviePlayer.playbackRate = 0.95;
         } else {
-          // Perfectly in sync: normal 1.0x rate
+          // Within 250ms of host: perfectly in frame lockstep at 1.0x rate
           if (el.moviePlayer.playbackRate !== 1.0) {
             el.moviePlayer.playbackRate = 1.0;
           }
