@@ -25,6 +25,7 @@
     isCamOn: false,   // Start camera off like in Image 1
     peerConnections: new Map(), // targetId -> RTCPeerConnection
     remoteStreams: new Map(),   // targetId -> MediaStream (video stream per peer)
+    pendingIceCandidates: new Map(), // targetId -> RTCIceCandidate[]
     audioContext: null,
     analyser: null,
     speakingInterval: null,
@@ -47,7 +48,19 @@
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
       { urls: 'stun:stun2.l.google.com:19302' },
-      { urls: 'stun:stun.cloudflare.com:3478' }
+      { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:stun4.l.google.com:19302' },
+      { urls: 'stun:stun.cloudflare.com:3478' },
+      // OpenRelay Public TURN Server for Cross-Network NAT/Firewall Traversal
+      {
+        urls: [
+          'turn:openrelay.metered.ca:80',
+          'turn:openrelay.metered.ca:443',
+          'turn:openrelay.metered.ca:443?transport=tcp'
+        ],
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      }
     ]
   };
 
@@ -504,12 +517,16 @@
       const pc = getOrCreatePeerConnection(senderId);
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
-        if (pc.pendingCandidates) {
-          for (const cand of pc.pendingCandidates) {
+
+        // Drain any pending ICE candidates queued before remoteDescription was set
+        const pending = state.pendingIceCandidates.get(senderId) || [];
+        for (const cand of pending) {
+          try {
             await pc.addIceCandidate(new RTCIceCandidate(cand)).catch(() => {});
-          }
-          pc.pendingCandidates = [];
+          } catch (e) {}
         }
+        state.pendingIceCandidates.delete(senderId);
+
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         s.emit('webrtc-answer', { targetId: senderId, answer });
@@ -525,12 +542,16 @@
       if (pc) {
         try {
           await pc.setRemoteDescription(new RTCSessionDescription(answer));
-          if (pc.pendingCandidates) {
-            for (const cand of pc.pendingCandidates) {
+
+          // Drain any pending ICE candidates queued before remoteDescription was set
+          const pending = state.pendingIceCandidates.get(senderId) || [];
+          for (const cand of pending) {
+            try {
               await pc.addIceCandidate(new RTCIceCandidate(cand)).catch(() => {});
-            }
-            pc.pendingCandidates = [];
+            } catch (e) {}
           }
+          state.pendingIceCandidates.delete(senderId);
+
           updateParticipantTileState(senderId);
         } catch (err) {
           console.error('[WebRTC] Answer error:', err);
@@ -539,16 +560,17 @@
     });
 
     s.on('webrtc-ice', async ({ senderId, candidate }) => {
+      if (!candidate) return;
       const pc = state.peerConnections.get(senderId);
-      if (pc && candidate) {
+      if (pc && pc.remoteDescription && pc.remoteDescription.type) {
         try {
-          if (pc.remoteDescription) {
-            await pc.addIceCandidate(new RTCIceCandidate(candidate));
-          } else {
-            pc.pendingCandidates = pc.pendingCandidates || [];
-            pc.pendingCandidates.push(candidate);
-          }
+          await pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
         } catch (e) {}
+      } else {
+        if (!state.pendingIceCandidates.has(senderId)) {
+          state.pendingIceCandidates.set(senderId, []);
+        }
+        state.pendingIceCandidates.get(senderId).push(candidate);
       }
     });
 
@@ -652,11 +674,13 @@
 
   function getRemoteVideoStream(targetId) {
     if (state.remoteStreams.has(targetId)) {
-      return state.remoteStreams.get(targetId);
+      const ms = state.remoteStreams.get(targetId);
+      if (ms && ms.getVideoTracks().length > 0) return ms;
     }
     const pc = state.peerConnections.get(targetId);
     if (pc) {
-      const videoReceiver = pc.getReceivers().find(r => r.track && r.track.kind === 'video');
+      const receivers = pc.getReceivers ? pc.getReceivers() : [];
+      const videoReceiver = receivers.find(r => r.track && r.track.kind === 'video' && r.track.readyState !== 'ended');
       if (videoReceiver && videoReceiver.track) {
         const ms = new MediaStream([videoReceiver.track]);
         state.remoteStreams.set(targetId, ms);
@@ -666,6 +690,50 @@
     return null;
   }
 
+  function attachRemoteVideo(targetId, stream) {
+    if (!stream) return;
+    state.remoteStreams.set(targetId, stream);
+
+    const video = document.getElementById(`participant-video-${targetId}`);
+    const avatar = document.getElementById(`participant-avatar-${targetId}`);
+
+    if (video) {
+      video.muted = true;
+      video.defaultMuted = true;
+      video.playsInline = true;
+      video.autoplay = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      video.setAttribute('autoplay', '');
+
+      if (video.srcObject !== stream) {
+        video.srcObject = stream;
+      }
+
+      video.classList.remove('hidden');
+      if (avatar) avatar.classList.add('hidden');
+
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => {
+          console.warn('[WebRTC] Autoplay waiting on user touch:', err);
+        });
+      }
+    }
+  }
+
+  function detachRemoteVideo(targetId) {
+    state.remoteStreams.delete(targetId);
+    const video = document.getElementById(`participant-video-${targetId}`);
+    const avatar = document.getElementById(`participant-avatar-${targetId}`);
+    if (video) {
+      video.classList.add('hidden');
+      video.srcObject = null;
+    }
+    if (avatar) avatar.classList.remove('hidden');
+  }
+
   function getOrCreatePeerConnection(targetId) {
     if (state.peerConnections.has(targetId)) {
       return state.peerConnections.get(targetId);
@@ -673,7 +741,6 @@
 
     const pc = new RTCPeerConnection(ICE_SERVERS);
     state.peerConnections.set(targetId, pc);
-    pc.pendingCandidates = [];
 
     // Add audio track or audio transceiver
     if (state.localAudioTrack) {
@@ -696,6 +763,20 @@
       }
     };
 
+    pc.oniceconnectionstatechange = () => {
+      console.log(`[WebRTC] ICE state with ${targetId}:`, pc.iceConnectionState);
+      if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+        updateParticipantTileState(targetId);
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      console.log(`[WebRTC] Connection state with ${targetId}:`, pc.connectionState);
+      if (pc.connectionState === 'connected') {
+        updateParticipantTileState(targetId);
+      }
+    };
+
     // Remote Track Arrival (Fixes Remote Video Stream and Black Screen)
     pc.ontrack = (e) => {
       console.log(`[WebRTC] Received ${e.track.kind} track from ${targetId}`);
@@ -709,24 +790,22 @@
           a.setAttribute('playsinline', '');
           document.body.appendChild(a);
         }
-        a.srcObject = new MediaStream([e.track]);
+        a.srcObject = (e.streams && e.streams[0]) ? e.streams[0] : new MediaStream([e.track]);
         a.play().catch(() => {
-          el.unmuteMovieBanner.classList.remove('hidden');
+          el.unmuteMovieBanner?.classList.remove('hidden');
         });
       } else if (e.track.kind === 'video') {
-        let videoStream = state.remoteStreams.get(targetId);
-        if (!videoStream) {
-          videoStream = new MediaStream([e.track]);
-          state.remoteStreams.set(targetId, videoStream);
-        } else if (!videoStream.getTracks().includes(e.track)) {
-          videoStream.addTrack(e.track);
-        }
-
-        updateParticipantTileState(targetId);
+        const stream = (e.streams && e.streams[0]) ? e.streams[0] : new MediaStream([e.track]);
+        state.remoteStreams.set(targetId, stream);
+        attachRemoteVideo(targetId, stream);
 
         e.track.onunmute = () => {
           console.log(`[WebRTC] Video unmuted from ${targetId}`);
-          updateParticipantTileState(targetId);
+          attachRemoteVideo(targetId, stream);
+        };
+        e.track.onended = () => {
+          console.log(`[WebRTC] Video ended from ${targetId}`);
+          detachRemoteVideo(targetId);
         };
       }
     };
@@ -754,6 +833,7 @@
       state.peerConnections.delete(targetId);
     }
     state.remoteStreams.delete(targetId);
+    state.pendingIceCandidates.delete(targetId);
     const a = document.getElementById(`remote-audio-${targetId}`);
     if (a) a.remove();
   }
@@ -790,9 +870,12 @@
         const selfAvatar = document.getElementById(`participant-avatar-${state.selfId}`);
         if (selfVideo) {
           selfVideo.muted = true;
+          selfVideo.defaultMuted = true;
           selfVideo.playsInline = true;
+          selfVideo.setAttribute('muted', '');
           selfVideo.setAttribute('playsinline', '');
           selfVideo.setAttribute('webkit-playsinline', '');
+          selfVideo.setAttribute('autoplay', '');
           selfVideo.srcObject = new MediaStream([videoTrack]);
           selfVideo.classList.remove('hidden');
           if (selfAvatar) selfAvatar.classList.add('hidden');
@@ -803,7 +886,7 @@
         for (const [targetId, pc] of state.peerConnections.entries()) {
           try {
             const transceivers = pc.getTransceivers ? pc.getTransceivers() : [];
-            let videoTransceiver = transceivers.find(t => t.receiver && t.receiver.track && t.receiver.track.kind === 'video');
+            let videoTransceiver = transceivers.find(t => (t.receiver?.track?.kind === 'video') || (t.sender?.track?.kind === 'video'));
 
             if (videoTransceiver && videoTransceiver.sender) {
               await videoTransceiver.sender.replaceTrack(videoTrack);
@@ -848,7 +931,7 @@
       for (const [targetId, pc] of state.peerConnections.entries()) {
         try {
           const transceivers = pc.getTransceivers ? pc.getTransceivers() : [];
-          const videoTransceiver = transceivers.find(t => t.receiver && t.receiver.track && t.receiver.track.kind === 'video');
+          let videoTransceiver = transceivers.find(t => (t.receiver?.track?.kind === 'video') || (t.sender?.track?.kind === 'video'));
           if (videoTransceiver && videoTransceiver.sender) {
             await videoTransceiver.sender.replaceTrack(null);
           } else {
@@ -964,9 +1047,12 @@
     video.id = `participant-video-${member.id}`;
     video.autoplay = true;
     video.playsInline = true;
-    video.muted = true; // Always muted: audio transmits through dedicated <audio> tag
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute('muted', '');
     video.setAttribute('playsinline', '');
     video.setAttribute('webkit-playsinline', '');
+    video.setAttribute('autoplay', '');
 
     // Bottom name tag with mic icon (Image 1)
     const bottomBadge = document.createElement('div');
@@ -994,20 +1080,15 @@
     tile.appendChild(bottomBadge);
 
     // Reattach active video feed (local or remote)
-    if (member.isCamOn) {
-      if (isSelf && state.localVideoTrack) {
-        video.srcObject = new MediaStream([state.localVideoTrack]);
-        video.classList.remove('hidden');
-        avatar.classList.add('hidden');
-        video.play().catch(() => {});
-      } else {
-        const stream = getRemoteVideoStream(member.id);
-        if (stream) {
-          video.srcObject = stream;
-          video.classList.remove('hidden');
-          avatar.classList.add('hidden');
-          video.play().catch(() => {});
-        }
+    if (isSelf && state.localVideoTrack && state.isCamOn) {
+      video.srcObject = new MediaStream([state.localVideoTrack]);
+      video.classList.remove('hidden');
+      avatar.classList.add('hidden');
+      video.play().catch(() => {});
+    } else if (!isSelf) {
+      const stream = getRemoteVideoStream(member.id);
+      if (stream && (member.isCamOn || stream.getVideoTracks().some(t => t.readyState === 'live'))) {
+        attachRemoteVideo(member.id, stream);
       }
     }
 
@@ -1023,31 +1104,36 @@
       mic.classList.toggle('muted', member.isMuted);
     }
 
-    const video = document.getElementById(`participant-video-${id}`);
-    const avatar = document.getElementById(`participant-avatar-${id}`);
-
-    if (video && avatar) {
-      if (member.isCamOn) {
-        const stream = (id === state.selfId)
-          ? (state.localVideoTrack ? new MediaStream([state.localVideoTrack]) : null)
-          : getRemoteVideoStream(id);
-
-        video.muted = true;
-        video.playsInline = true;
-        video.setAttribute('playsinline', '');
-        video.setAttribute('webkit-playsinline', '');
-
-        if (stream) {
-          if (video.srcObject !== stream) {
-            video.srcObject = stream;
+    if (id === state.selfId) {
+      const selfVideo = document.getElementById(`participant-video-${id}`);
+      const selfAvatar = document.getElementById(`participant-avatar-${id}`);
+      if (selfVideo && selfAvatar) {
+        if (state.isCamOn && state.localVideoTrack) {
+          selfVideo.muted = true;
+          selfVideo.defaultMuted = true;
+          selfVideo.playsInline = true;
+          selfVideo.setAttribute('muted', '');
+          selfVideo.setAttribute('playsinline', '');
+          selfVideo.setAttribute('webkit-playsinline', '');
+          selfVideo.setAttribute('autoplay', '');
+          if (!selfVideo.srcObject || selfVideo.srcObject.getVideoTracks()[0] !== state.localVideoTrack) {
+            selfVideo.srcObject = new MediaStream([state.localVideoTrack]);
           }
-          video.classList.remove('hidden');
-          avatar.classList.add('hidden');
-          video.play().catch(() => {});
+          selfVideo.classList.remove('hidden');
+          selfAvatar.classList.add('hidden');
+          selfVideo.play().catch(() => {});
+        } else {
+          selfVideo.classList.add('hidden');
+          selfAvatar.classList.remove('hidden');
+          selfVideo.srcObject = null;
         }
-      } else {
-        video.classList.add('hidden');
-        avatar.classList.remove('hidden');
+      }
+    } else {
+      const stream = getRemoteVideoStream(id);
+      if (stream && (member.isCamOn || stream.getVideoTracks().some(t => t.readyState === 'live'))) {
+        attachRemoteVideo(id, stream);
+      } else if (!member.isCamOn) {
+        detachRemoteVideo(id);
       }
     }
   }
@@ -2317,12 +2403,17 @@
       }
     });
 
-    // Unmute Banner & Audio Unlock
+    // Unmute Banner & Audio/Video Unlock
     const unlockAudio = () => {
       if (state.audioContext && state.audioContext.state === 'suspended') {
         state.audioContext.resume().catch(() => {});
       }
       document.querySelectorAll('audio').forEach(a => a.play().catch(() => {}));
+      document.querySelectorAll('.tile-video').forEach(v => {
+        if (v.srcObject && v.paused) {
+          v.play().catch(() => {});
+        }
+      });
       if (el.moviePlayer) {
         el.moviePlayer.muted = false;
         if (el.moviePlayer.paused && state.currentMovie) {
