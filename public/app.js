@@ -4504,5 +4504,12 @@
     initSubtitleDragAndDrop();
   }
 
+  // Register PWA Service Worker for mobile standalone display (removes address bar when installed)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+
   window.addEventListener('DOMContentLoaded', init);
 })();
