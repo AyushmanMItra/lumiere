@@ -753,6 +753,21 @@ io.on('connection', (socket) => {
     io.in(roomId).emit('chat-message', msg);
   });
 
+  // 5b. Live Cinema & Chat Reactions
+  socket.on('send-reaction', ({ roomId, emoji, username }) => {
+    const room = rooms.get(roomId);
+    if (!room || !room.members.has(socket.id)) return;
+
+    const member = room.members.get(socket.id);
+    const senderName = username || (member ? member.username : 'Viewer');
+
+    io.in(roomId).emit('reaction-burst', {
+      emoji: emoji || '❤️',
+      username: senderName,
+      senderId: socket.id
+    });
+  });
+
   // 6. Handle Disconnect
   socket.on('disconnect', () => {
     if (!currentRoomId) return;

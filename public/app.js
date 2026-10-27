@@ -162,6 +162,14 @@
     chatWelcomeHero: document.getElementById('chatWelcomeHero'),
     chatForm: document.getElementById('chatForm'),
     chatInput: document.getElementById('chatInput'),
+    chatEmojiBtn: document.getElementById('chatEmojiBtn'),
+    chatReactionBtn: document.getElementById('chatReactionBtn'),
+    chatEmojiPicker: document.getElementById('chatEmojiPicker'),
+    chatReactionsTray: document.getElementById('chatReactionsTray'),
+    emojiSearchInput: document.getElementById('emojiSearchInput'),
+    emojiPickerGrid: document.getElementById('emojiPickerGrid'),
+    reactionBurstContainer: document.getElementById('reactionBurstContainer'),
+    chatReactionBurstContainer: document.getElementById('chatReactionBurstContainer'),
 
     movieModal: document.getElementById('movieModal'),
     closeMovieModalBtn: document.getElementById('closeMovieModalBtn'),
@@ -552,6 +560,11 @@
         el.chatBadge.innerText = state.unreadMessages;
         el.chatBadge.classList.remove('hidden');
       }
+    });
+
+    // Live Floating Reaction Burst
+    s.on('reaction-burst', ({ emoji, username }) => {
+      spawnReactionBurst(emoji, username);
     });
   }
 
@@ -1499,6 +1512,325 @@
   }
 
   // ==========================================================================
+  // EMOJI PICKER & LIVE REACTIONS ENGINE
+  // ==========================================================================
+
+  const EMOJI_CATEGORIES = {
+    cinema: {
+      title: 'Cinema & Vibes',
+      items: [
+        { e: '🍿', tags: 'popcorn movie cinema snack' },
+        { e: '🎬', tags: 'clapper cinema movie action' },
+        { e: '🎥', tags: 'movie camera film recording' },
+        { e: '🎞️', tags: 'film frames movie projector' },
+        { e: '🎟️', tags: 'admission ticket cinema pass' },
+        { e: '📽️', tags: 'film projector theater' },
+        { e: '📺', tags: 'television tv screen' },
+        { e: '🍕', tags: 'pizza slice food snack cheese' },
+        { e: '🍔', tags: 'hamburger burger fastfood' },
+        { e: '🍟', tags: 'fries french fries snack' },
+        { e: '🌭', tags: 'hotdog sausage snack' },
+        { e: '🥤', tags: 'soda cup drink beverage cola' },
+        { e: '🍻', tags: 'beer mugs cheers party drinks' },
+        { e: '🥂', tags: 'champagne glasses toast cheers' },
+        { e: '🍫', tags: 'chocolate bar candy sweet' },
+        { e: '🛋️', tags: 'couch sofa relax watching' },
+        { e: '🎭', tags: 'theater masks drama arts' },
+        { e: '🎧', tags: 'headphones audio sound music' },
+        { e: '🔊', tags: 'speaker loud volume audio' },
+        { e: '🕶️', tags: 'sunglasses cool shades 3d' },
+        { e: '🍪', tags: 'cookie sweet snack biscuit' }
+      ]
+    },
+    popular: {
+      title: 'Popular Reactions',
+      items: [
+        { e: '😂', tags: 'laughing lol tears haha funny' },
+        { e: '🤣', tags: 'rofl rolling on floor laugh' },
+        { e: '😭', tags: 'crying tears sad sob' },
+        { e: '💀', tags: 'skull dead lol dying' },
+        { e: '🥹', tags: 'emotional holding back tears touched' },
+        { e: '🥺', tags: 'pleading eyes cute please puppy' },
+        { e: '🤩', tags: 'starstruck amazed excited wow' },
+        { e: '😎', tags: 'cool sunglasses chill boss' },
+        { e: '🥳', tags: 'party face celebrating woo' },
+        { e: '🤯', tags: 'exploding head mind blown shock' },
+        { e: '🫠', tags: 'melting face warm awkward' },
+        { e: '🤠', tags: 'cowboy hat smiley' },
+        { e: '😈', tags: 'smiling devil cheeky mischievous' },
+        { e: '😇', tags: 'angel innocent halo' },
+        { e: '😜', tags: 'winking eye tongue out goofy' },
+        { e: '🤤', tags: 'drooling hungry delicious yummy' },
+        { e: '😱', tags: 'screaming scared shocked fear' },
+        { e: '🥱', tags: 'yawning tired sleepy bored' },
+        { e: '😴', tags: 'sleeping face zzz bed' },
+        { e: '🥶', tags: 'cold freezing chilled icy' },
+        { e: '🥵', tags: 'hot sweating overwhelmed' }
+      ]
+    },
+    hype: {
+      title: 'Hype & Love',
+      items: [
+        { e: '🔥', tags: 'fire flame lit hot hype' },
+        { e: '⚡', tags: 'lightning bolt zap energy speed' },
+        { e: '💯', tags: 'hundred 100 points perfect score' },
+        { e: '🚀', tags: 'rocket ship blastoff launch moon hype' },
+        { e: '✨', tags: 'sparkles sparkle stars magic' },
+        { e: '💥', tags: 'boom collision explosion bang' },
+        { e: '🎉', tags: 'tada party popper celebration' },
+        { e: '🎊', tags: 'confetti ball festival party' },
+        { e: '🏆', tags: 'trophy prize winner champion' },
+        { e: '💖', tags: 'sparkling heart love romance' },
+        { e: '❤️', tags: 'red heart love like romance' },
+        { e: '🖤', tags: 'black heart dark aesthetic' },
+        { e: '🤍', tags: 'white heart peace pure' },
+        { e: '👑', tags: 'crown king queen royal goat' },
+        { e: '🌟', tags: 'glowing star night shine' },
+        { e: '💫', tags: 'dizzy star shooting magic' },
+        { e: '🎯', tags: 'bullseye direct hit target' },
+        { e: '💣', tags: 'bomb explosive lit boom' }
+      ]
+    },
+    gestures: {
+      title: 'Claps & Gestures',
+      items: [
+        { e: '👏', tags: 'clapping hands applause bravo' },
+        { e: '🙌', tags: 'raising hands praise celebration' },
+        { e: '👍', tags: 'thumbs up like yes agree good' },
+        { e: '👎', tags: 'thumbs down dislike bad no' },
+        { e: '👊', tags: 'fist bump bro punch' },
+        { e: '✌️', tags: 'peace sign victory fingers' },
+        { e: '🤞', tags: 'crossed fingers hope luck' },
+        { e: '🫡', tags: 'saluting face respect yes sir' },
+        { e: '🤝', tags: 'handshake deal agreement' },
+        { e: '🫶', tags: 'heart hands love care' },
+        { e: '🤙', tags: 'call me shaka hang loose' },
+        { e: '👀', tags: 'eyes looking side-eye tea drama' },
+        { e: '👁️', tags: 'single eye watch see' },
+        { e: '🧠', tags: 'brain smart genius 200iq' },
+        { e: '🦾', tags: 'mechanical robot arm flex strength' },
+        { e: '🙏', tags: 'folded hands pray please thanks' }
+      ]
+    }
+  };
+
+  let activeEmojiCategory = 'cinema';
+
+  function initEmojiPicker() {
+    renderEmojiGrid();
+
+    // Tab buttons click
+    if (el.chatEmojiPicker) {
+      el.chatEmojiPicker.querySelectorAll('.emoji-tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          el.chatEmojiPicker.querySelectorAll('.emoji-tab-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeEmojiCategory = btn.dataset.category || 'cinema';
+          if (el.emojiSearchInput) el.emojiSearchInput.value = '';
+          renderEmojiGrid();
+        });
+      });
+    }
+
+    // Search input
+    if (el.emojiSearchInput) {
+      el.emojiSearchInput.addEventListener('input', () => {
+        const query = el.emojiSearchInput.value.trim().toLowerCase();
+        renderEmojiGrid(query);
+      });
+    }
+
+    // Toggle emoji picker on button click
+    if (el.chatEmojiBtn) {
+      el.chatEmojiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleEmojiPicker();
+      });
+    }
+
+    // Toggle reaction tray on button click
+    if (el.chatReactionBtn) {
+      el.chatReactionBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleReactionsTray();
+      });
+    }
+
+    // Reaction items in tray
+    if (el.chatReactionsTray) {
+      el.chatReactionsTray.querySelectorAll('.reaction-item-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const emoji = btn.dataset.emoji || '❤️';
+          sendLiveReaction(emoji);
+        });
+      });
+    }
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      if (el.chatEmojiPicker && !el.chatEmojiPicker.contains(e.target) && e.target !== el.chatEmojiBtn && !el.chatEmojiBtn?.contains(e.target)) {
+        closeEmojiPicker();
+      }
+      if (el.chatReactionsTray && !el.chatReactionsTray.contains(e.target) && e.target !== el.chatReactionBtn && !el.chatReactionBtn?.contains(e.target)) {
+        closeReactionsTray();
+      }
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeEmojiPicker();
+        closeReactionsTray();
+      }
+    });
+  }
+
+  function renderEmojiGrid(searchQuery = '') {
+    if (!el.emojiPickerGrid) return;
+    el.emojiPickerGrid.innerHTML = '';
+
+    if (searchQuery) {
+      // Search all categories
+      let matches = [];
+      Object.keys(EMOJI_CATEGORIES).forEach(catKey => {
+        const cat = EMOJI_CATEGORIES[catKey];
+        cat.items.forEach(item => {
+          if (item.tags.includes(searchQuery) || item.e.includes(searchQuery)) {
+            matches.push(item);
+          }
+        });
+      });
+
+      if (matches.length === 0) {
+        el.emojiPickerGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); font-size: 12px; padding: 24px 0;">No emojis found</div>';
+        return;
+      }
+
+      matches.forEach(item => {
+        const btn = createEmojiButton(item.e);
+        el.emojiPickerGrid.appendChild(btn);
+      });
+    } else {
+      // Render active category
+      const cat = EMOJI_CATEGORIES[activeEmojiCategory] || EMOJI_CATEGORIES.cinema;
+      cat.items.forEach(item => {
+        const btn = createEmojiButton(item.e);
+        el.emojiPickerGrid.appendChild(btn);
+      });
+    }
+  }
+
+  function createEmojiButton(emoji) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'emoji-item-btn';
+    btn.innerText = emoji;
+    btn.title = emoji;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      insertEmojiIntoChat(emoji);
+    });
+    return btn;
+  }
+
+  function insertEmojiIntoChat(emoji) {
+    if (!el.chatInput) return;
+    const input = el.chatInput;
+    const start = input.selectionStart != null ? input.selectionStart : input.value.length;
+    const end = input.selectionEnd != null ? input.selectionEnd : input.value.length;
+    const val = input.value;
+    input.value = val.substring(0, start) + emoji + val.substring(end);
+    const newPos = start + emoji.length;
+    input.selectionStart = input.selectionEnd = newPos;
+    input.focus();
+  }
+
+  function toggleEmojiPicker() {
+    if (!el.chatEmojiPicker) return;
+    const isHidden = el.chatEmojiPicker.classList.contains('hidden');
+    closeReactionsTray();
+    if (isHidden) {
+      el.chatEmojiPicker.classList.remove('hidden');
+      el.chatEmojiBtn?.classList.add('active');
+      if (el.emojiSearchInput) el.emojiSearchInput.focus();
+    } else {
+      closeEmojiPicker();
+    }
+  }
+
+  function closeEmojiPicker() {
+    if (el.chatEmojiPicker) el.chatEmojiPicker.classList.add('hidden');
+    el.chatEmojiBtn?.classList.remove('active');
+  }
+
+  function toggleReactionsTray() {
+    if (!el.chatReactionsTray) return;
+    const isHidden = el.chatReactionsTray.classList.contains('hidden');
+    closeEmojiPicker();
+    if (isHidden) {
+      el.chatReactionsTray.classList.remove('hidden');
+      el.chatReactionBtn?.classList.add('active');
+    } else {
+      closeReactionsTray();
+    }
+  }
+
+  function closeReactionsTray() {
+    if (el.chatReactionsTray) el.chatReactionsTray.classList.add('hidden');
+    el.chatReactionBtn?.classList.remove('active');
+  }
+
+  function sendLiveReaction(emoji) {
+    if (!state.socket || !state.roomId) return;
+    const username = state.username || 'Viewer';
+    state.socket.emit('send-reaction', {
+      roomId: state.roomId,
+      emoji,
+      username
+    });
+  }
+
+  function spawnReactionBurst(emoji, username) {
+    const containers = [el.reactionBurstContainer, el.chatReactionBurstContainer].filter(Boolean);
+    if (!containers.length) return;
+
+    containers.forEach((container, cIdx) => {
+      // Spawn a cluster of 5 animated emojis
+      const count = cIdx === 0 ? 5 : 3;
+      for (let i = 0; i < count; i++) {
+        setTimeout(() => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'floating-reaction';
+
+          const xMid = (Math.random() - 0.5) * 60;
+          const xEnd = (Math.random() - 0.5) * 90;
+          const rotMid = (Math.random() - 0.5) * 30;
+          const rotEnd = (Math.random() - 0.5) * 50;
+
+          wrapper.style.setProperty('--x-mid', `${xMid}px`);
+          wrapper.style.setProperty('--x-end', `${xEnd}px`);
+          wrapper.style.setProperty('--rot-mid', `${rotMid}deg`);
+          wrapper.style.setProperty('--rot-end', `${rotEnd}deg`);
+
+          let html = `<span class="floating-reaction-emoji">${emoji}</span>`;
+          if (i === 0 && username && cIdx === 0) {
+            html += `<span class="floating-reaction-user">${escapeHtml(username)}</span>`;
+          }
+          wrapper.innerHTML = html;
+
+          container.appendChild(wrapper);
+
+          setTimeout(() => {
+            wrapper.remove();
+          }, 2400);
+        }, i * 90);
+      }
+    });
+  }
+
+  // ==========================================================================
   // MOVIE LIBRARY
   // ==========================================================================
 
@@ -1805,6 +2137,7 @@
         sendChatMessage(e);
       }
     });
+    initEmojiPicker();
 
     // Mic & Camera
     el.toggleMicBtn.onclick = toggleMicrophone;

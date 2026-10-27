@@ -1227,12 +1227,6 @@ body {
   color: var(--text-muted);
 }
 
-.edit-channel-btn {
-  margin-top: 6px;
-  border-radius: var(--radius-sm);
-  background-color: var(--bg-tertiary);
-}
-
 /* Chat Message Item */
 .chat-msg {
   display: flex;
@@ -1283,9 +1277,13 @@ body {
   line-height: 1.4;
 }
 
-/* Bottom Chat Input Bar (Matching Image 3) */
-.chat-compose-bar {
+/* Bottom Chat Wrapper & Input Bar */
+.chat-bottom-wrapper {
+  position: relative;
   flex-shrink: 0;
+}
+
+.chat-compose-bar {
   padding: 0 16px 16px;
 }
 
@@ -1296,6 +1294,13 @@ body {
   align-items: center;
   padding: 4px 12px;
   gap: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  border: 1px solid transparent;
+}
+
+.chat-pill-input-box:focus-within {
+  border-color: rgba(229, 169, 60, 0.4);
+  box-shadow: 0 0 10px rgba(229, 169, 60, 0.15);
 }
 
 .chat-pill-input-box input {
@@ -1307,6 +1312,7 @@ body {
   font-size: 14px;
   padding: 8px 0;
 }
+
 .chat-pill-input-box input::placeholder {
   color: var(--text-muted);
 }
@@ -1319,16 +1325,328 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: 6px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s, transform 0.15s;
 }
+
 .chat-action-icon-btn:hover {
   color: var(--text-white);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.chat-action-icon-btn.active {
+  color: #e5a93c;
+  background: rgba(229, 169, 60, 0.18);
+}
+
+.chat-action-icon-btn.chat-reaction-trigger-btn:hover {
+  color: #ff5b79;
 }
 
 .chat-input-right-icons {
   display: flex;
   align-items: center;
+  gap: 4px;
+}
+
+/* ==========================================================================
+   EMOJI PICKER POPOVER
+   ========================================================================== */
+.chat-emoji-picker {
+  position: absolute;
+  bottom: calc(100% - 6px);
+  right: 16px;
+  width: 320px;
+  max-width: calc(100% - 32px);
+  height: 340px;
+  background: rgba(20, 21, 26, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 15px rgba(229, 169, 60, 0.1);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow: hidden;
+  animation: pickerFadeUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pickerFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.emoji-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.emoji-picker-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #e5a93c;
+}
+
+.emoji-picker-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.emoji-tab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  font-size: 15px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.emoji-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: scale(1.12);
+}
+
+.emoji-tab-btn.active {
+  background: rgba(229, 169, 60, 0.2);
+  border-color: rgba(229, 169, 60, 0.45);
+}
+
+.emoji-picker-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 12px 6px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+}
+
+.emoji-picker-search-bar svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.emoji-picker-search-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 12px;
+  color: #fff;
+}
+
+.emoji-picker-search-bar input::placeholder {
+  color: var(--text-muted);
+}
+
+.emoji-picker-grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  align-content: flex-start;
+}
+
+.emoji-picker-grid::-webkit-scrollbar {
+  width: 6px;
+}
+.emoji-picker-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+.emoji-picker-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.emoji-item-btn {
+  font-size: 20px;
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.12s, background 0.12s;
+  user-select: none;
+}
+
+.emoji-item-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(1.22);
+}
+
+.emoji-item-btn:active {
+  transform: scale(0.92);
+}
+
+.emoji-category-header {
+  grid-column: 1 / -1;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 6px 2px 2px;
+}
+
+/* ==========================================================================
+   QUICK REACTIONS TRAY
+   ========================================================================== */
+.chat-reactions-tray {
+  position: absolute;
+  bottom: calc(100% - 6px);
+  right: 16px;
+  display: flex;
+  align-items: center;
   gap: 6px;
+  background: rgba(20, 21, 26, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(229, 169, 60, 0.4);
+  border-radius: 40px;
+  padding: 6px 12px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.7), 0 0 18px rgba(229, 169, 60, 0.2);
+  z-index: 100;
+  animation: pickerFadeUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reactions-tray-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #e5a93c;
+  padding-right: 6px;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  user-select: none;
+}
+
+.reaction-tray-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.reaction-item-btn {
+  font-size: 22px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.18s;
+  user-select: none;
+}
+
+.reaction-item-btn:hover {
+  transform: scale(1.35) translateY(-3px);
+  background: rgba(255, 255, 255, 0.12);
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
+}
+
+.reaction-item-btn:active {
+  transform: scale(0.92);
+}
+
+/* ==========================================================================
+   FLOATING SCREEN & CHAT REACTION BURSTS
+   ========================================================================== */
+.reaction-burst-container {
+  position: absolute;
+  bottom: 85px;
+  right: 28px;
+  width: 120px;
+  height: 380px;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 60;
+}
+
+.chat-reaction-burst-container {
+  position: absolute;
+  bottom: 75px;
+  right: 20px;
+  width: 90px;
+  height: 280px;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 60;
+}
+
+.floating-reaction {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: floatReactionBurst 2.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  user-select: none;
+}
+
+.floating-reaction-emoji {
+  font-size: 34px;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.8));
+}
+
+.floating-reaction-user {
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(16, 17, 21, 0.85);
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin-top: -2px;
+  white-space: nowrap;
+  border: 1px solid rgba(229, 169, 60, 0.45);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+@keyframes floatReactionBurst {
+  0% {
+    opacity: 0;
+    transform: translate3d(-50%, 15px, 0) scale(0.4) rotate(0deg);
+  }
+  14% {
+    opacity: 1;
+    transform: translate3d(calc(-50% + var(--x-mid, 0px)), -55px, 0) scale(1.3) rotate(var(--rot-mid, -6deg));
+  }
+  70% {
+    opacity: 0.95;
+    transform: translate3d(calc(-50% + var(--x-end, 12px)), -220px, 0) scale(1.05) rotate(var(--rot-end, 8deg));
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(calc(-50% + var(--x-end, 16px)), -330px, 0) scale(0.7) rotate(var(--rot-end, 14deg));
+  }
 }
 
 /* ==========================================================================
