@@ -696,7 +696,9 @@
   function getRemoteVideoStream(targetId) {
     if (state.remoteStreams.has(targetId)) {
       const ms = state.remoteStreams.get(targetId);
-      if (ms && ms.getVideoTracks().length > 0) return ms;
+      if (ms && ms.getVideoTracks().length > 0 && ms.getVideoTracks()[0].readyState !== 'ended') {
+        return ms;
+      }
     }
     const pc = state.peerConnections.get(targetId);
     if (pc) {
@@ -705,6 +707,19 @@
       if (videoReceiver && videoReceiver.track) {
         const ms = new MediaStream([videoReceiver.track]);
         state.remoteStreams.set(targetId, ms);
+
+        videoReceiver.track.onunmute = () => {
+          console.log(`[WebRTC] Receiver video track unmuted from ${targetId}`);
+          const m = state.members.get(targetId);
+          if (m && m.isCamOn) {
+            attachRemoteVideo(targetId, ms);
+          }
+        };
+        videoReceiver.track.onended = () => {
+          console.log(`[WebRTC] Receiver video track ended from ${targetId}`);
+          detachRemoteVideo(targetId);
+        };
+
         return ms;
       }
     }
@@ -751,7 +766,6 @@
   }
 
   function detachRemoteVideo(targetId) {
-    state.remoteStreams.delete(targetId);
     const video = document.getElementById(`participant-video-${targetId}`);
     const avatar = document.getElementById(`participant-avatar-${targetId}`);
     if (video) {
@@ -927,7 +941,7 @@
           selfVideo.play().catch(() => {});
         }
 
-        // Transmit video track to each connected peer AND send renegotiation offer
+        // Transmit video track to each connected peer
         for (const [targetId, pc] of state.peerConnections.entries()) {
           try {
             const transceivers = pc.getTransceivers ? pc.getTransceivers() : [];
@@ -935,20 +949,19 @@
 
             if (videoTransceiver && videoTransceiver.sender) {
               await videoTransceiver.sender.replaceTrack(videoTrack);
-              videoTransceiver.direction = 'sendrecv';
             } else {
               const videoSender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
               if (videoSender) {
                 await videoSender.replaceTrack(videoTrack);
               } else {
                 pc.addTrack(videoTrack, new MediaStream([videoTrack]));
+                if (pc.signalingState === 'stable') {
+                  const offer = await pc.createOffer();
+                  await pc.setLocalDescription(offer);
+                  state.socket.emit('webrtc-offer', { targetId, offer });
+                }
               }
             }
-
-            // Always renegotiate offer so remote peer sets up video decoder
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            state.socket.emit('webrtc-offer', { targetId, offer });
           } catch (e) {
             console.warn('[WebRTC] Error updating video track with ' + targetId, e);
           }
@@ -957,10 +970,17 @@
         el.toggleCameraBtn.classList.remove('pill-btn-off');
         el.camOnIcon.classList.remove('hidden');
         el.camOffIcon.classList.add('hidden');
+
+        if (state.socket) {
+          state.socket.emit('update-cam-status', { roomId: state.roomId, isCamOn: true });
+        }
       } catch (err) {
         console.error('Camera access failed:', err);
         showToast('Camera access denied or busy', 'error');
         state.isCamOn = false;
+        if (state.socket) {
+          state.socket.emit('update-cam-status', { roomId: state.roomId, isCamOn: false });
+        }
         return;
       }
     } else {
@@ -985,9 +1005,6 @@
               await videoSender.replaceTrack(null);
             }
           }
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          state.socket.emit('webrtc-offer', { targetId, offer });
         } catch (e) {}
       }
 
@@ -1005,10 +1022,10 @@
       el.toggleCameraBtn.classList.add('pill-btn-off');
       el.camOnIcon.classList.add('hidden');
       el.camOffIcon.classList.remove('hidden');
-    }
 
-    if (state.socket) {
-      state.socket.emit('update-cam-status', { roomId: state.roomId, isCamOn: state.isCamOn });
+      if (state.socket) {
+        state.socket.emit('update-cam-status', { roomId: state.roomId, isCamOn: false });
+      }
     }
   }
 
@@ -1136,7 +1153,7 @@
     } else if (!isSelf) {
       if (member.isCamOn) {
         const stream = getRemoteVideoStream(member.id);
-        if (stream && stream.getVideoTracks().some(t => t.readyState === 'live' && !t.muted)) {
+        if (stream) {
           attachRemoteVideo(member.id, stream);
         }
       } else {
@@ -1183,7 +1200,7 @@
     } else {
       if (member.isCamOn) {
         const stream = getRemoteVideoStream(id);
-        if (stream && stream.getVideoTracks().some(t => t.readyState === 'live' && !t.muted)) {
+        if (stream) {
           attachRemoteVideo(id, stream);
         }
       } else {
