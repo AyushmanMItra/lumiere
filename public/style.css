@@ -1816,6 +1816,46 @@ body {
   color: var(--text-muted);
 }
 
+.modal-now-playing-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(229, 169, 60, 0.12);
+  border: 1px solid rgba(229, 169, 60, 0.35);
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+}
+
+.modal-now-playing-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.modal-now-playing-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e5a93c;
+  box-shadow: 0 0 8px #e5a93c;
+  flex-shrink: 0;
+  animation: liveDotPulse 2s infinite ease-in-out;
+}
+
+.modal-now-playing-text {
+  font-size: 13px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.modal-now-playing-text strong {
+  color: #ffc86b;
+}
+
 .upload-drop-area {
   border: 2px dashed rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-md);

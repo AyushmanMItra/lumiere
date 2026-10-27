@@ -126,6 +126,7 @@
     timelineHoverTime: document.getElementById('timelineHoverTime'),
 
     playPauseBtn: document.getElementById('playPauseBtn'),
+    stopMovieBtn: document.getElementById('stopMovieBtn'),
     playIcon: document.getElementById('playIcon'),
     pauseIcon: document.getElementById('pauseIcon'),
     rewind10Btn: document.getElementById('rewind10Btn'),
@@ -190,6 +191,9 @@
     chatReactionBurstContainer: document.getElementById('chatReactionBurstContainer'),
 
     movieModal: document.getElementById('movieModal'),
+    modalNowPlayingBanner: document.getElementById('modalNowPlayingBanner'),
+    modalNowPlayingTitle: document.getElementById('modalNowPlayingTitle'),
+    modalStopMovieBtn: document.getElementById('modalStopMovieBtn'),
     closeMovieModalBtn: document.getElementById('closeMovieModalBtn'),
     refreshMoviesBtn: document.getElementById('refreshMoviesBtn'),
     folderHint: document.getElementById('folderHint'),
@@ -337,6 +341,8 @@
 
       if (data.currentMovie) {
         loadMovieInTheater(data.currentMovie, data.audioTrack, data.subtitleTrack, data.currentTime, data.isPlaying);
+      } else {
+        stopMovieInTheater();
       }
 
       // Connect WebRTC to every existing member in the room
@@ -406,6 +412,11 @@
       showToast(`Now Playing: ${movie.filename}`);
     });
 
+    s.on('sync-movie-stopped', () => {
+      stopMovieInTheater();
+      showToast('Movie stopped by Host');
+    });
+
     s.on('sync-tracks-changed', ({ audioTrack, subtitleTrack, currentTime }) => {
       applyTrackChanges(audioTrack, subtitleTrack, currentTime, !el.moviePlayer.paused);
       const trackObj = state.audioTracks.find(t => t.trackIndex === audioTrack);
@@ -465,7 +476,12 @@
     // Disrupted Member Auto-Resync Response
     s.on('room-synced', ({ currentMovie, audioTrack, subtitleTrack, currentTime, isPlaying }) => {
       if (state.isHost) return;
-      if (!currentMovie) return;
+      if (!currentMovie) {
+        if (state.currentMovie) {
+          stopMovieInTheater();
+        }
+        return;
+      }
 
       if (!state.currentMovie || state.currentMovie.filename !== currentMovie.filename) {
         loadMovieInTheater(currentMovie, audioTrack, subtitleTrack, currentTime, isPlaying);
@@ -697,6 +713,12 @@
 
   function attachRemoteVideo(targetId, stream) {
     if (!stream) return;
+    const member = state.members.get(targetId);
+    if (member && !member.isCamOn) {
+      detachRemoteVideo(targetId);
+      return;
+    }
+
     state.remoteStreams.set(targetId, stream);
 
     const video = document.getElementById(`participant-video-${targetId}`);
@@ -733,8 +755,11 @@
     const video = document.getElementById(`participant-video-${targetId}`);
     const avatar = document.getElementById(`participant-avatar-${targetId}`);
     if (video) {
-      video.classList.add('hidden');
+      video.pause();
       video.srcObject = null;
+      video.removeAttribute('src');
+      try { video.load(); } catch (e) {}
+      video.classList.add('hidden');
     }
     if (avatar) avatar.classList.remove('hidden');
   }
@@ -802,11 +827,26 @@
       } else if (e.track.kind === 'video') {
         const stream = (e.streams && e.streams[0]) ? e.streams[0] : new MediaStream([e.track]);
         state.remoteStreams.set(targetId, stream);
-        attachRemoteVideo(targetId, stream);
+        const member = state.members.get(targetId);
+        if (member && member.isCamOn) {
+          attachRemoteVideo(targetId, stream);
+        } else {
+          detachRemoteVideo(targetId);
+        }
 
         e.track.onunmute = () => {
           console.log(`[WebRTC] Video unmuted from ${targetId}`);
-          attachRemoteVideo(targetId, stream);
+          const m = state.members.get(targetId);
+          if (m && m.isCamOn) {
+            attachRemoteVideo(targetId, stream);
+          }
+        };
+        e.track.onmute = () => {
+          console.log(`[WebRTC] Video muted from ${targetId}`);
+          const m = state.members.get(targetId);
+          if (!m || !m.isCamOn) {
+            detachRemoteVideo(targetId);
+          }
         };
         e.track.onended = () => {
           console.log(`[WebRTC] Video ended from ${targetId}`);
@@ -954,8 +994,11 @@
       const selfVideo = document.getElementById(`participant-video-${state.selfId}`);
       const selfAvatar = document.getElementById(`participant-avatar-${state.selfId}`);
       if (selfVideo) {
-        selfVideo.classList.add('hidden');
+        selfVideo.pause();
         selfVideo.srcObject = null;
+        selfVideo.removeAttribute('src');
+        try { selfVideo.load(); } catch (e) {}
+        selfVideo.classList.add('hidden');
       }
       if (selfAvatar) selfAvatar.classList.remove('hidden');
 
@@ -1091,9 +1134,13 @@
       avatar.classList.add('hidden');
       video.play().catch(() => {});
     } else if (!isSelf) {
-      const stream = getRemoteVideoStream(member.id);
-      if (stream && (member.isCamOn || stream.getVideoTracks().some(t => t.readyState === 'live'))) {
-        attachRemoteVideo(member.id, stream);
+      if (member.isCamOn) {
+        const stream = getRemoteVideoStream(member.id);
+        if (stream && stream.getVideoTracks().some(t => t.readyState === 'live' && !t.muted)) {
+          attachRemoteVideo(member.id, stream);
+        }
+      } else {
+        detachRemoteVideo(member.id);
       }
     }
 
@@ -1134,10 +1181,12 @@
         }
       }
     } else {
-      const stream = getRemoteVideoStream(id);
-      if (stream && (member.isCamOn || stream.getVideoTracks().some(t => t.readyState === 'live'))) {
-        attachRemoteVideo(id, stream);
-      } else if (!member.isCamOn) {
+      if (member.isCamOn) {
+        const stream = getRemoteVideoStream(id);
+        if (stream && stream.getVideoTracks().some(t => t.readyState === 'live' && !t.muted)) {
+          attachRemoteVideo(id, stream);
+        }
+      } else {
         detachRemoteVideo(id);
       }
     }
@@ -1217,6 +1266,53 @@
     el.currentTimeDisplay.innerText = formatTime(clampedTime);
   }
 
+  function stopMovieInTheater() {
+    state.currentMovie = null;
+    state.streamStartTime = 0;
+    state.movieDuration = 0;
+    state.isLiveStream = false;
+
+    if (el.moviePlayer) {
+      el.moviePlayer.pause();
+      el.moviePlayer.removeAttribute('src');
+      el.moviePlayer.removeAttribute('data-stream-file');
+      el.moviePlayer.removeAttribute('data-stream-audio');
+      el.moviePlayer.removeAttribute('data-stream-src');
+      while (el.moviePlayer.firstChild) {
+        el.moviePlayer.removeChild(el.moviePlayer.firstChild);
+      }
+      try {
+        el.moviePlayer.load(); // Resets video element and erases frozen last frame
+      } catch (e) {}
+    }
+
+    if (el.stagePlaceholder) {
+      el.stagePlaceholder.classList.remove('hidden');
+    }
+
+    updatePlayPauseIcons(false);
+    if (el.timelineProgress) el.timelineProgress.style.width = '0%';
+    if (el.timelineThumb) el.timelineThumb.style.left = '0%';
+    if (el.timelineBuffered) el.timelineBuffered.style.width = '0%';
+    if (el.currentTimeDisplay) el.currentTimeDisplay.innerText = '00:00';
+    if (el.durationDisplay) el.durationDisplay.innerText = '00:00';
+    if (el.audioTrackSelect) el.audioTrackSelect.innerHTML = '<option value="0">Default</option>';
+    if (el.subtitleTrackSelect) el.subtitleTrackSelect.innerHTML = '<option value="off">Off</option>';
+    if (el.modalNowPlayingBanner) el.modalNowPlayingBanner.classList.add('hidden');
+  }
+
+  function hostStopMovie() {
+    if (!state.isHost) {
+      showToast('Only Host can stop the movie');
+      return;
+    }
+    stopMovieInTheater();
+    if (state.socket) {
+      state.socket.emit('host-stop-movie', { roomId: state.roomId });
+    }
+    showToast('Movie stopped');
+  }
+
   async function loadMovieInTheater(movie, audioTrack = 0, subtitleTrack = 'off', startTime = 0, autoPlay = false) {
     state.currentMovie = movie;
     state.selectedAudio = audioTrack;
@@ -1224,6 +1320,8 @@
     state.streamStartTime = startTime || 0;
 
     el.stagePlaceholder.classList.add('hidden');
+    if (el.modalNowPlayingBanner) el.modalNowPlayingBanner.classList.remove('hidden');
+    if (el.modalNowPlayingTitle) el.modalNowPlayingTitle.innerText = movie.filename;
 
     try {
       const probeRes = await fetch(`/api/probe?file=${encodeURIComponent(movie.filename)}`);
@@ -1541,6 +1639,15 @@
 
     player.addEventListener('playing', () => {
       clearTimeout(stallResyncTimer);
+    });
+
+    player.addEventListener('ended', () => {
+      console.log('[Player] Movie ended');
+      if (state.isHost) {
+        hostStopMovie();
+      } else {
+        stopMovieInTheater();
+      }
     });
   }
 
@@ -1935,6 +2042,15 @@
   }
 
   async function loadMoviesList() {
+    if (el.modalNowPlayingBanner) {
+      if (state.currentMovie) {
+        el.modalNowPlayingBanner.classList.remove('hidden');
+        if (el.modalNowPlayingTitle) el.modalNowPlayingTitle.innerText = state.currentMovie.filename;
+      } else {
+        el.modalNowPlayingBanner.classList.add('hidden');
+      }
+    }
+
     el.movieLibraryList.innerHTML = '<div class="loading-state">Scanning movies folder...</div>';
 
     try {
@@ -2452,6 +2568,11 @@
       } else if (key === 'f' || key === 'F') {
         e.preventDefault();
         toggleCinemaFullscreen();
+      } else if (key === 's' || key === 'S') {
+        if (state.isHost && state.currentMovie) {
+          e.preventDefault();
+          hostStopMovie();
+        }
       } else if (key === 'm' || key === 'M') {
         e.preventDefault();
         toggleMute();
@@ -2512,6 +2633,13 @@
 
     // Video Play/Pause & Movie Library
     el.playPauseBtn.onclick = handlePlayPauseToggle;
+    if (el.stopMovieBtn) el.stopMovieBtn.onclick = hostStopMovie;
+    if (el.modalStopMovieBtn) {
+      el.modalStopMovieBtn.onclick = () => {
+        hostStopMovie();
+        loadMoviesList();
+      };
+    }
     el.moviePlayer.onclick = handlePlayPauseToggle;
     el.stagePlaceholder.onclick = () => { if (state.isHost) openMovieModal(); };
     el.openMovieLibraryBtn.onclick = openMovieModal;

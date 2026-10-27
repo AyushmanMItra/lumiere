@@ -637,6 +637,19 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('host-stop-movie', ({ roomId }) => {
+    const room = rooms.get(roomId);
+    if (!room || room.hostId !== socket.id) return;
+
+    room.currentMovie = null;
+    room.currentTime = 0;
+    room.isPlaying = false;
+    room.lastUpdate = Date.now();
+
+    io.in(roomId).emit('sync-movie-stopped');
+    console.log(`[Room ${roomId}] Host stopped movie playback. Returning to stage placeholder.`);
+  });
+
   socket.on('host-set-tracks', ({ roomId, audioTrack, subtitleTrack, currentTime }) => {
     const room = rooms.get(roomId);
     if (!room || room.hostId !== socket.id) return;

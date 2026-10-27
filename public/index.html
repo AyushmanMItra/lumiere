@@ -533,6 +533,13 @@
                   </svg>
                 </button>
 
+                <!-- Stop Movie / Return to Stage Button -->
+                <button id="stopMovieBtn" class="hud-icon-btn host-only-control" title="Stop Movie (Eject to Stage)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="5" y="5" width="14" height="14" rx="2"></rect>
+                  </svg>
+                </button>
+
                 <!-- Rewind 10s -->
                 <button id="rewind10Btn" class="hud-icon-btn host-only-control" title="Rewind 10s">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -850,6 +857,15 @@
       <div class="modal-sub-row">
         <span class="folder-path-text" id="folderHint">Scanning movies/ folder...</span>
         <button id="refreshMoviesBtn" class="btn btn-secondary btn-sm">Refresh</button>
+      </div>
+
+      <!-- Currently Playing Banner with Stop Option -->
+      <div id="modalNowPlayingBanner" class="modal-now-playing-banner hidden">
+        <div class="modal-now-playing-info">
+          <span class="modal-now-playing-dot"></span>
+          <span class="modal-now-playing-text">Now Playing: <strong id="modalNowPlayingTitle">Movie</strong></span>
+        </div>
+        <button id="modalStopMovieBtn" class="btn btn-danger btn-sm">Stop Movie</button>
       </div>
 
       <div class="upload-drop-area" id="uploadDropzone">
