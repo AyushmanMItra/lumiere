@@ -362,18 +362,27 @@ app.get('/api/stream', (req, res) => {
 
   const command = ffmpeg(safePath);
 
+  const inputOptions = [
+    '-fflags +genpts+discardcorrupt'
+  ];
+
   if (startTime > 0) {
     command.seekInput(startTime);
   }
 
+  command.inputOptions(inputOptions);
+
   command
     .outputOptions([
-      '-map 0:v:0',
+      '-map 0:V:0',
       `-map 0:a:${audioIndex}?`,
       '-c:v copy',
       '-c:a aac',
       '-b:a 192k',
       '-ac 2',
+      '-ar 48000',
+      '-af aresample=async=1:first_pts=0',
+      '-avoid_negative_ts make_zero',
       '-movflags frag_keyframe+empty_moov+default_base_moof',
       '-f mp4'
     ])
