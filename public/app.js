@@ -31,6 +31,14 @@
     speakingInterval: null,
     isSpeaking: false,
 
+    // Screenshare & YouTube Watch Party
+    isSharingScreen: false,
+    screenStream: null,
+    screenSharer: null,
+    screenSenders: new Map(), // targetId -> RTCRtpSender
+    ytPlayer: null,
+    isYtSyncing: false,
+
     // UI & Inactivity timer (Matching Image 2: hide after 3 seconds)
     chatOpen: false,
     unreadMessages: 0,
@@ -174,6 +182,33 @@
     layoutToggleBtn: document.getElementById('layoutToggleBtn'),
     disconnectBtn: document.getElementById('disconnectBtn'),
     theaterFullscreenBtn: document.getElementById('theaterFullscreenBtn'),
+
+    moreOptionsGroup: document.getElementById('moreOptionsGroup'),
+    moreOptionsBtn: document.getElementById('moreOptionsBtn'),
+    moreOptionsMenu: document.getElementById('moreOptionsMenu'),
+    menuScreenshareBtn: document.getElementById('menuScreenshareBtn'),
+    menuScreenshareText: document.getElementById('menuScreenshareText'),
+    menuYouTubeBtn: document.getElementById('menuYouTubeBtn'),
+    menuUrlBtn: document.getElementById('menuUrlBtn'),
+
+    screenSharePlayer: document.getElementById('screenSharePlayer'),
+    youtubePlayerBox: document.getElementById('youtubePlayerBox'),
+    youtubeIframe: document.getElementById('youtubeIframe'),
+
+    youtubeModal: document.getElementById('youtubeModal'),
+    youtubeForm: document.getElementById('youtubeForm'),
+    youtubeUrlInput: document.getElementById('youtubeUrlInput'),
+    closeYouTubeBtn: document.getElementById('closeYouTubeBtn'),
+    cancelYouTubeBtn: document.getElementById('cancelYouTubeBtn'),
+    startYouTubeBtn: document.getElementById('startYouTubeBtn'),
+
+    urlModal: document.getElementById('urlModal'),
+    urlForm: document.getElementById('urlForm'),
+    directVideoUrlInput: document.getElementById('directVideoUrlInput'),
+    directVideoTitleInput: document.getElementById('directVideoTitleInput'),
+    closeUrlBtn: document.getElementById('closeUrlBtn'),
+    cancelUrlBtn: document.getElementById('cancelUrlBtn'),
+    startUrlStreamBtn: document.getElementById('startUrlStreamBtn'),
 
     chatSidebar: document.getElementById('chatSidebar'),
     closeChatBtn: document.getElementById('closeChatBtn'),
@@ -339,7 +374,13 @@
       updateHostStatusUI();
       renderParticipantStrip();
 
-      if (data.currentMovie) {
+      if (data.screenShare) {
+        state.screenSharer = data.screenShare;
+        if (el.screenSharePlayer) el.screenSharePlayer.classList.remove('hidden');
+        if (el.moviePlayer) el.moviePlayer.classList.add('hidden');
+        if (el.stagePlaceholder) el.stagePlaceholder.classList.add('hidden');
+        if (el.stageUsername) el.stageUsername.textContent = `${data.screenShare.sharerName}'s Screen`;
+      } else if (data.currentMovie) {
         loadMovieInTheater(data.currentMovie, data.audioTrack, data.subtitleTrack, data.currentTime, data.isPlaying);
       } else {
         stopMovieInTheater();
@@ -417,6 +458,84 @@
       showToast('Movie stopped by Host');
     });
 
+    // YouTube Socket Synchronization
+    s.on('sync-youtube-changed', ({ videoId, title, sharerName }) => {
+      loadYouTubeInTheater(videoId, 0, true);
+      showToast(`${sharerName} loaded YouTube: ${title}`);
+    });
+
+    s.on('sync-youtube-action', ({ action, time }) => {
+      if (!state.ytPlayer) return;
+      state.isYtSyncing = true;
+      if (typeof time === 'number' && !isNaN(time)) {
+        try {
+          const curTime = state.ytPlayer.getCurrentTime ? state.ytPlayer.getCurrentTime() : 0;
+          if (Math.abs(curTime - time) > 1.5) {
+            state.ytPlayer.seekTo(time, true);
+          }
+        } catch (e) {}
+      }
+      if (action === 'play') {
+        try { state.ytPlayer.playVideo(); } catch (e) {}
+        updatePlayPauseIcons(true);
+      } else if (action === 'pause') {
+        try { state.ytPlayer.pauseVideo(); } catch (e) {}
+        updatePlayPauseIcons(false);
+      }
+      setTimeout(() => { state.isYtSyncing = false; }, 700);
+    });
+
+    // Screen Share Socket Synchronization
+    s.on('sync-screen-share-started', (sharer) => {
+      state.screenSharer = sharer;
+      if (sharer.sharerId === state.selfId) {
+        return;
+      }
+      if (el.stageUsername) el.stageUsername.textContent = `${sharer.sharerName}'s Screen`;
+      if (el.moviePlayer) {
+        el.moviePlayer.pause();
+        el.moviePlayer.classList.add('hidden');
+      }
+      if (el.stagePlaceholder) el.stagePlaceholder.classList.add('hidden');
+      if (el.youtubePlayerBox) el.youtubePlayerBox.classList.add('hidden');
+      if (el.screenSharePlayer) el.screenSharePlayer.classList.remove('hidden');
+
+      // Check if peer connection already has the track
+      const pc = state.peerConnections.get(sharer.sharerId);
+      if (pc) {
+        const receivers = pc.getReceivers ? pc.getReceivers() : [];
+        const videoReceivers = receivers.filter(r => r.track && r.track.kind === 'video');
+        const screenReceiver = videoReceivers.find(r => r.track.id === sharer.trackId) || videoReceivers[videoReceivers.length - 1];
+        if (screenReceiver && screenReceiver.track) {
+          handleRemoteScreenTrack(new MediaStream([screenReceiver.track]), sharer.sharerId);
+        }
+      }
+      showToast(`${sharer.sharerName} is sharing their screen`);
+    });
+
+    s.on('sync-screen-share-stopped', () => {
+      state.screenSharer = null;
+      if (el.screenSharePlayer) {
+        el.screenSharePlayer.srcObject = null;
+        try { el.screenSharePlayer.load(); } catch (e) {}
+        el.screenSharePlayer.classList.add('hidden');
+      }
+      if (state.currentMovie) {
+        if (state.currentMovie.type === 'youtube') {
+          if (el.youtubePlayerBox) el.youtubePlayerBox.classList.remove('hidden');
+        } else {
+          if (el.moviePlayer) el.moviePlayer.classList.remove('hidden');
+        }
+      } else {
+        if (el.stagePlaceholder) el.stagePlaceholder.classList.remove('hidden');
+      }
+      if (el.stageUsername) el.stageUsername.textContent = 'Stream';
+      if (state.isSharingScreen) {
+        stopScreenShare(false);
+      }
+      showToast('Screen sharing ended');
+    });
+
     s.on('sync-tracks-changed', ({ audioTrack, subtitleTrack, currentTime }) => {
       applyTrackChanges(audioTrack, subtitleTrack, currentTime, !el.moviePlayer.paused);
       const trackObj = state.audioTracks.find(t => t.trackIndex === audioTrack);
@@ -474,11 +593,29 @@
     });
 
     // Disrupted Member Auto-Resync Response
-    s.on('room-synced', ({ currentMovie, audioTrack, subtitleTrack, currentTime, isPlaying }) => {
+    s.on('room-synced', ({ currentMovie, screenShare, audioTrack, subtitleTrack, currentTime, isPlaying }) => {
       if (state.isHost) return;
+
+      if (screenShare) {
+        state.screenSharer = screenShare;
+        if (el.screenSharePlayer) el.screenSharePlayer.classList.remove('hidden');
+        if (el.moviePlayer) el.moviePlayer.classList.add('hidden');
+        if (el.stagePlaceholder) el.stagePlaceholder.classList.add('hidden');
+        if (el.youtubePlayerBox) el.youtubePlayerBox.classList.add('hidden');
+        if (el.stageUsername) el.stageUsername.textContent = `${screenShare.sharerName}'s Screen`;
+        return;
+      }
+
       if (!currentMovie) {
         if (state.currentMovie) {
           stopMovieInTheater();
+        }
+        return;
+      }
+
+      if (currentMovie.type === 'youtube') {
+        if (!state.currentMovie || state.currentMovie.videoId !== currentMovie.videoId) {
+          loadYouTubeInTheater(currentMovie.videoId, currentTime, isPlaying);
         }
         return;
       }
@@ -823,6 +960,18 @@
       try { pc.addTransceiver('video', { direction: 'sendrecv' }); } catch (e) {}
     }
 
+    // If currently sharing screen, attach screen track to this peer connection
+    if (state.isSharingScreen && state.screenStream) {
+      const screenTrack = state.screenStream.getVideoTracks()[0];
+      if (screenTrack) {
+        try {
+          const sender = pc.addTrack(screenTrack, state.screenStream);
+          state.screenSenders = state.screenSenders || new Map();
+          state.screenSenders.set(targetId, sender);
+        } catch (e) {}
+      }
+    }
+
     preferH264Codecs(pc);
 
     // Send ICE candidates
@@ -846,7 +995,7 @@
       }
     };
 
-    // Remote Track Arrival (Fixes Remote Video Stream and Black Screen)
+    // Remote Track Arrival (Handles Camera & Screenshare Streams)
     pc.ontrack = (e) => {
       console.log(`[WebRTC] Received ${e.track.kind} track from ${targetId}`);
       if (e.track.kind === 'audio') {
@@ -865,6 +1014,24 @@
         });
       } else if (e.track.kind === 'video') {
         const stream = (e.streams && e.streams[0]) ? e.streams[0] : new MediaStream([e.track]);
+
+        // Detect if incoming track is a screenshare stream
+        const isScreen = (state.screenSharer && state.screenSharer.sharerId === targetId && (e.track.id === state.screenSharer.trackId || (e.streams && e.streams[0] && e.streams[0].id === state.screenSharer.streamId))) ||
+                         (e.streams && e.streams[0] && (e.streams[0].id.includes('screen') || e.streams[0].id.includes('display'))) ||
+                         (e.track.label && (e.track.label.toLowerCase().includes('screen') || e.track.label.toLowerCase().includes('window') || e.track.label.toLowerCase().includes('display')));
+
+        if (isScreen) {
+          console.log(`[WebRTC] Attached remote screen share from ${targetId}`);
+          handleRemoteScreenTrack(stream, targetId);
+          e.track.onended = () => {
+            if (el.screenSharePlayer) {
+              el.screenSharePlayer.srcObject = null;
+              el.screenSharePlayer.classList.add('hidden');
+            }
+          };
+          return;
+        }
+
         state.remoteStreams.set(targetId, stream);
         const member = state.members.get(targetId);
         if (member && member.isCamOn) {
@@ -1096,6 +1263,378 @@
 
     if (state.socket) {
       state.socket.emit('update-mic-status', { roomId: state.roomId, isMuted: state.isMicMuted });
+    }
+  }
+
+  // ==========================================================================
+  // WEBRTC SCREEN SHARING ENGINE
+  // ==========================================================================
+
+  function updateScreenShareMenuUI() {
+    if (!el.menuScreenshareBtn) return;
+    if (state.isSharingScreen) {
+      el.menuScreenshareBtn.classList.add('active-sharing');
+      if (el.menuScreenshareText) el.menuScreenshareText.textContent = 'Stop Screen Share';
+    } else {
+      el.menuScreenshareBtn.classList.remove('active-sharing');
+      if (el.menuScreenshareText) el.menuScreenshareText.textContent = 'Share Screen';
+    }
+  }
+
+  async function toggleScreenShare() {
+    if (state.isSharingScreen) {
+      stopScreenShare(true);
+    } else {
+      await startScreenShare();
+    }
+  }
+
+  async function startScreenShare() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+      showToast('Screen sharing is not supported by your browser', 'error');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          cursor: 'always',
+          displaySurface: 'monitor'
+        },
+        audio: true
+      });
+
+      state.screenStream = stream;
+      state.isSharingScreen = true;
+      updateScreenShareMenuUI();
+
+      const screenVideoTrack = stream.getVideoTracks()[0];
+      if (!screenVideoTrack) {
+        throw new Error('No video track available from display media');
+      }
+
+      // Handle user clicking native browser "Stop sharing" bar
+      screenVideoTrack.onended = () => {
+        stopScreenShare(true);
+      };
+
+      // Render locally on main cinema stage
+      if (el.screenSharePlayer) {
+        el.screenSharePlayer.srcObject = stream;
+        el.screenSharePlayer.classList.remove('hidden');
+        el.screenSharePlayer.play().catch(() => {});
+      }
+      if (el.moviePlayer) {
+        el.moviePlayer.pause();
+        el.moviePlayer.classList.add('hidden');
+      }
+      if (el.stagePlaceholder) el.stagePlaceholder.classList.add('hidden');
+      if (el.youtubePlayerBox) el.youtubePlayerBox.classList.add('hidden');
+      if (el.stageUsername) el.stageUsername.textContent = `${state.username}'s Screen`;
+
+      // Broadcast to room
+      if (state.socket) {
+        state.socket.emit('start-screen-share', {
+          roomId: state.roomId,
+          streamId: stream.id,
+          trackId: screenVideoTrack.id,
+          username: state.username
+        });
+      }
+
+      // Add track to all connected peers and renegotiate
+      state.screenSenders = state.screenSenders || new Map();
+      for (const [targetId, pc] of state.peerConnections.entries()) {
+        try {
+          const sender = pc.addTrack(screenVideoTrack, stream);
+          state.screenSenders.set(targetId, sender);
+
+          const audioTracks = stream.getAudioTracks();
+          if (audioTracks.length > 0) {
+            try { pc.addTrack(audioTracks[0], stream); } catch (e) {}
+          }
+
+          preferH264Codecs(pc);
+          if (pc.signalingState === 'stable') {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            state.socket.emit('webrtc-offer', { targetId, offer });
+          }
+        } catch (e) {
+          console.warn('[WebRTC] Error sharing screen to peer ' + targetId, e);
+        }
+      }
+
+      showToast('Screen sharing started');
+    } catch (err) {
+      if (err.name !== 'NotAllowedError') {
+        console.error('Error starting screen share:', err);
+        showToast('Could not share screen: ' + err.message, 'error');
+      }
+      state.isSharingScreen = false;
+      updateScreenShareMenuUI();
+    }
+  }
+
+  function stopScreenShare(notifyServer = true) {
+    if (state.screenStream) {
+      state.screenStream.getTracks().forEach(t => {
+        try { t.stop(); } catch (e) {}
+      });
+      state.screenStream = null;
+    }
+
+    state.isSharingScreen = false;
+    updateScreenShareMenuUI();
+
+    // Remove track from peer connections and renegotiate
+    if (state.screenSenders) {
+      for (const [targetId, sender] of state.screenSenders.entries()) {
+        const pc = state.peerConnections.get(targetId);
+        if (pc && sender) {
+          try { pc.removeTrack(sender); } catch (e) {}
+          if (pc.signalingState === 'stable') {
+            pc.createOffer().then(offer => {
+              pc.setLocalDescription(offer);
+              state.socket.emit('webrtc-offer', { targetId, offer });
+            }).catch(() => {});
+          }
+        }
+      }
+      state.screenSenders.clear();
+    }
+
+    // Reset local player
+    if (el.screenSharePlayer) {
+      el.screenSharePlayer.srcObject = null;
+      try { el.screenSharePlayer.load(); } catch (e) {}
+      el.screenSharePlayer.classList.add('hidden');
+    }
+
+    if (state.currentMovie) {
+      if (state.currentMovie.type === 'youtube') {
+        if (el.youtubePlayerBox) el.youtubePlayerBox.classList.remove('hidden');
+      } else {
+        if (el.moviePlayer) el.moviePlayer.classList.remove('hidden');
+      }
+      if (el.stageUsername) el.stageUsername.textContent = 'Stream';
+    } else {
+      if (el.stagePlaceholder) el.stagePlaceholder.classList.remove('hidden');
+      if (el.stageUsername) el.stageUsername.textContent = 'Stream';
+    }
+
+    if (notifyServer && state.socket) {
+      state.socket.emit('stop-screen-share', { roomId: state.roomId });
+    }
+  }
+
+  function handleRemoteScreenTrack(stream, targetId) {
+    if (el.screenSharePlayer) {
+      el.screenSharePlayer.srcObject = stream;
+      el.screenSharePlayer.classList.remove('hidden');
+      el.screenSharePlayer.play().catch(() => {});
+    }
+    if (el.moviePlayer) {
+      el.moviePlayer.pause();
+      el.moviePlayer.classList.add('hidden');
+    }
+    if (el.stagePlaceholder) el.stagePlaceholder.classList.add('hidden');
+    if (el.youtubePlayerBox) el.youtubePlayerBox.classList.add('hidden');
+    const sharerName = state.screenSharer?.sharerName || state.members.get(targetId)?.username || 'Remote User';
+    if (el.stageUsername) el.stageUsername.textContent = `${sharerName}'s Screen`;
+  }
+
+  // ==========================================================================
+  // YOUTUBE WATCH PARTY ENGINE
+  // ==========================================================================
+
+  function extractYouTubeId(urlOrId) {
+    if (!urlOrId) return null;
+    const trimmed = urlOrId.trim();
+    if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) return trimmed;
+    const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = trimmed.match(regExp);
+    return match ? match[1] : null;
+  }
+
+  function initYouTubeApi(callback) {
+    if (window.YT && window.YT.Player) {
+      callback();
+      return;
+    }
+    const prevOnReady = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      if (typeof prevOnReady === 'function') prevOnReady();
+      callback();
+    };
+    if (!document.getElementById('yt-iframe-script')) {
+      const tag = document.createElement('script');
+      tag.id = 'yt-iframe-script';
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
+    }
+  }
+
+  function loadYouTubeInTheater(videoId, startTime = 0, autoPlay = true) {
+    state.currentMovie = { type: 'youtube', videoId, filename: 'YouTube Video' };
+    state.movieDuration = 0;
+    state.isLiveStream = false;
+
+    if (el.moviePlayer) {
+      el.moviePlayer.pause();
+      el.moviePlayer.classList.add('hidden');
+    }
+    if (el.stagePlaceholder) el.stagePlaceholder.classList.add('hidden');
+    if (el.screenSharePlayer) el.screenSharePlayer.classList.add('hidden');
+    if (el.youtubePlayerBox) el.youtubePlayerBox.classList.remove('hidden');
+    if (el.stageUsername) el.stageUsername.textContent = 'YouTube';
+    if (el.durationDisplay) el.durationDisplay.textContent = 'YouTube';
+    if (el.audioPickerGroup) el.audioPickerGroup.classList.add('hidden');
+    if (el.subtitlePickerGroup) el.subtitlePickerGroup.classList.add('hidden');
+
+    initYouTubeApi(() => {
+      if (state.ytPlayer && typeof state.ytPlayer.loadVideoById === 'function') {
+        state.isYtSyncing = true;
+        state.ytPlayer.loadVideoById({
+          videoId: videoId,
+          startSeconds: startTime || 0
+        });
+        if (autoPlay) {
+          try { state.ytPlayer.playVideo(); } catch (e) {}
+          updatePlayPauseIcons(true);
+        } else {
+          try { state.ytPlayer.pauseVideo(); } catch (e) {}
+          updatePlayPauseIcons(false);
+        }
+        setTimeout(() => { state.isYtSyncing = false; }, 800);
+      } else {
+        let ytContainer = document.getElementById('youtubeIframe');
+        if (!ytContainer && el.youtubePlayerBox) {
+          ytContainer = document.createElement('div');
+          ytContainer.id = 'youtubeIframe';
+          el.youtubePlayerBox.appendChild(ytContainer);
+        }
+        try {
+          state.ytPlayer = new YT.Player('youtubeIframe', {
+            videoId: videoId,
+            playerVars: {
+              autoplay: autoPlay ? 1 : 0,
+              controls: 1,
+              modestbranding: 1,
+              rel: 0,
+              playsinline: 1,
+              start: Math.floor(startTime || 0)
+            },
+            events: {
+              onReady: (event) => {
+                if (autoPlay) event.target.playVideo();
+                updatePlayPauseIcons(autoPlay);
+              },
+              onStateChange: onYouTubeStateChange
+            }
+          });
+        } catch (e) {
+          console.error('[YouTube] Init error:', e);
+        }
+      }
+    });
+  }
+
+  function onYouTubeStateChange(event) {
+    if (state.isYtSyncing) return;
+    if (!state.ytPlayer || !state.socket) return;
+
+    try {
+      const curTime = state.ytPlayer.getCurrentTime ? state.ytPlayer.getCurrentTime() : 0;
+      if (event.data === YT.PlayerState.PLAYING) {
+        updatePlayPauseIcons(true);
+        state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'play', time: curTime });
+      } else if (event.data === YT.PlayerState.PAUSED) {
+        updatePlayPauseIcons(false);
+        state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'pause', time: curTime });
+      }
+    } catch (e) {}
+  }
+
+  function openYouTubeModal() {
+    if (el.youtubeModal) {
+      el.youtubeModal.classList.remove('hidden');
+      if (el.youtubeUrlInput) {
+        el.youtubeUrlInput.value = '';
+        setTimeout(() => el.youtubeUrlInput.focus(), 80);
+      }
+    }
+  }
+
+  function closeYouTubeModal() {
+    if (el.youtubeModal) el.youtubeModal.classList.add('hidden');
+  }
+
+  function handleYouTubeSubmit(e) {
+    if (e) e.preventDefault();
+    const val = el.youtubeUrlInput?.value;
+    const videoId = extractYouTubeId(val);
+    if (!videoId) {
+      showToast('Please enter a valid YouTube link or video ID', 'error');
+      return;
+    }
+    closeYouTubeModal();
+    if (state.socket) {
+      state.socket.emit('host-set-youtube', { roomId: state.roomId, videoId });
+    }
+  }
+
+  // ==========================================================================
+  // DIRECT URL STREAMING ENGINE
+  // ==========================================================================
+
+  function openUrlModal() {
+    if (el.urlModal) {
+      el.urlModal.classList.remove('hidden');
+      if (el.directVideoUrlInput) {
+        el.directVideoUrlInput.value = '';
+        setTimeout(() => el.directVideoUrlInput.focus(), 80);
+      }
+    }
+  }
+
+  function closeUrlModal() {
+    if (el.urlModal) el.urlModal.classList.add('hidden');
+  }
+
+  function handleUrlSubmit(e) {
+    if (e) e.preventDefault();
+    const url = el.directVideoUrlInput?.value?.trim();
+    const title = el.directVideoTitleInput?.value?.trim();
+
+    if (!url || (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('blob:'))) {
+      showToast('Please enter a valid HTTP/HTTPS video URL', 'error');
+      return;
+    }
+
+    closeUrlModal();
+
+    let filename = title;
+    if (!filename) {
+      try {
+        const u = new URL(url);
+        filename = u.pathname.split('/').pop() || 'Web Video Stream';
+      } catch (e) {
+        filename = 'Web Video Stream';
+      }
+    }
+
+    const movie = {
+      filename: filename,
+      url: url,
+      isUrl: true
+    };
+
+    if (state.socket) {
+      state.socket.emit('host-set-movie', {
+        roomId: state.roomId,
+        movie: movie
+      });
     }
   }
 
@@ -1346,9 +1885,33 @@
       } catch (e) {}
     }
 
+    if (el.youtubePlayerBox) {
+      el.youtubePlayerBox.classList.add('hidden');
+      if (state.ytPlayer && typeof state.ytPlayer.stopVideo === 'function') {
+        try { state.ytPlayer.stopVideo(); } catch (e) {}
+      }
+    }
+
+    if (el.screenSharePlayer) {
+      el.screenSharePlayer.srcObject = null;
+      try { el.screenSharePlayer.load(); } catch (e) {}
+      el.screenSharePlayer.classList.add('hidden');
+    }
+
+    if (state.isSharingScreen) {
+      stopScreenShare(false);
+    }
+
     if (el.stagePlaceholder) {
       el.stagePlaceholder.classList.remove('hidden');
     }
+
+    if (el.stageUsername) {
+      el.stageUsername.textContent = 'Stream';
+    }
+
+    if (el.audioPickerGroup) el.audioPickerGroup.classList.remove('hidden');
+    if (el.subtitlePickerGroup) el.subtitlePickerGroup.classList.remove('hidden');
 
     updatePlayPauseIcons(false);
     if (el.timelineProgress) el.timelineProgress.style.width = '0%';
@@ -1362,10 +1925,6 @@
   }
 
   function hostStopMovie() {
-    if (!state.isHost) {
-      showToast('Only Host can stop the movie');
-      return;
-    }
     stopMovieInTheater();
     if (state.socket) {
       state.socket.emit('host-stop-movie', { roomId: state.roomId });
@@ -1374,6 +1933,73 @@
   }
 
   async function loadMovieInTheater(movie, audioTrack = 0, subtitleTrack = 'off', startTime = 0, autoPlay = false) {
+    if (!movie) return;
+
+    // 1. YouTube Watch Party Stream
+    if (movie.type === 'youtube' || movie.videoId) {
+      loadYouTubeInTheater(movie.videoId, startTime, autoPlay);
+      return;
+    }
+
+    // 2. Direct Web Stream URL
+    if (movie.isUrl && movie.url) {
+      state.currentMovie = movie;
+      state.selectedAudio = 0;
+      state.selectedSubtitle = 'off';
+      state.streamStartTime = 0;
+      state.movieDuration = 0;
+      state.isLiveStream = false;
+
+      el.stagePlaceholder.classList.add('hidden');
+      if (el.youtubePlayerBox) el.youtubePlayerBox.classList.add('hidden');
+      if (el.screenSharePlayer) el.screenSharePlayer.classList.add('hidden');
+      if (el.moviePlayer) el.moviePlayer.classList.remove('hidden');
+
+      if (el.modalNowPlayingBanner) el.modalNowPlayingBanner.classList.remove('hidden');
+      if (el.modalNowPlayingTitle) el.modalNowPlayingTitle.innerText = movie.filename || 'Direct URL Stream';
+      if (el.audioPickerGroup) el.audioPickerGroup.classList.add('hidden');
+      if (el.subtitlePickerGroup) el.subtitlePickerGroup.classList.add('hidden');
+
+      el.moviePlayer.setAttribute('data-stream-file', movie.url);
+      el.moviePlayer.setAttribute('data-stream-src', movie.url);
+      el.moviePlayer.src = movie.url;
+
+      const onUrlMeta = () => {
+        if (el.moviePlayer.duration && !isNaN(el.moviePlayer.duration) && isFinite(el.moviePlayer.duration)) {
+          state.movieDuration = el.moviePlayer.duration;
+          el.durationDisplay.innerText = formatTime(state.movieDuration);
+        } else {
+          el.durationDisplay.innerText = 'Stream';
+        }
+        if (startTime > 0) {
+          el.moviePlayer.currentTime = startTime;
+        }
+        if (autoPlay) {
+          el.moviePlayer.play().catch(() => {
+            el.unmuteMovieBanner?.classList.remove('hidden');
+          });
+          updatePlayPauseIcons(true);
+        } else {
+          updatePlayPauseIcons(false);
+        }
+        el.moviePlayer.removeEventListener('loadedmetadata', onUrlMeta);
+      };
+
+      if (el.moviePlayer.readyState >= 1) {
+        onUrlMeta();
+      } else {
+        el.moviePlayer.addEventListener('loadedmetadata', onUrlMeta);
+      }
+      return;
+    }
+
+    // 3. Local Library Movie (FFmpeg Transcoded / Direct Stream)
+    if (el.audioPickerGroup) el.audioPickerGroup.classList.remove('hidden');
+    if (el.subtitlePickerGroup) el.subtitlePickerGroup.classList.remove('hidden');
+    if (el.youtubePlayerBox) el.youtubePlayerBox.classList.add('hidden');
+    if (el.screenSharePlayer) el.screenSharePlayer.classList.add('hidden');
+    if (el.moviePlayer) el.moviePlayer.classList.remove('hidden');
+
     state.currentMovie = movie;
     state.selectedAudio = audioTrack;
     state.selectedSubtitle = subtitleTrack;
@@ -1514,23 +2140,28 @@
   }
 
   function handlePlayPauseToggle() {
-    if (!state.currentMovie) {
-      if (state.isHost) openMovieModal();
+    if (state.currentMovie?.type === 'youtube' && state.ytPlayer) {
+      try {
+        const pState = state.ytPlayer.getPlayerState ? state.ytPlayer.getPlayerState() : -1;
+        if (pState === 1) { // Playing -> Pause
+          state.ytPlayer.pauseVideo();
+          updatePlayPauseIcons(false);
+          if (state.socket) {
+            state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'pause', time: state.ytPlayer.getCurrentTime() });
+          }
+        } else { // Paused / Ended / Other -> Play
+          state.ytPlayer.playVideo();
+          updatePlayPauseIcons(true);
+          if (state.socket) {
+            state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'play', time: state.ytPlayer.getCurrentTime() });
+          }
+        }
+      } catch (e) {}
       return;
     }
 
-    if (!state.isHost) {
-      if (el.moviePlayer.paused) {
-        el.moviePlayer.play().then(() => {
-          el.unmuteMovieBanner.classList.add('hidden');
-          showToast('Resynced with Host');
-        }).catch(() => {});
-        if (state.socket) {
-          state.socket.emit('request-room-sync', { roomId: state.roomId });
-        }
-      } else {
-        showToast('Controlled by Host');
-      }
+    if (!state.currentMovie) {
+      openMovieModal();
       return;
     }
 
@@ -1608,17 +2239,31 @@
     });
 
     const handleScrub = (clientX) => {
-      if (!state.isHost) {
-        showToast('Only Host can seek');
+      if (state.currentMovie?.type === 'youtube' && state.ytPlayer) {
+        try {
+          const rect = el.timelineContainer.getBoundingClientRect();
+          const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+          const dur = state.ytPlayer.getDuration ? state.ytPlayer.getDuration() : 0;
+          if (dur > 0) {
+            const seekTime = pos * dur;
+            state.ytPlayer.seekTo(seekTime, true);
+            if (state.socket) {
+              state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'seek', time: seekTime });
+            }
+          }
+        } catch (e) {}
         return;
       }
+
       const rect = el.timelineContainer.getBoundingClientRect();
       const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
       const dur = getEffectiveDuration();
       if (dur > 0) {
         const seekTime = pos * dur;
         seekMovie(seekTime);
-        state.socket.emit('host-seek', { roomId: state.roomId, time: seekTime });
+        if (state.socket) {
+          state.socket.emit('host-seek', { roomId: state.roomId, time: seekTime });
+        }
       }
     };
 
@@ -2428,7 +3073,48 @@
     document.addEventListener('click', () => {
       el.micDeviceMenu.classList.add('hidden');
       el.camDeviceMenu.classList.add('hidden');
+      if (el.moreOptionsMenu) el.moreOptionsMenu.classList.add('hidden');
     });
+
+    // More Options Button & Dropdown Menu (Screenshare, YouTube, Direct URL)
+    if (el.moreOptionsBtn) {
+      el.moreOptionsBtn.onclick = (e) => {
+        e.stopPropagation();
+        el.moreOptionsMenu?.classList.toggle('hidden');
+        el.micDeviceMenu?.classList.add('hidden');
+        el.camDeviceMenu?.classList.add('hidden');
+      };
+    }
+    if (el.moreOptionsMenu) {
+      el.moreOptionsMenu.onclick = (e) => e.stopPropagation();
+    }
+    if (el.menuScreenshareBtn) {
+      el.menuScreenshareBtn.onclick = () => {
+        el.moreOptionsMenu?.classList.add('hidden');
+        toggleScreenShare();
+      };
+    }
+    if (el.menuYouTubeBtn) {
+      el.menuYouTubeBtn.onclick = () => {
+        el.moreOptionsMenu?.classList.add('hidden');
+        openYouTubeModal();
+      };
+    }
+    if (el.menuUrlBtn) {
+      el.menuUrlBtn.onclick = () => {
+        el.moreOptionsMenu?.classList.add('hidden');
+        openUrlModal();
+      };
+    }
+
+    // Extra Feature Modals (YouTube & URL)
+    if (el.closeYouTubeBtn) el.closeYouTubeBtn.onclick = closeYouTubeModal;
+    if (el.cancelYouTubeBtn) el.cancelYouTubeBtn.onclick = closeYouTubeModal;
+    if (el.youtubeForm) el.youtubeForm.onsubmit = handleYouTubeSubmit;
+
+    if (el.closeUrlBtn) el.closeUrlBtn.onclick = closeUrlModal;
+    if (el.cancelUrlBtn) el.cancelUrlBtn.onclick = closeUrlModal;
+    if (el.urlForm) el.urlForm.onsubmit = handleUrlSubmit;
 
     // Disconnect
     el.disconnectBtn.onclick = () => {
@@ -2571,8 +3257,15 @@
 
     // Rewind / Forward 10 Seconds Helpers
     const rewind10Seconds = () => {
-      if (!state.isHost) {
-        showToast('Only Host can seek');
+      if (state.currentMovie?.type === 'youtube' && state.ytPlayer) {
+        try {
+          const t = Math.max(0, state.ytPlayer.getCurrentTime() - 10);
+          state.ytPlayer.seekTo(t, true);
+          if (state.socket) {
+            state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'seek', time: t });
+          }
+          showToast('Rewound 10s');
+        } catch (e) {}
         return;
       }
       const cur = getEffectiveCurrentTime();
@@ -2585,8 +3278,16 @@
     };
 
     const forward10Seconds = () => {
-      if (!state.isHost) {
-        showToast('Only Host can seek');
+      if (state.currentMovie?.type === 'youtube' && state.ytPlayer) {
+        try {
+          const dur = state.ytPlayer.getDuration ? state.ytPlayer.getDuration() : 999999;
+          const t = Math.min(dur, state.ytPlayer.getCurrentTime() + 10);
+          state.ytPlayer.seekTo(t, true);
+          if (state.socket) {
+            state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'seek', time: t });
+          }
+          showToast('Forwarded 10s');
+        } catch (e) {}
         return;
       }
       const cur = getEffectiveCurrentTime();
@@ -2615,6 +3316,12 @@
         return;
       }
       if (el.movieModal && !el.movieModal.classList.contains('hidden')) {
+        return;
+      }
+      if (el.youtubeModal && !el.youtubeModal.classList.contains('hidden')) {
+        return;
+      }
+      if (el.urlModal && !el.urlModal.classList.contains('hidden')) {
         return;
       }
 

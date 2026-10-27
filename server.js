@@ -553,6 +553,7 @@ io.on('connection', (socket) => {
       isHost: memberInfo.isHost,
       hostId: room.hostId,
       currentMovie: room.currentMovie,
+      screenShare: room.screenShare || null,
       audioTrack: room.audioTrack,
       subtitleTrack: room.subtitleTrack,
       currentTime: estimatedTime,
@@ -579,6 +580,7 @@ io.on('connection', (socket) => {
 
     socket.emit('room-synced', {
       currentMovie: room.currentMovie,
+      screenShare: room.screenShare || null,
       audioTrack: room.audioTrack,
       subtitleTrack: room.subtitleTrack,
       currentTime: estimatedTime,
@@ -586,32 +588,36 @@ io.on('connection', (socket) => {
     });
   });
 
-  // 2. Host Playback Controls
+  // 2. Playback & Stream Controls (Host and Room Members)
   socket.on('host-play', ({ roomId, time }) => {
     const room = rooms.get(roomId);
-    if (!room || room.hostId !== socket.id) return;
+    if (!room || !room.members.has(socket.id)) return;
 
     room.isPlaying = true;
-    room.currentTime = time;
+    if (typeof time === 'number' && !isNaN(time)) {
+      room.currentTime = time;
+    }
     room.lastUpdate = Date.now();
 
-    socket.to(roomId).emit('sync-play', { time });
+    socket.to(roomId).emit('sync-play', { time: room.currentTime });
   });
 
   socket.on('host-pause', ({ roomId, time }) => {
     const room = rooms.get(roomId);
-    if (!room || room.hostId !== socket.id) return;
+    if (!room || !room.members.has(socket.id)) return;
 
     room.isPlaying = false;
-    room.currentTime = time;
+    if (typeof time === 'number' && !isNaN(time)) {
+      room.currentTime = time;
+    }
     room.lastUpdate = Date.now();
 
-    socket.to(roomId).emit('sync-pause', { time });
+    socket.to(roomId).emit('sync-pause', { time: room.currentTime });
   });
 
   socket.on('host-seek', ({ roomId, time }) => {
     const room = rooms.get(roomId);
-    if (!room || room.hostId !== socket.id) return;
+    if (!room || !room.members.has(socket.id)) return;
 
     room.currentTime = time;
     room.lastUpdate = Date.now();
@@ -621,13 +627,13 @@ io.on('connection', (socket) => {
 
   socket.on('host-set-movie', ({ roomId, movie, audioTrack, subtitleTrack }) => {
     const room = rooms.get(roomId);
-    if (!room || room.hostId !== socket.id) return;
+    if (!room || !room.members.has(socket.id)) return;
 
     room.currentMovie = movie;
     room.audioTrack = audioTrack || 0;
     room.subtitleTrack = subtitleTrack !== undefined ? subtitleTrack : null;
     room.currentTime = 0;
-    room.isPlaying = false;
+    room.isPlaying = true;
     room.lastUpdate = Date.now();
 
     io.in(roomId).emit('sync-movie-changed', {
@@ -635,11 +641,12 @@ io.on('connection', (socket) => {
       audioTrack: room.audioTrack,
       subtitleTrack: room.subtitleTrack
     });
+    console.log(`[Room ${roomId}] Movie changed: ${movie?.filename || 'URL Stream'}`);
   });
 
   socket.on('host-stop-movie', ({ roomId }) => {
     const room = rooms.get(roomId);
-    if (!room || room.hostId !== socket.id) return;
+    if (!room || !room.members.has(socket.id)) return;
 
     room.currentMovie = null;
     room.currentTime = 0;
@@ -647,12 +654,73 @@ io.on('connection', (socket) => {
     room.lastUpdate = Date.now();
 
     io.in(roomId).emit('sync-movie-stopped');
-    console.log(`[Room ${roomId}] Host stopped movie playback. Returning to stage placeholder.`);
+    console.log(`[Room ${roomId}] Stream stopped. Returning to stage placeholder.`);
+  });
+
+  // YouTube Watch Together Socket Events
+  socket.on('host-set-youtube', ({ roomId, videoId, title }) => {
+    const room = rooms.get(roomId);
+    if (!room || !room.members.has(socket.id)) return;
+
+    const member = room.members.get(socket.id);
+    const videoTitle = title || 'YouTube Video';
+    room.currentMovie = { type: 'youtube', videoId, title: videoTitle, filename: videoTitle };
+    room.currentTime = 0;
+    room.isPlaying = true;
+    room.lastUpdate = Date.now();
+
+    io.in(roomId).emit('sync-youtube-changed', {
+      videoId,
+      title: videoTitle,
+      sharerName: member ? member.username : 'User'
+    });
+    console.log(`[Room ${roomId}] YouTube stream loaded: ${videoId} by ${member?.username}`);
+  });
+
+  socket.on('host-youtube-sync', ({ roomId, action, time }) => {
+    const room = rooms.get(roomId);
+    if (!room || !room.members.has(socket.id)) return;
+
+    if (action === 'play') room.isPlaying = true;
+    if (action === 'pause') room.isPlaying = false;
+    if (typeof time === 'number' && !isNaN(time)) {
+      room.currentTime = time;
+      room.lastUpdate = Date.now();
+    }
+    socket.to(roomId).emit('sync-youtube-action', { action, time });
+  });
+
+  // Screen Share WebRTC & Broadcast Events
+  socket.on('start-screen-share', ({ roomId, streamId, trackId, username }) => {
+    const room = rooms.get(roomId);
+    if (!room || !room.members.has(socket.id)) return;
+
+    const sharerName = username || room.members.get(socket.id)?.username || 'User';
+    room.screenShare = {
+      sharerId: socket.id,
+      sharerName,
+      streamId,
+      trackId
+    };
+
+    io.in(roomId).emit('sync-screen-share-started', room.screenShare);
+    console.log(`[Room ${roomId}] Screen share started by ${sharerName} (${socket.id})`);
+  });
+
+  socket.on('stop-screen-share', ({ roomId }) => {
+    const room = rooms.get(roomId);
+    if (!room) return;
+
+    if (room.screenShare && room.screenShare.sharerId === socket.id) {
+      room.screenShare = null;
+    }
+    io.in(roomId).emit('sync-screen-share-stopped');
+    console.log(`[Room ${roomId}] Screen share stopped by ${socket.id}`);
   });
 
   socket.on('host-set-tracks', ({ roomId, audioTrack, subtitleTrack, currentTime }) => {
     const room = rooms.get(roomId);
-    if (!room || room.hostId !== socket.id) return;
+    if (!room || !room.members.has(socket.id)) return;
 
     room.audioTrack = audioTrack;
     room.subtitleTrack = subtitleTrack;
@@ -791,6 +859,12 @@ io.on('connection', (socket) => {
     room.members.delete(socket.id);
 
     console.log(`[Room ${currentRoomId}] ${member ? member.username : socket.id} disconnected.`);
+
+    // If active screensharer left, clean up and reset stage
+    if (room.screenShare && room.screenShare.sharerId === socket.id) {
+      room.screenShare = null;
+      io.in(currentRoomId).emit('sync-screen-share-stopped');
+    }
 
     // If host left, elect the next user as host
     if (room.hostId === socket.id) {

@@ -460,6 +460,10 @@
         <!-- Main Cinema Frame (Image 1 Center) -->
         <div class="cinema-box" id="cinemaBox">
           <video id="moviePlayer" preload="auto" playsinline crossorigin="anonymous"></video>
+          <video id="screenSharePlayer" class="screen-share-player hidden" autoplay playsinline></video>
+          <div id="youtubePlayerBox" class="youtube-player-box hidden">
+            <div id="youtubeIframe"></div>
+          </div>
 
           <!-- Empty Cinema State (Avatar in center when no movie is playing) -->
           <div id="stagePlaceholder" class="stage-placeholder">
@@ -809,14 +813,51 @@
           </button>
           -->
 
-          <!-- 6. More Options Button (Image 1 three dots) -->
-          <button id="moreOptionsBtn" class="pill-btn" title="More Options">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="12" r="2"/>
-              <circle cx="19" cy="12" r="2"/>
-              <circle cx="5" cy="12" r="2"/>
-            </svg>
-          </button>
+          <!-- 6. More Options Button Group (Screenshare, YouTube, Direct URL) -->
+          <div class="split-dock-btn" id="moreOptionsGroup">
+            <button id="moreOptionsBtn" class="pill-btn" title="More Options">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="2"/>
+                <circle cx="19" cy="12" r="2"/>
+                <circle cx="5" cy="12" r="2"/>
+              </svg>
+            </button>
+            <div id="moreOptionsMenu" class="device-menu more-options-menu hidden">
+              <div class="device-menu-header">More Stream Options</div>
+              <div class="device-menu-items">
+                <button type="button" class="more-menu-item" id="menuScreenshareBtn" title="Share Screen">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title" id="menuScreenshareText">Share Screen</span>
+                    <span class="more-menu-desc">Broadcast your screen or window</span>
+                  </div>
+                </button>
+                <button type="button" class="more-menu-item" id="menuYouTubeBtn" title="Watch YouTube">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21.58 7.19a2.5 2.5 0 0 0-1.76-1.77C18.26 5 12 5 12 5s-6.26 0-7.82.42c-.86.23-1.54.91-1.76 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.9 1.54 1.76 1.77C5.74 19 12 19 12 19s6.26 0 7.82-.42a2.5 2.5 0 0 0 1.76-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Watch YouTube</span>
+                    <span class="more-menu-desc">Stream any YouTube link together</span>
+                  </div>
+                </button>
+                <button type="button" class="more-menu-item" id="menuUrlBtn" title="Play from URL">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Play from URL</span>
+                    <span class="more-menu-desc">Direct .mp4, .webm or live web stream</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
 
           <!-- 7. Disconnect Button (Image 1 Red Pill) -->
           <button id="disconnectBtn" class="pill-btn pill-btn-danger" title="Disconnect">
@@ -996,6 +1037,81 @@
       <div class="support-github-cta">
         <span>⭐ Loving the project? Give it a star on GitHub!</span>
       </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 7. YOUTUBE WATCH PARTY MODAL                                 -->
+  <!-- ============================================================ -->
+  <div id="youtubeModal" class="modal-overlay hidden">
+    <div class="modal-card extra-feature-modal-card">
+      <div class="modal-header-row">
+        <div class="modal-title-with-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#ff0000">
+            <path d="M21.58 7.19a2.5 2.5 0 0 0-1.76-1.77C18.26 5 12 5 12 5s-6.26 0-7.82.42c-.86.23-1.54.91-1.76 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.9 1.54 1.76 1.77C5.74 19 12 19 12 19s6.26 0 7.82-.42a2.5 2.5 0 0 0 1.76-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/>
+          </svg>
+          <h3>Watch YouTube Together</h3>
+        </div>
+        <button id="closeYouTubeBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <p class="modal-subtitle-text">
+        Paste any YouTube link or video ID. Playback, pause, and seek will synchronize in real-time for everyone in the room.
+      </p>
+      <form id="youtubeForm" class="extra-feature-form">
+        <div class="form-group">
+          <label for="youtubeUrlInput">YOUTUBE URL OR VIDEO ID</label>
+          <input type="text" id="youtubeUrlInput" placeholder="https://www.youtube.com/watch?v=... or ID" class="form-input" required autocomplete="off">
+        </div>
+        <div class="modal-actions-row">
+          <button type="button" id="cancelYouTubeBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="startYouTubeBtn" class="btn btn-coral">Watch in Room</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 8. PLAY FROM DIRECT URL MODAL                                -->
+  <!-- ============================================================ -->
+  <div id="urlModal" class="modal-overlay hidden">
+    <div class="modal-card extra-feature-modal-card">
+      <div class="modal-header-row">
+        <div class="modal-title-with-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+          <h3>Play Video from URL</h3>
+        </div>
+        <button id="closeUrlBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <p class="modal-subtitle-text">
+        Enter a direct video stream link (.mp4, .webm, or HTTP video stream). It will stream synchronously to everyone in the room.
+      </p>
+      <form id="urlForm" class="extra-feature-form">
+        <div class="form-group">
+          <label for="directVideoUrlInput">VIDEO STREAM URL</label>
+          <input type="url" id="directVideoUrlInput" placeholder="https://example.com/video.mp4" class="form-input" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="directVideoTitleInput">TITLE (OPTIONAL)</label>
+          <input type="text" id="directVideoTitleInput" placeholder="e.g. Big Buck Bunny" class="form-input" autocomplete="off">
+        </div>
+        <div class="modal-actions-row">
+          <button type="button" id="cancelUrlBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="startUrlStreamBtn" class="btn btn-coral">Stream in Room</button>
+        </div>
+      </form>
     </div>
   </div>
 

@@ -1146,6 +1146,152 @@ body {
   color: #fff;
 }
 
+/* More Options Menu (Three dots dropdown) */
+.more-options-menu {
+  width: 280px;
+  max-width: calc(100vw - 32px);
+  padding: 8px;
+  background: rgba(30, 31, 35, 0.96);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 1000;
+}
+
+.more-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-normal, #dbdee1);
+  border-radius: 9px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.16s ease, color 0.16s ease, transform 0.12s ease;
+}
+
+.more-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.more-menu-item:active {
+  transform: scale(0.98);
+}
+
+.more-menu-item.active-sharing {
+  background: rgba(235, 69, 158, 0.18);
+  color: #ff6584;
+}
+
+.more-menu-item svg {
+  flex-shrink: 0;
+  color: var(--text-muted, #949ba4);
+  transition: color 0.16s ease, transform 0.16s ease;
+}
+
+.more-menu-item:hover svg {
+  color: #fff;
+}
+
+.more-menu-item.active-sharing svg {
+  color: #ff6584;
+}
+
+.more-menu-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.more-menu-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: inherit;
+  line-height: 1.2;
+}
+
+.more-menu-desc {
+  font-size: 11px;
+  color: var(--text-muted, #949ba4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+/* Screen Share Video Stream on Main Stage */
+.screen-share-player {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background-color: #000;
+  z-index: 8;
+  border-radius: 12px;
+}
+
+/* YouTube Player Box on Main Stage */
+.youtube-player-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+  z-index: 8;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.youtube-player-box iframe,
+.youtube-player-box #youtubeIframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Extra Feature Modals (YouTube, URL) */
+.extra-feature-modal-card {
+  max-width: 500px;
+  width: 90%;
+  padding: 24px;
+}
+
+.modal-title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-title-with-icon h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.extra-feature-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 14px;
+}
+
 /* ==========================================================================
    IDLE AUTO-HIDE (Matching Image 3: Controls drop after 3s idle)
    ========================================================================== */
@@ -1770,7 +1916,11 @@ body {
 }
 
 .cinema-box:fullscreen #moviePlayer,
-.cinema-box:-webkit-full-screen #moviePlayer {
+.cinema-box:-webkit-full-screen #moviePlayer,
+.cinema-box:fullscreen #screenSharePlayer,
+.cinema-box:-webkit-full-screen #screenSharePlayer,
+.cinema-box:fullscreen #youtubePlayerBox,
+.cinema-box:-webkit-full-screen #youtubePlayerBox {
   width: 100vw !important;
   height: 100vh !important;
   object-fit: contain !important;
