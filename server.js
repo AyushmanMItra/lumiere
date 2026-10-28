@@ -12,15 +12,40 @@ const zlib = require('zlib');
 
 // Configure ffmpeg & ffprobe
 const ffmpeg = require('fluent-ffmpeg');
-try {
-  const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
-  const ffprobeInstaller = require('@ffprobe-installer/ffprobe');
-  ffmpeg.setFfmpegPath(ffmpegInstaller.path);
-  ffmpeg.setFfprobePath(ffprobeInstaller.path);
-  console.log('[FFmpeg] Using bundled FFmpeg at:', ffmpegInstaller.path);
-  console.log('[FFprobe] Using bundled FFprobe at:', ffprobeInstaller.path);
-} catch (err) {
-  console.log('[FFmpeg] Bundled installer not found, falling back to system PATH');
+const isTermux = Boolean(process.env.TERMUX_VERSION || (process.env.PREFIX && process.env.PREFIX.includes('com.termux')));
+
+if (process.env.FFMPEG_PATH) {
+  ffmpeg.setFfmpegPath(process.env.FFMPEG_PATH);
+  console.log('[FFmpeg] Using custom FFMPEG_PATH:', process.env.FFMPEG_PATH);
+} else if (!isTermux) {
+  try {
+    const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
+    if (ffmpegInstaller.path && fs.existsSync(ffmpegInstaller.path)) {
+      ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+      console.log('[FFmpeg] Using bundled FFmpeg at:', ffmpegInstaller.path);
+    }
+  } catch (err) {
+    console.log('[FFmpeg] Bundled installer not found, falling back to system PATH');
+  }
+} else {
+  console.log('[FFmpeg] Android/Termux environment detected: using system ffmpeg');
+}
+
+if (process.env.FFPROBE_PATH) {
+  ffmpeg.setFfprobePath(process.env.FFPROBE_PATH);
+  console.log('[FFprobe] Using custom FFPROBE_PATH:', process.env.FFPROBE_PATH);
+} else if (!isTermux) {
+  try {
+    const ffprobeInstaller = require('@ffprobe-installer/ffprobe');
+    if (ffprobeInstaller.path && fs.existsSync(ffprobeInstaller.path)) {
+      ffmpeg.setFfprobePath(ffprobeInstaller.path);
+      console.log('[FFprobe] Using bundled FFprobe at:', ffprobeInstaller.path);
+    }
+  } catch (err) {
+    console.log('[FFprobe] Bundled installer not found, falling back to system PATH');
+  }
+} else {
+  console.log('[FFprobe] Android/Termux environment detected: using system ffprobe');
 }
 
 const app = express();
