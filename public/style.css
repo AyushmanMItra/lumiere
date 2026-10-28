@@ -3193,7 +3193,7 @@ body {
     opacity: 0.65;
   }
 
-  /* 4. Participant Tile Area (Matches Participant Red Box: 322px x 181px for single user) */
+  /* 4. Balanced Participant Distribution Above & Below Cinema Stage */
   .participants-tile-area {
     width: 100%;
     margin-top: 0;
@@ -3203,108 +3203,101 @@ body {
     justify-content: center;
   }
 
+  .participants-top-area {
+    margin-bottom: 8px;
+    margin-top: 0;
+  }
+
+  .participants-bottom-area {
+    margin-top: 8px;
+    margin-bottom: 0;
+  }
+
   .participants-row {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    padding: 4px;
-    flex-wrap: wrap;
+    gap: 8px;
+    padding: 2px 4px;
     width: 100%;
     max-width: 100%;
+    flex-wrap: wrap;
   }
 
-  /* 1 Participant: Matches User's Exact Red Box (322px x 181px) */
-  .participant-tile:only-child {
-    width: min(322px, 92vw) !important;
-    max-width: 322px !important;
-    height: 181px !important;
-    border-radius: 12px !important;
+  /* Single card in a strip (e.g. 1 user, or top strip with 1 user) */
+  .participants-row:has(.participant-tile:only-child) .participant-tile {
+    width: min(220px, 58vw) !important;
+    max-width: 220px !important;
+    height: 120px !important;
+    border-radius: 10px !important;
     flex: 0 0 auto !important;
   }
 
-  .participant-tile:only-child .tile-avatar-center {
-    width: 68px !important;
-    height: 68px !important;
-    font-size: 26px !important;
-  }
-
-  .participant-tile:only-child .tile-name-badge {
-    font-size: 13px !important;
-    padding: 4px 10px !important;
-    bottom: 8px !important;
-    left: 8px !important;
-  }
-
-  /* 2 Participants: 2 Generous Side-by-Side Cards */
-  .participant-tile:first-child:nth-last-child(2),
-  .participant-tile:first-child:nth-last-child(2) ~ .participant-tile {
-    flex: 0 1 calc(50% - 10px) !important;
-    max-width: 270px !important;
-    height: 150px !important;
-    border-radius: 10px !important;
-  }
-
-  .participant-tile:first-child:nth-last-child(2) .tile-avatar-center,
-  .participant-tile:first-child:nth-last-child(2) ~ .participant-tile .tile-avatar-center {
+  .participants-row:has(.participant-tile:only-child) .tile-avatar-center {
     width: 52px !important;
     height: 52px !important;
     font-size: 20px !important;
   }
 
-  /* 3 Participants Special Layout: The 3rd overflowing participant is positioned above cinema screen */
-  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) {
-    position: relative;
-    padding-top: 128px;
-    gap: 12px;
-  }
-
-  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(3) {
-    position: absolute !important;
-    top: 0 !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: min(220px, 58vw) !important;
+  /* 2 cards in a strip: side-by-side */
+  .participants-row:has(.participant-tile:nth-child(2):last-child) .participant-tile {
+    flex: 0 1 calc(50% - 6px) !important;
     max-width: 220px !important;
-    height: 115px !important;
+    height: 110px !important;
     border-radius: 9px !important;
-    z-index: 10;
   }
 
-  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(3) .tile-avatar-center {
+  .participants-row:has(.participant-tile:nth-child(2):last-child) .tile-avatar-center {
     width: 44px !important;
     height: 44px !important;
     font-size: 18px !important;
   }
 
-  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(3) .tile-name-badge {
-    font-size: 11px !important;
-    padding: 2px 7px !important;
-    bottom: 4px !important;
-    left: 4px !important;
+  /* 3+ cards in a strip: compact row (e.g. 6 participants = 3 top, 3 bottom) */
+  .participants-row:has(.participant-tile:nth-child(3)) .participant-tile {
+    flex: 0 1 calc(33.333% - 6px) !important;
+    max-width: 160px !important;
+    min-width: 100px !important;
+    height: 95px !important;
+    border-radius: 8px !important;
   }
 
-  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(1),
-  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(2) {
-    flex: 0 1 calc(50% - 8px) !important;
-    max-width: 220px !important;
-    height: 115px !important;
-    border-radius: 9px !important;
+  .participants-row:has(.participant-tile:nth-child(3)) .tile-avatar-center {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 15px !important;
   }
 
-  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(1) .tile-avatar-center,
-  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(2) .tile-avatar-center {
-    width: 44px !important;
-    height: 44px !important;
-    font-size: 18px !important;
+  .participants-row:has(.participant-tile:nth-child(3)) .tile-name-badge {
+    font-size: 10px !important;
+    padding: 1px 5px !important;
   }
 
-  /* 4+ Participants (Grid distribution) */
+  /* 4+ cards in a strip: smooth horizontal scrollable ribbon */
+  .participants-row:has(.participant-tile:nth-child(4)) {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    justify-content: flex-start !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .participants-row:has(.participant-tile:nth-child(4))::-webkit-scrollbar {
+    display: none;
+  }
+
+  .participants-row:has(.participant-tile:nth-child(4)) .participant-tile {
+    flex: 0 0 130px !important;
+    min-width: 130px !important;
+    max-width: 130px !important;
+    height: 85px !important;
+  }
+
   .participant-tile {
     flex: 0 1 calc(50% - 8px);
     max-width: 220px;
-    min-width: 120px;
-    height: 115px;
+    min-width: 110px;
+    height: 110px;
     border-radius: 9px;
   }
 
@@ -3511,56 +3504,33 @@ body {
   }
 
   .cinema-stage-wrapper {
-    max-height: 40dvh;
+    max-height: 36dvh;
   }
 
   .stage-cinema-group {
-    gap: 10px;
+    gap: 8px;
   }
 
-  /* 3 Participants in compact portrait: smaller heights to fit within 667px-700px screens */
-  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) {
-    padding-top: 98px !important;
-    gap: 8px !important;
+  .participants-top-area {
+    margin-bottom: 6px;
   }
 
-  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .cinema-stage-wrapper {
-    max-height: 33dvh !important;
+  .participants-bottom-area {
+    margin-top: 6px;
   }
 
-  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(3) {
+  .participants-row:has(.participant-tile:only-child) .participant-tile {
+    height: 95px !important;
+    max-width: 190px !important;
+  }
+
+  .participants-row:has(.participant-tile:nth-child(2):last-child) .participant-tile {
     height: 88px !important;
     max-width: 180px !important;
-  }
-
-  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(1),
-  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(2) {
-    height: 88px !important;
-    max-width: 180px !important;
-  }
-
-  /* When more than 2 participants on short screens, horizontal shelf */
-  .participants-row:has(.participant-tile:nth-child(3)) {
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    justify-content: flex-start !important;
-    gap: 6px !important;
-    padding: 2px 4px !important;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .participants-row:has(.participant-tile:nth-child(3))::-webkit-scrollbar {
-    display: none;
   }
 
   .participants-row:has(.participant-tile:nth-child(3)) .participant-tile {
-    flex: 0 0 100px !important;
-    min-width: 100px !important;
-    max-width: 100px !important;
-    height: 64px !important;
-    border-radius: 7px !important;
+    height: 80px !important;
   }
 }
 
@@ -3664,6 +3634,11 @@ body {
   .hud-pill-group {
     padding: 2px 6px;
     font-size: 11px;
+  }
+
+  /* In landscape mode, top area is hidden; all participants stack in right column */
+  .participants-top-area {
+    display: none !important;
   }
 
   /* Participants stacked in right column matching user red box: width ~200px, height ~134px */

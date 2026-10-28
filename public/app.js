@@ -166,6 +166,8 @@
     hudFullscreenCompress: document.getElementById('hudFullscreenCompress'),
 
     participantStrip: document.getElementById('participantStrip'),
+    participantTopArea: document.getElementById('participantTopArea'),
+    participantStripTop: document.getElementById('participantStripTop'),
 
     dockWrapper: document.getElementById('dockWrapper'),
     dockInviteBtn: document.getElementById('dockInviteBtn'),
@@ -2579,13 +2581,45 @@
   // PARTICIPANT TILE RENDERING (Image 1 Centered beneath stage)
   // ==========================================================================
 
-  function renderParticipantStrip() {
-    el.participantStrip.innerHTML = '';
+  function isPortraitMode() {
+    return window.matchMedia('(orientation: portrait)').matches || (window.innerHeight > window.innerWidth);
+  }
 
-    state.members.forEach(member => {
-      const tile = createParticipantTile(member);
-      el.participantStrip.appendChild(tile);
-    });
+  function renderParticipantStrip() {
+    if (!el.participantStrip) return;
+    el.participantStrip.innerHTML = '';
+    if (el.participantStripTop) el.participantStripTop.innerHTML = '';
+
+    const members = Array.from(state.members.values());
+    const isPortrait = isPortraitMode();
+
+    // In landscape mode, on desktop, or when 2 or fewer participants:
+    // keep all participants in the primary strip (bottom in portrait, right column in landscape)
+    if (!isPortrait || members.length <= 2) {
+      if (el.participantTopArea) el.participantTopArea.classList.add('hidden');
+      members.forEach(member => {
+        el.participantStrip.appendChild(createParticipantTile(member));
+      });
+    } else {
+      // In portrait mode with 3 or more participants:
+      // Dynamically distribute participants above and below the cinema screen
+      // so the cinema screen always remains in the exact vertical center!
+      if (el.participantTopArea) el.participantTopArea.classList.remove('hidden');
+
+      const topCount = Math.floor(members.length / 2);
+      const topMembers = members.slice(0, topCount);
+      const bottomMembers = members.slice(topCount);
+
+      if (el.participantStripTop) {
+        topMembers.forEach(member => {
+          el.participantStripTop.appendChild(createParticipantTile(member));
+        });
+      }
+
+      bottomMembers.forEach(member => {
+        el.participantStrip.appendChild(createParticipantTile(member));
+      });
+    }
   }
 
   function createParticipantTile(member) {
@@ -4742,6 +4776,19 @@
         }
       });
     }
+
+    let orientationTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(orientationTimer);
+      orientationTimer = setTimeout(() => {
+        if (state.inRoom) renderParticipantStrip();
+      }, 100);
+    });
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        if (state.inRoom) renderParticipantStrip();
+      }, 150);
+    });
   }
 
   // Register PWA Service Worker for mobile standalone display (removes address bar when installed)

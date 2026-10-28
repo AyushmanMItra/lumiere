@@ -19,7 +19,7 @@
   <link rel="apple-touch-icon" href="/icon.svg">
 
   <title>Lumière - Watch Together</title>
-  <link rel="stylesheet" href="style.css?v=2.3">
+  <link rel="stylesheet" href="style.css?v=2.4">
 </head>
 <body class="discord-dark">
 
@@ -476,6 +476,13 @@
         <!-- Stage Cinema Group: wraps cinema stage + participants so they collectively drop down in idle mode -->
         <div class="stage-cinema-group" id="stageCinemaGroup">
 
+          <!-- Top Participant Area (Balances participant videos above the movie in portrait mode) -->
+          <div class="participants-tile-area participants-top-area hidden" id="participantTopArea">
+            <div class="participants-row" id="participantStripTop">
+              <!-- Dynamic cards placed above screen in portrait mode -->
+            </div>
+          </div>
+
           <!-- Cinema Stage Wrapper (Houses ambient glow canvas strictly behind cinema box) -->
           <div class="cinema-stage-wrapper" id="cinemaStageWrapper">
           <!-- Ambient Cinema Glow Canvas (Radiates dynamic blurred color glow strictly behind stage) -->
@@ -721,7 +728,7 @@
       </div>
 
         <!-- Participant Tile Strip (Image 1 Centered beneath stage) -->
-        <div class="participants-tile-area" id="participantStripArea">
+        <div class="participants-tile-area participants-bottom-area" id="participantStripArea">
           <div class="participants-row" id="participantStrip">
             <!-- Dynamic cards inserted here -->
           </div>
@@ -1520,6 +1527,6 @@
 
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="app.js?v=2.3"></script>
+  <script src="app.js?v=2.4"></script>
 </body>
 </html>
