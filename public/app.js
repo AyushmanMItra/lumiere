@@ -1974,9 +1974,11 @@
         }
       } else {
         // Single Tap Detected on Cinema Screen (Mobile / Touch Devices)
+        if (state.resetIdleTimer) state.resetIdleTimer();
+        e.preventDefault(); // Prevents synthetic click from opening modals or accidental pause
+
         // Toggle the Cinema HUD visibility so mobile users can easily access and tap all controls
         if (el.cinemaControls && state.currentMovie) {
-          e.preventDefault(); // Prevents accidental movie pause on mobile
           const isCurrentlyActive = el.cinemaControls.classList.contains('active');
           if (isCurrentlyActive) {
             el.cinemaControls.classList.remove('active');
@@ -3149,7 +3151,9 @@
     }
 
     if (!state.currentMovie) {
-      openMovieModal();
+      if (state.isHost) {
+        showToast('No movie loaded. Tap "Load Movie" to pick a movie.');
+      }
       return;
     }
 
@@ -4673,9 +4677,16 @@
         loadMoviesList();
       };
     }
-    el.moviePlayer.onclick = handlePlayPauseToggle;
-    el.stagePlaceholder.onclick = () => { if (state.isHost) openMovieModal(); };
-    el.openMovieLibraryBtn.onclick = openMovieModal;
+    el.moviePlayer.onclick = (e) => {
+      // On mobile / touch devices, tapping the screen toggles HUD controls; desktop clicks toggle play/pause
+      if (window.matchMedia('(pointer: coarse)').matches) return;
+      handlePlayPauseToggle();
+    };
+    // Do not open movie library when tapping the stage background/placeholder
+    el.openMovieLibraryBtn.onclick = (e) => {
+      if (e) e.stopPropagation();
+      openMovieModal();
+    };
     el.hostMovieLibraryDockBtn.onclick = openMovieModal;
 
     // Track selections

@@ -398,7 +398,7 @@ body {
   gap: 16px;
   background-color: var(--bg-stage);
   border-radius: 12px;
-  cursor: pointer;
+  cursor: default;
 }
 
 .stage-center-avatar {
@@ -429,16 +429,15 @@ body {
   padding: 8px 18px;
   font-size: 13px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  opacity: 0;
-  transform: translateY(6px);
-  pointer-events: none;
+  opacity: 0.92;
+  transform: translateY(0);
+  pointer-events: auto;
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.stage-placeholder:hover .load-movie-btn {
+.load-movie-btn:hover {
   opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
+  transform: scale(1.03);
 }
 
 /* Stage Bottom Left Name Tag (Image 1) */
