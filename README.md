@@ -80,17 +80,20 @@ Watching high-quality local movie files (2GB+ `.mkv` or `.mp4` rips) remotely wi
 
 ## 🚀 Quick Start
 
-### 1. Prerequisites
-- **Node.js** v18 or later ([Download Node.js](https://nodejs.org))
+### Option A: Desktop (Windows, macOS, Linux)
 
-### 2. Clone & Install
+#### 1. Prerequisites
+- **Node.js** v18 or later ([Download Node.js](https://nodejs.org))
+- Bundled FFmpeg is included automatically for Windows, macOS, and Linux.
+
+#### 2. Clone & Install
 ```bash
 git clone https://github.com/AyushmanMItra/lumiere.git
 cd lumiere
 npm install
 ```
 
-### 3. Add Movies
+#### 3. Add Movies
 Place your video files (`.mkv`, `.mp4`, `.webm`) into the `movies/` directory:
 ```text
 movies/
@@ -98,10 +101,9 @@ movies/
   └── HolidayTrip.mp4
 ```
 
-### 4. Start the Engine
-```bash
-npm start
-```
+#### 4. Start the Engine
+- **Windows**: Double-click `start.bat` or run `npm start`
+- **macOS / Linux**: Run `./start.sh` or `npm start`
 
 Your terminal will display your active connection addresses:
 ```text
@@ -122,13 +124,61 @@ Your terminal will display your active connection addresses:
 
 ---
 
+### Option B: Android Phone (Run Directly on Device via Termux)
+
+Run Lumière directly from your Android phone without needing a computer using **Termux**.
+
+#### 1. Install Termux
+Download and install Termux from **[F-Droid](https://f-droid.org/en/packages/com.termux/)** or the **[Termux GitHub Releases](https://github.com/termux/termux-app/releases)** *(do not use the obsolete Google Play Store version)*.
+
+#### 2. Install Packages & Grant Storage Access
+Open Termux and run:
+```bash
+# Update repositories and install Node.js, Git & ARM-optimized FFmpeg
+pkg update && pkg install git nodejs-lts ffmpeg -y
+
+# Grant storage permission (tap "Allow" on the Android prompt)
+termux-setup-storage
+```
+
+#### 3. Clone & Install
+```bash
+git clone https://github.com/AyushmanMItra/lumiere.git
+cd lumiere
+npm install
+```
+
+#### 4. Link Movies from Phone Storage
+Link video files from Android's Movies or Download folder into Lumière without duplicating files:
+```bash
+# Link all videos from Android's Movies folder:
+ln -s ~/storage/shared/Movies/* movies/
+
+# Or link from Downloads:
+ln -s ~/storage/shared/Download/*.mkv movies/
+```
+
+#### 5. Prevent Sleep & Start Server
+```bash
+# Prevent Android from putting the CPU to sleep when screen locks
+termux-wake-lock
+
+# Start Lumière
+./start.sh
+```
+
+> **Android Optimization Tip:** In your phone's **Settings → Apps → Termux → Battery**, set battery usage to **"Unrestricted"** so Android's process killer doesn't terminate the server in the background.
+
+---
+
 ## 🌐 Connecting With Friends
 
-### On the Same Wi-Fi (LAN):
-- Open `http://<your-local-ip>:3000` or `https://<your-local-ip>:3443` on any phone, tablet, or laptop connected to your home Wi-Fi.
+### On the Same Wi-Fi / Phone Hotspot (Zero Internet Data):
+- **Desktop Host:** Connect devices to the same home Wi-Fi and open `http://<host-ip>:3000` or `https://<host-ip>:3443`.
+- **Android Phone Host:** Turn on your phone's **Personal Hotspot**, have friends connect to it, and open `https://192.168.43.1:3443` (or `http://192.168.43.1:3000`).
 
 ### With Remote Friends Anywhere in the World (Tailscale):
-1. Install [Tailscale](https://tailscale.com) on your PC and your friend's device.
+1. Install [Tailscale](https://tailscale.com) on your device (available for Windows, macOS, Linux, and Android via Google Play).
 2. Sign in with the same account (or use Tailscale Node Sharing to invite your friend's device).
 3. Send your friend your Tailscale link: `http://100.x.x.x:3000` (or `https://100.x.x.x:3443`).
 4. Enjoy private cinema without port forwarding or third-party cloud uploads!
@@ -156,6 +206,8 @@ lumiere/
 ├── cert.pem / key.pem      # Auto-generated self-signed SSL for WebRTC
 ├── package.json
 ├── server.js               # Express, Socket.io, FFmpeg streaming pipeline
+├── start.bat               # 1-click Windows launcher
+├── start.sh                # 1-click Linux / macOS / Android Termux launcher
 └── README.md
 ```
 
