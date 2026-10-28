@@ -5225,7 +5225,8 @@ body {
 }
 
 .story-prose-card code,
-.solution-card code {
+.solution-card code,
+.compromise-card code {
   color: #57f287;
   background: rgba(87, 242, 135, 0.1);
   padding: 2px 6px;
@@ -5236,7 +5237,7 @@ body {
 /* Compromise Grid */
 .compromise-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
 }
 
@@ -5262,6 +5263,7 @@ body {
 .lock-icon { background: rgba(235, 59, 90, 0.15); color: #eb3b5a; }
 .screen-icon { background: rgba(88, 101, 242, 0.15); color: #5865F2; }
 .cloud-icon { background: rgba(254, 231, 92, 0.15); color: #fee75c; }
+.sync-icon { background: rgba(26, 188, 156, 0.15); color: #1abc9c; }
 
 .compromise-tag {
   display: flex;

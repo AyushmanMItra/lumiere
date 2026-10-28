@@ -19,7 +19,7 @@
   <link rel="apple-touch-icon" href="/icon.svg">
 
   <title>Lumière - Watch Together</title>
-  <link rel="stylesheet" href="style.css?v=2.7">
+  <link rel="stylesheet" href="style.css?v=2.8">
 </head>
 <body class="discord-dark">
 
@@ -291,13 +291,13 @@
         </h2>
         <div class="section-card story-prose-card">
           <p>
-            Most high-definition media libraries rely on <code>.mkv</code> (Matroska) containers and multi-channel surround sound like 5.1 AC3, Dolby Digital, or DTS. But modern web browsers (Chrome, Safari, Firefox) legally and technically refuse to decode Matroska files or proprietary audio codecs natively due to patent constraints. Drop an <code>.mkv</code> rip into a browser, and it either fails to open or plays in total silence.
+            Modern web browsers are engineered for the open web, not home theater archives. While engines like Chromium, WebKit, and Gecko natively support <code>.mp4</code> and <code>.webm</code> containers, high-definition personal libraries almost universally rely on <code>.mkv</code> (Matroska) packaging high-bitrate video with multi-channel surround audio like Dolby Digital (<code>AC-3</code>, <code>E-AC-3</code>) or <code>DTS</code>. Because multi-channel surround codecs carry proprietary patent licensing pools, browser vendors legally refuse native decoders. Drag an <code>.mkv</code> file into any web browser, and it either fails to parse the container or plays video in total, eerie silence.
           </p>
           <p>
-            The conventional cloud workaround is equally impractical. A standard 1080p movie rip is 2 GB to 8 GB. On typical residential upload connections (10–25 Mbps), uploading that single file to a cloud host takes 30 to 60+ minutes before a watch party can even begin.
+            A common developer impulse is to bridge this gap client-side using in-browser WebAssembly (WASM) decoders like FFmpeg.wasm. In practice, software-decoding high-bitrate 1080p or 4K containers without hardware acceleration overwhelms laptop CPUs and mobile SoCs. It triggers aggressive thermal throttling, drains batteries in minutes, drops frames during high-action scenes, and crashes browser tabs as memory allocations collide with V8 heap limits.
           </p>
           <p>
-            Attempting to decode these heavy containers purely client-side through in-browser WebAssembly decoders causes severe CPU utilization, thermal throttling on laptops and phones, and quickly crashes browser tabs once memory consumption hits V8 heap limits.
+            Meanwhile, traditional cloud streaming workarounds require uploading 5&nbsp;GB to 15&nbsp;GB movie files to third-party servers. On typical residential uplink speeds (10–25&nbsp;Mbps), uploading a single film wastes 30 to 60+ minutes before a watch party can even begin.
           </p>
         </div>
       </section>
@@ -327,9 +327,32 @@
               <span>COMPROMISE</span>
             </div>
             <h4>Screen Sharing</h4>
-            <span class="sub-label">ZOOM, TEAMS, GOOGLE MEET</span>
+            <span class="sub-label">DISCORD &amp; ZOOM</span>
             <p>
-              Real-time screen capture re-encodes the host's desktop under aggressive bitrate limits. Dark scenes dissolve into blocky compression artifacts, framerates drop to 15–30 fps, and audio clocks gradually drift out of sync by 1–3 seconds. Viewers have zero personal control over volume or subtitles.
+              Real-time screen capture re-encodes the host's desktop under aggressive bitrate limits. Discord caps free streams at 720p and 30&nbsp;fps (locking 1080p behind a $9.99/mo Nitro subscription). Dark scenes dissolve into heavy macroblocking, capturing 24fps film causes severe telecine judder and audio-video desync, and remote friends have zero personal autonomy over subtitle tracks or volume.
+            </p>
+          </div>
+
+          <div class="compromise-card">
+            <div class="compromise-icon sync-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+            </div>
+            <div class="compromise-tag">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <span>COMPROMISE</span>
+            </div>
+            <h4>Local Sync Tools</h4>
+            <span class="sub-label">SYNCPLAY &amp; MPV-SYNC</span>
+            <p>
+              Tools like Syncplay coordinate playhead timestamps between standalone desktop media players (VLC, mpv), but they do not stream video. Every friend must manually locate, download, and verify identical 5&nbsp;GB to 15&nbsp;GB files hours in advance. There is zero integrated voice or video chat, requiring users to juggle disparate third-party call apps.
             </p>
           </div>
 
@@ -348,10 +371,10 @@
               </svg>
               <span>COMPROMISE</span>
             </div>
-            <h4>Walled Gardens</h4>
-            <span class="sub-label">TELEPARTY, SCENER, STREAMING APPS</span>
+            <h4>Commercial Walled Gardens</h4>
+            <span class="sub-label">TELEPARTY &amp; SCENER</span>
             <p>
-              Strictly confined to commercial catalogs like Netflix or Disney+. You cannot watch personal media, downloaded films, or indie projects. Every participant must maintain their own paid subscription, and third-party extensions frequently break when platforms update their web players.
+              Confined exclusively to paid catalog platforms like Netflix, Disney+, and Prime Video. Every single viewer must maintain an active, separate paid subscription. They offer zero support for personal MKVs, indie cinema, or home archives, while third-party browser extensions break frequently whenever streaming platforms update their DRM or web player DOM.
             </p>
           </div>
 
@@ -372,9 +395,9 @@
               <span>COMPROMISE</span>
             </div>
             <h4>Dedicated Media Servers</h4>
-            <span class="sub-label">PLEX, JELLYFIN, CLOUD HOSTS</span>
+            <span class="sub-label">PLEX &amp; JELLYFIN</span>
             <p>
-              Setting up a self-hosted media server requires complex router port forwarding, static DNS or reverse proxies, and dedicated hardware encoding to handle simultaneous transcode streams. It turns a casual movie night into a network administration task.
+              Designed for 24/7 home server infrastructure, demanding complex router port forwarding (port 32400 for Plex, 8096 for Jellyfin), dynamic DNS, reverse proxies, and SSL management. When multiple friends connect from varied devices, simultaneous GPU/CPU transcoding triggers heavy thermal load and fan noise, transforming movie night into a server administration chore.
             </p>
           </div>
         </div>
@@ -389,13 +412,16 @@
 
         <div class="section-card solution-card">
           <p>
-            Lumière eliminates cloud uploads entirely. The movie file stays on the host machine. For native web formats (<code>.mp4</code> and <code>.webm</code>), Lumière serves byte-range streams via HTTP 206 for immediate scrubbing and zero transcoding overhead.
+            Lumière completely eliminates cloud uploads. The media file never leaves the host's machine, and friends stream directly on demand without waiting on multi-gigabyte downloads. For native web containers (<code>.mp4</code> and <code>.webm</code>), the Express backend serves direct byte ranges via HTTP 206 Partial Content, delivering instantaneous timeline scrubbing with zero FFmpeg invocation.
           </p>
           <p>
-            For complex <code>.mkv</code> files or multi-channel audio tracks, the host's background engine uses stream copy (<code>-c:v copy</code>) via a bundled FFmpeg worker. The video stream passes through untouched in 100% of its original picture clarity with zero video re-encoding. Only incompatible audio tracks (like 5.1 DTS or AC3) are normalized into stereo AAC on the fly, consuming negligible CPU (under 3%). The output is streamed in real time as fragmented MP4 chunks directly into peers' players.
+            When streaming high-definition <code>.mkv</code> files, Lumière runs an intelligent on-the-fly packaging pipeline. Instead of crushing video through costly GPU/CPU re-encoding, FFmpeg performs a zero-loss video stream copy (<code>-c:v copy</code>), extracting raw H.264 or HEVC bitstream packets and remuxing them on the fly into fragmented MP4 (fMP4) via <code>-movflags frag_keyframe+empty_moov+default_base_moof</code>. The video pipeline operates at near 0% CPU load, preserving 100% of the film's original color depth, bit depth, and crisp master clarity.
           </p>
           <p>
-            Playback synchronization is coordinated through lightweight Socket.IO heartbeats with automated clock-drift correction, keeping everyone within milliseconds of the host's playhead without streaming heavy screen pixels.
+            To conquer browser audio silence, Lumière selectively normalizes surround sound tracks. Only proprietary multi-channel codecs (such as 5.1 DTS or Dolby AC-3/E-AC-3) are downmixed into crystal-clear stereo AAC (<code>-c:a aac -b:a 192k -ac 2</code>). This targeted audio transcode consumes negligible host overhead (under 2–3% CPU) while delivering immediate, synchronized audio to every connected web client.
+          </p>
+          <p>
+            Crucially, the synchronization and media layers are decoupled. Playback synchronization is coordinated through sub-second Socket.IO heartbeats with automated rate steering (adjusting between 0.95× and 1.06× to eliminate buffer underruns without pitch distortion). Meanwhile, voice chat, webcams, and reactions operate on an isolated peer-to-peer WebRTC mesh (<code>RTCPeerConnection</code>). If someone's Wi-Fi drops voice packets, the movie stream never stutters, drops frames, or buffers.
           </p>
         </div>
       </section>
@@ -408,10 +434,13 @@
         </h2>
         <div class="section-card diff-card">
           <p>
-            Lumière is an open-source, self-hosted web tool, not a commercial SaaS startup with recurring subscription tiers. There are no user logins, no centralized databases, no bandwidth meters, and no third-party telemetry tracking your viewing habits.
+            Lumière was built on a simple conviction: watching cinema with people you care about should not be an exercise in surveillance capitalism, subscription fees, or cloud gatekeeping. There are no account sign-ups, no passwords to manage, and no centralized databases harvesting user profiles. Room states are strictly ephemeral, living entirely in host memory and evaporating the instant a screening ends.
           </p>
           <p>
-            It connects directly across your local Wi-Fi or securely over private encrypted mesh networks like Tailscale and WireGuard. Voice chat, webcams, and live reactions run on an isolated peer-to-peer WebRTC layer, so a network fluctuation in someone's voice chat never buffers or interrupts the movie stream.
+            There are zero analytics trackers, third-party telemetry scripts, or cloud servers logging your watch history. You retain complete sovereignty over your bandwidth, your files, and your privacy.
+          </p>
+          <p>
+            Connecting is seamless and secure. Lumière operates directly over your local home Wi-Fi or across zero-configuration private mesh networks like Tailscale and WireGuard. By leveraging direct mesh routing, you get end-to-end encrypted cinema streaming between friends without ever opening router ports (no UPnP or public 32400/8096 forwarding required). It is private, resilient software designed purely for the joy of shared cinema.
           </p>
         </div>
       </section>
@@ -1527,6 +1556,6 @@
 
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="app.js?v=2.7"></script>
+  <script src="app.js?v=2.8"></script>
 </body>
 </html>
