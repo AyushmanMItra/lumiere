@@ -1062,12 +1062,11 @@ body {
   padding: 4px 6px;
 }
 
-/* Participant Tile Card (Larger 280px x 142px video boxes matching user sketch) */
+/* Participant Tile Card */
 .participant-tile {
   flex: 0 1 280px;
   width: 280px;
   height: 142px;
-  max-height: 142px;
   background-color: var(--bg-secondary);
   border-radius: 10px;
   position: relative;
@@ -1078,6 +1077,31 @@ body {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
   flex-shrink: 1;
   transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+/* Dynamic desktop card scaling when fewer participants are present */
+@media (min-width: 1025px) {
+  .stage-cinema-group[data-participant-count="1"] .participant-tile {
+    width: 330px;
+    max-width: 330px;
+    height: 168px;
+    max-height: 168px;
+    flex: 0 0 330px;
+  }
+
+  .stage-cinema-group[data-participant-count="1"] .tile-avatar-center {
+    width: 66px;
+    height: 66px;
+    font-size: 26px;
+  }
+
+  .stage-cinema-group[data-participant-count="2"] .participant-tile {
+    width: 295px;
+    max-width: 295px;
+    height: 152px;
+    max-height: 152px;
+    flex: 0 1 295px;
+  }
 }
 
 /* Green border when speaking */
@@ -3182,16 +3206,16 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: max(56px, calc(50px + env(safe-area-inset-top, 0px))) max(12px, env(safe-area-inset-right, 12px)) max(92px, calc(84px + env(safe-area-inset-bottom, 24px))) max(12px, env(safe-area-inset-left, 12px));
+    padding: max(52px, calc(48px + env(safe-area-inset-top, 0px))) max(10px, env(safe-area-inset-right, 10px)) max(78px, calc(70px + env(safe-area-inset-bottom, 16px))) max(10px, env(safe-area-inset-left, 10px));
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
-    gap: 16px;
+    gap: clamp(6px, 1.5vh, 12px);
     transition: padding 0.45s cubic-bezier(0.25, 1, 0.5, 1);
   }
 
   .idle-mode .stage-section {
-    padding: 14px max(12px, env(safe-area-inset-right, 12px)) 14px max(12px, env(safe-area-inset-left, 12px));
+    padding: 10px max(10px, env(safe-area-inset-right, 10px)) 10px max(10px, env(safe-area-inset-left, 10px));
   }
 
   .stage-cinema-group {
@@ -3200,7 +3224,7 @@ body {
     align-items: center;
     width: 100%;
     max-width: 100%;
-    gap: 20px;
+    gap: clamp(8px, 1.6vh, 14px);
     transform: translateY(0);
     transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
     will-change: transform;
@@ -3211,12 +3235,12 @@ body {
     transform: translateY(clamp(6px, 2vh, 16px));
   }
 
-  /* 3. Cinema Stage Wrapper (Matches Big Center Red Box: 100% width, 16:9 aspect ratio) */
+  /* 3. Cinema Stage Wrapper (Prominent theater screen: 100% width, 16:9 aspect ratio) */
   .cinema-stage-wrapper {
     width: 100%;
     max-width: 100%;
     aspect-ratio: 16 / 9;
-    max-height: min(440px, 46dvh);
+    max-height: min(480px, 48dvh);
     margin: 0 auto;
     flex-shrink: 0;
     position: relative;
@@ -3378,56 +3402,131 @@ body {
     flex-wrap: wrap;
   }
 
-  /* Single card in a strip (e.g. 1 user, or top strip with 1 user) */
-  .participants-row:has(.participant-tile:only-child) .participant-tile {
-    width: min(220px, 58vw) !important;
-    max-width: 220px !important;
-    height: 120px !important;
-    border-radius: 10px !important;
+  /* ==========================================================================
+     Progressive Participant Scaling in Portrait Mode
+     Avoids blank space when few members exist; scales gracefully as more join.
+     ========================================================================== */
+
+  /* 1 Member: Generous video tile (eliminates the large blank void) */
+  .stage-cinema-group[data-participant-count="1"] .participant-tile,
+  .stage-section:not([data-participant-count]) .participants-row:has(.participant-tile:only-child) .participant-tile {
+    width: min(340px, 88vw) !important;
+    max-width: 340px !important;
+    height: 180px !important;
+    max-height: 180px !important;
+    border-radius: 12px !important;
     flex: 0 0 auto !important;
   }
 
-  .participants-row:has(.participant-tile:only-child) .tile-avatar-center {
-    width: 52px !important;
-    height: 52px !important;
-    font-size: 20px !important;
+  .stage-cinema-group[data-participant-count="1"] .tile-avatar-center,
+  .stage-section:not([data-participant-count]) .participants-row:has(.participant-tile:only-child) .tile-avatar-center {
+    width: 68px !important;
+    height: 68px !important;
+    font-size: 26px !important;
   }
 
-  /* 2 cards in a strip: side-by-side */
-  .participants-row:has(.participant-tile:nth-child(2):last-child) .participant-tile {
+  .stage-cinema-group[data-participant-count="1"] .tile-username,
+  .stage-section:not([data-participant-count]) .participants-row:has(.participant-tile:only-child) .tile-username {
+    font-size: 13px !important;
+  }
+
+  /* 2 Members: 1 Top, 1 Bottom - Symmetrically framing center cinema screen */
+  .stage-cinema-group[data-participant-count="2"] .participant-tile {
+    width: min(280px, 76vw) !important;
+    max-width: 280px !important;
+    height: 145px !important;
+    max-height: 145px !important;
+    border-radius: 11px !important;
+    flex: 0 0 auto !important;
+  }
+
+  .stage-cinema-group[data-participant-count="2"] .tile-avatar-center {
+    width: 56px !important;
+    height: 56px !important;
+    font-size: 22px !important;
+  }
+
+  .stage-cinema-group[data-participant-count="2"] .tile-username {
+    font-size: 12px !important;
+  }
+
+  /* 3 Members: 1 Top (centered), 2 Bottom (side-by-side) */
+  .stage-cinema-group[data-participant-count="3"] .participants-top-area .participant-tile {
+    width: min(270px, 72vw) !important;
+    max-width: 270px !important;
+    height: 135px !important;
+    max-height: 135px !important;
+    border-radius: 11px !important;
+    flex: 0 0 auto !important;
+  }
+
+  .stage-cinema-group[data-participant-count="3"] .participants-bottom-area .participant-tile {
     flex: 0 1 calc(50% - 6px) !important;
-    max-width: 220px !important;
-    height: 110px !important;
-    border-radius: 9px !important;
+    max-width: 210px !important;
+    min-width: 135px !important;
+    height: 125px !important;
+    max-height: 125px !important;
+    border-radius: 10px !important;
   }
 
-  .participants-row:has(.participant-tile:nth-child(2):last-child) .tile-avatar-center {
+  .stage-cinema-group[data-participant-count="3"] .tile-avatar-center {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 19px !important;
+  }
+
+  .stage-cinema-group[data-participant-count="3"] .tile-username {
+    font-size: 11.5px !important;
+  }
+
+  /* 4 Members: 2 Top (side-by-side), 2 Bottom (side-by-side) */
+  .stage-cinema-group[data-participant-count="4"] .participant-tile {
+    flex: 0 1 calc(50% - 6px) !important;
+    max-width: 200px !important;
+    min-width: 130px !important;
+    height: 120px !important;
+    max-height: 120px !important;
+    border-radius: 10px !important;
+  }
+
+  .stage-cinema-group[data-participant-count="4"] .tile-avatar-center {
     width: 44px !important;
     height: 44px !important;
-    font-size: 18px !important;
+    font-size: 17px !important;
   }
 
-  /* 3+ cards in a strip: compact row (e.g. 6 participants = 3 top, 3 bottom) */
-  .participants-row:has(.participant-tile:nth-child(3)) .participant-tile {
+  .stage-cinema-group[data-participant-count="4"] .tile-username {
+    font-size: 11px !important;
+  }
+
+  /* 5 or 6 Members: 2-3 Top, 3 Bottom (compact 3-across rows) */
+  .stage-cinema-group[data-participant-count="5"] .participant-tile,
+  .stage-cinema-group[data-participant-count="6"] .participant-tile,
+  .participants-row:has(.participant-tile:nth-child(3):last-child) .participant-tile {
     flex: 0 1 calc(33.333% - 6px) !important;
-    max-width: 160px !important;
-    min-width: 100px !important;
-    height: 95px !important;
+    max-width: 165px !important;
+    min-width: 105px !important;
+    height: 106px !important;
+    max-height: 106px !important;
     border-radius: 8px !important;
   }
 
-  .participants-row:has(.participant-tile:nth-child(3)) .tile-avatar-center {
-    width: 36px !important;
-    height: 36px !important;
+  .stage-cinema-group[data-participant-count="5"] .tile-avatar-center,
+  .stage-cinema-group[data-participant-count="6"] .tile-avatar-center,
+  .participants-row:has(.participant-tile:nth-child(3):last-child) .tile-avatar-center {
+    width: 38px !important;
+    height: 38px !important;
     font-size: 15px !important;
   }
 
-  .participants-row:has(.participant-tile:nth-child(3)) .tile-name-badge {
-    font-size: 10px !important;
-    padding: 1px 5px !important;
+  .stage-cinema-group[data-participant-count="5"] .tile-username,
+  .stage-cinema-group[data-participant-count="6"] .tile-username,
+  .participants-row:has(.participant-tile:nth-child(3):last-child) .tile-username {
+    font-size: 10.5px !important;
   }
 
-  /* 4+ cards in a strip: smooth horizontal scrollable ribbon */
+  /* 7+ Members: Smooth horizontal scrollable ribbons (never shrinks below readable size) */
+  .stage-cinema-group[data-participant-count]:not([data-participant-count="1"]):not([data-participant-count="2"]):not([data-participant-count="3"]):not([data-participant-count="4"]):not([data-participant-count="5"]):not([data-participant-count="6"]) .participants-row,
   .participants-row:has(.participant-tile:nth-child(4)) {
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
@@ -3436,33 +3535,57 @@ body {
     scrollbar-width: none;
   }
 
-  .participants-row:has(.participant-tile:nth-child(4))::-webkit-scrollbar {
+  .participants-row:has(.participant-tile:nth-child(4))::-webkit-scrollbar,
+  .stage-cinema-group[data-participant-count]:not([data-participant-count="1"]):not([data-participant-count="2"]):not([data-participant-count="3"]):not([data-participant-count="4"]):not([data-participant-count="5"]):not([data-participant-count="6"]) .participants-row::-webkit-scrollbar {
     display: none;
   }
 
+  .stage-cinema-group[data-participant-count]:not([data-participant-count="1"]):not([data-participant-count="2"]):not([data-participant-count="3"]):not([data-participant-count="4"]):not([data-participant-count="5"]):not([data-participant-count="6"]) .participant-tile,
   .participants-row:has(.participant-tile:nth-child(4)) .participant-tile {
-    flex: 0 0 130px !important;
-    min-width: 130px !important;
-    max-width: 130px !important;
-    height: 85px !important;
+    flex: 0 0 140px !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+    height: 98px !important;
+    border-radius: 8px !important;
+  }
+
+  .stage-cinema-group[data-participant-count]:not([data-participant-count="1"]):not([data-participant-count="2"]):not([data-participant-count="3"]):not([data-participant-count="4"]):not([data-participant-count="5"]):not([data-participant-count="6"]) .tile-avatar-center,
+  .participants-row:has(.participant-tile:nth-child(4)) .tile-avatar-center {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 14px !important;
+  }
+
+  /* Fallback 2-card row when count attribute is absent */
+  .participants-row:has(.participant-tile:nth-child(2):last-child) .participant-tile {
+    flex: 0 1 calc(50% - 6px) !important;
+    max-width: 240px !important;
+    height: 130px !important;
+    border-radius: 10px !important;
+  }
+
+  .participants-row:has(.participant-tile:nth-child(2):last-child) .tile-avatar-center {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 19px !important;
   }
 
   .participant-tile {
     flex: 0 1 calc(50% - 8px);
-    max-width: 220px;
+    max-width: 240px;
     min-width: 110px;
-    height: 110px;
-    border-radius: 9px;
+    height: 120px;
+    border-radius: 10px;
   }
 
   .tile-avatar-center {
-    width: 44px;
-    height: 44px;
-    font-size: 18px;
+    width: 48px;
+    height: 48px;
+    font-size: 19px;
   }
 
   .tile-name-badge {
-    font-size: 10.5px;
+    font-size: 11px;
     padding: 2px 7px;
   }
 
@@ -3530,6 +3653,91 @@ body {
 }
 
 /* --------------------------------------------------------------------------
+   Tablet Portrait Optimization (501px <= width <= 1024px, e.g. iPad, Galaxy Tab)
+   Fills spacious tablet screen without awkward blank areas
+   -------------------------------------------------------------------------- */
+@media (min-width: 501px) and (max-width: 1024px) and (orientation: portrait) {
+  .cinema-stage-wrapper {
+    max-height: min(540px, 50dvh) !important;
+    max-width: 900px !important;
+  }
+
+  /* Single Participant on Tablet: Prominent 225px card */
+  .stage-cinema-group[data-participant-count="1"] .participant-tile,
+  .stage-section:not([data-participant-count]) .participants-row:has(.participant-tile:only-child) .participant-tile {
+    width: min(440px, 68vw) !important;
+    max-width: 440px !important;
+    height: 225px !important;
+    max-height: 225px !important;
+    border-radius: 14px !important;
+  }
+
+  .stage-cinema-group[data-participant-count="1"] .tile-avatar-center,
+  .stage-section:not([data-participant-count]) .participants-row:has(.participant-tile:only-child) .tile-avatar-center {
+    width: 76px !important;
+    height: 76px !important;
+    font-size: 30px !important;
+  }
+
+  /* 2 Participants on Tablet */
+  .stage-cinema-group[data-participant-count="2"] .participant-tile {
+    width: min(340px, 48vw) !important;
+    max-width: 340px !important;
+    height: 180px !important;
+    max-height: 180px !important;
+    border-radius: 12px !important;
+  }
+
+  .stage-cinema-group[data-participant-count="2"] .tile-avatar-center {
+    width: 62px !important;
+    height: 62px !important;
+    font-size: 24px !important;
+  }
+
+  /* 3-4 Participants on Tablet */
+  .stage-cinema-group[data-participant-count="3"] .participant-tile,
+  .stage-cinema-group[data-participant-count="4"] .participant-tile {
+    height: 145px !important;
+    max-width: 250px !important;
+  }
+
+  .stage-cinema-group[data-participant-count="3"] .tile-avatar-center,
+  .stage-cinema-group[data-participant-count="4"] .tile-avatar-center {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 20px !important;
+  }
+
+  /* 5-6 Participants on Tablet */
+  .stage-cinema-group[data-participant-count="5"] .participant-tile,
+  .stage-cinema-group[data-participant-count="6"] .participant-tile {
+    height: 125px !important;
+    max-width: 195px !important;
+  }
+
+  .stage-cinema-group[data-participant-count="5"] .tile-avatar-center,
+  .stage-cinema-group[data-participant-count="6"] .tile-avatar-center {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 17px !important;
+  }
+
+  /* 7+ Participants on Tablet */
+  .participants-row:has(.participant-tile:nth-child(4)) .participant-tile,
+  .stage-cinema-group[data-participant-count]:not([data-participant-count="1"]):not([data-participant-count="2"]):not([data-participant-count="3"]):not([data-participant-count="4"]):not([data-participant-count="5"]):not([data-participant-count="6"]) .participant-tile {
+    flex: 0 0 160px !important;
+    height: 110px !important;
+  }
+
+  .participants-row:has(.participant-tile:nth-child(4)) .tile-avatar-center,
+  .stage-cinema-group[data-participant-count]:not([data-participant-count="1"]):not([data-participant-count="2"]):not([data-participant-count="3"]):not([data-participant-count="4"]):not([data-participant-count="5"]):not([data-participant-count="6"]) .tile-avatar-center {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 16px !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
    Phone Portrait Tweaks (width <= 500px, e.g. Moto G Power 412x823, iPhone 13-16)
    Matches exact phone red boxes:
      - Single Card: ~220px wide x ~138px tall
@@ -3545,23 +3753,26 @@ body {
     font-size: 14.5px;
   }
 
-  /* Single Participant Card on phones: matches exact red box 218px x 136px */
-  .participant-tile:only-child {
-    width: 220px !important;
-    max-width: 220px !important;
-    height: 138px !important;
-    border-radius: 10px !important;
+  /* Single Participant Card on phones: generous sizing eliminating blank spaces */
+  .participant-tile:only-child,
+  .stage-cinema-group[data-participant-count="1"] .participant-tile {
+    width: min(340px, 88vw) !important;
+    max-width: 340px !important;
+    height: 175px !important;
+    border-radius: 12px !important;
   }
 
-  .participant-tile:only-child .tile-avatar-center {
-    width: 54px !important;
-    height: 54px !important;
-    font-size: 22px !important;
+  .participant-tile:only-child .tile-avatar-center,
+  .stage-cinema-group[data-participant-count="1"] .tile-avatar-center {
+    width: 64px !important;
+    height: 64px !important;
+    font-size: 24px !important;
   }
 
-  .participant-tile:only-child .tile-name-badge {
-    font-size: 11px !important;
-    padding: 2px 8px !important;
+  .participant-tile:only-child .tile-name-badge,
+  .stage-cinema-group[data-participant-count="1"] .tile-name-badge {
+    font-size: 12px !important;
+    padding: 3px 9px !important;
     bottom: 6px !important;
     left: 6px !important;
   }
@@ -3734,16 +3945,16 @@ body {
    -------------------------------------------------------------------------- */
 @media (max-height: 760px) and (orientation: portrait) {
   .stage-section {
-    padding: max(50px, calc(46px + env(safe-area-inset-top, 0px))) max(10px, env(safe-area-inset-right, 10px)) max(84px, calc(76px + env(safe-area-inset-bottom, 20px))) max(10px, env(safe-area-inset-left, 10px));
-    gap: 8px;
+    padding: max(48px, calc(44px + env(safe-area-inset-top, 0px))) max(8px, env(safe-area-inset-right, 8px)) max(70px, calc(64px + env(safe-area-inset-bottom, 12px))) max(8px, env(safe-area-inset-left, 8px));
+    gap: 6px;
   }
 
   .idle-mode .stage-section {
-    padding: 10px max(10px, env(safe-area-inset-right, 10px)) 10px max(10px, env(safe-area-inset-left, 10px));
+    padding: 8px max(8px, env(safe-area-inset-right, 8px)) 8px max(8px, env(safe-area-inset-left, 8px));
   }
 
   .cinema-stage-wrapper {
-    max-height: 35dvh;
+    max-height: min(340px, 44dvh);
   }
 
   .stage-cinema-group {
@@ -3751,26 +3962,74 @@ body {
   }
 
   .participants-top-area {
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   .participants-bottom-area {
-    margin-top: 6px;
+    margin-top: 4px;
   }
 
-  .participant-tile:only-child,
-  .participants-row:has(.participant-tile:only-child) .participant-tile {
-    height: 95px !important;
+  /* Single Participant: Generous 155px card eliminating blank space on compact phones */
+  .stage-cinema-group[data-participant-count="1"] .participant-tile,
+  .stage-section:not([data-participant-count]) .participants-row:has(.participant-tile:only-child) .participant-tile {
+    width: min(300px, 86vw) !important;
+    max-width: 300px !important;
+    height: 155px !important;
+    max-height: 155px !important;
+    border-radius: 11px !important;
+  }
+
+  .stage-cinema-group[data-participant-count="1"] .tile-avatar-center,
+  .stage-section:not([data-participant-count]) .participants-row:has(.participant-tile:only-child) .tile-avatar-center {
+    width: 60px !important;
+    height: 60px !important;
+    font-size: 22px !important;
+  }
+
+  /* 2 Participants: 125px cards framing center cinema screen */
+  .stage-cinema-group[data-participant-count="2"] .participant-tile {
+    width: min(250px, 72vw) !important;
+    max-width: 250px !important;
+    height: 125px !important;
+    max-height: 125px !important;
+    border-radius: 10px !important;
+  }
+
+  .stage-cinema-group[data-participant-count="2"] .tile-avatar-center {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 19px !important;
+  }
+
+  /* 3-4 Participants: 110px cards */
+  .stage-cinema-group[data-participant-count="3"] .participant-tile,
+  .stage-cinema-group[data-participant-count="4"] .participant-tile,
+  .participants-row:has(.participant-tile:nth-child(2):last-child) .participant-tile {
+    height: 110px !important;
     max-width: 190px !important;
   }
 
-  .participants-row:has(.participant-tile:nth-child(2):last-child) .participant-tile {
-    height: 88px !important;
-    max-width: 180px !important;
+  .stage-cinema-group[data-participant-count="3"] .tile-avatar-center,
+  .stage-cinema-group[data-participant-count="4"] .tile-avatar-center,
+  .participants-row:has(.participant-tile:nth-child(2):last-child) .tile-avatar-center {
+    width: 42px !important;
+    height: 42px !important;
+    font-size: 16px !important;
   }
 
-  .participants-row:has(.participant-tile:nth-child(3)) .participant-tile {
-    height: 80px !important;
+  /* 5-6 Participants: 98px cards */
+  .stage-cinema-group[data-participant-count="5"] .participant-tile,
+  .stage-cinema-group[data-participant-count="6"] .participant-tile,
+  .participants-row:has(.participant-tile:nth-child(3):last-child) .participant-tile {
+    height: 98px !important;
+    max-width: 150px !important;
+  }
+
+  /* 7+ Participants */
+  .participants-row:has(.participant-tile:nth-child(4)) .participant-tile,
+  .stage-cinema-group[data-participant-count]:not([data-participant-count="1"]):not([data-participant-count="2"]):not([data-participant-count="3"]):not([data-participant-count="4"]):not([data-participant-count="5"]):not([data-participant-count="6"]) .participant-tile {
+    flex: 0 0 130px !important;
+    height: 92px !important;
   }
 }
 
@@ -3827,9 +4086,8 @@ body {
   /* Video fits available height and width strictly without clipping right column */
   .cinema-stage-wrapper {
     aspect-ratio: 16 / 9;
-    max-height: calc(100vh - 86px);
-    max-height: calc(100dvh - 86px);
-    max-width: calc(100% - 225px);
+    max-height: calc(100dvh - 78px);
+    max-width: calc(100% - clamp(205px, 25vw, 235px));
     width: 100%;
     height: auto;
     margin: 0;
@@ -4005,11 +4263,12 @@ body {
     display: none !important;
   }
 
-  /* Participants stacked in right column matching user red box: width ~200px, height ~134px */
+  /* Participants stacked in right column: dynamic scaling to avoid empty space */
   .participants-tile-area {
     margin-top: 0;
-    max-height: calc(100vh - 86px);
-    width: 200px;
+    max-height: calc(100vh - 78px);
+    max-height: calc(100dvh - 78px);
+    width: clamp(200px, 24vw, 230px);
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
@@ -4033,22 +4292,93 @@ body {
     gap: 8px;
     padding: 2px;
     width: 100%;
+    height: 100%;
     max-height: 100%;
   }
 
+  /* 1 Participant in Landscape: fills vertical column generously */
+  .stage-cinema-group[data-participant-count="1"] .participant-tile,
+  .stage-section:not([data-participant-count]) .participants-row:has(.participant-tile:only-child) .participant-tile {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 220px !important;
+    flex: 0 0 220px !important;
+    border-radius: 12px !important;
+  }
+
+  .stage-cinema-group[data-participant-count="1"] .tile-avatar-center,
+  .stage-section:not([data-participant-count]) .participants-row:has(.participant-tile:only-child) .tile-avatar-center {
+    width: 64px !important;
+    height: 64px !important;
+    font-size: 24px !important;
+  }
+
+  /* 2 Participants in Landscape: fills column split 50/50 */
+  .stage-cinema-group[data-participant-count="2"] .participant-tile,
+  .stage-section:not([data-participant-count]) .participants-row:has(.participant-tile:nth-child(2):last-child) .participant-tile {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 140px !important;
+    flex: 0 0 140px !important;
+    border-radius: 11px !important;
+  }
+
+  .stage-cinema-group[data-participant-count="2"] .tile-avatar-center,
+  .stage-section:not([data-participant-count]) .participants-row:has(.participant-tile:nth-child(2):last-child) .tile-avatar-center {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 19px !important;
+  }
+
+  /* 3 Participants in Landscape: fills column split 33/33/33 */
+  .stage-cinema-group[data-participant-count="3"] .participant-tile,
+  .stage-section:not([data-participant-count]) .participants-row:has(.participant-tile:nth-child(3):last-child) .participant-tile {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 105px !important;
+    flex: 0 0 105px !important;
+    border-radius: 9px !important;
+  }
+
+  .stage-cinema-group[data-participant-count="3"] .tile-avatar-center,
+  .stage-section:not([data-participant-count]) .participants-row:has(.participant-tile:nth-child(3):last-child) .tile-avatar-center {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 16px !important;
+  }
+
+  /* 4+ Participants in Landscape: scrollable list with 100px minimum clear tiles */
+  .stage-cinema-group[data-participant-count]:not([data-participant-count="1"]):not([data-participant-count="2"]):not([data-participant-count="3"]) .participant-tile,
+  .stage-section:not([data-participant-count]) .participants-row:has(.participant-tile:nth-child(4)) .participant-tile {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 100px !important;
+    flex: 0 0 100px !important;
+    border-radius: 8px !important;
+  }
+
+  .stage-cinema-group[data-participant-count]:not([data-participant-count="1"]):not([data-participant-count="2"]):not([data-participant-count="3"]) .tile-avatar-center,
+  .stage-section:not([data-participant-count]) .participants-row:has(.participant-tile:nth-child(4)) .tile-avatar-center {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 15px !important;
+  }
+
   .participant-tile {
-    width: 196px !important;
-    flex: 0 0 134px !important;
-    min-width: 196px !important;
-    max-width: 196px !important;
-    height: 134px !important;
-    border-radius: 12px;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    border-radius: 10px;
   }
 
   .tile-avatar-center {
-    width: 52px;
-    height: 52px;
-    font-size: 20px;
+    width: 48px;
+    height: 48px;
+    font-size: 19px;
   }
 
   .tile-name-badge {

@@ -166,8 +166,10 @@
     hudFullscreenCompress: document.getElementById('hudFullscreenCompress'),
 
     participantStrip: document.getElementById('participantStrip'),
+    participantStripArea: document.getElementById('participantStripArea'),
     participantTopArea: document.getElementById('participantTopArea'),
     participantStripTop: document.getElementById('participantStripTop'),
+    stageCinemaGroup: document.getElementById('stageCinemaGroup'),
 
     dockWrapper: document.getElementById('dockWrapper'),
     dockInviteBtn: document.getElementById('dockInviteBtn'),
@@ -2614,10 +2616,19 @@
     const members = Array.from(state.members.values());
     const isPortrait = isPortraitMode();
 
+    if (el.stageCinemaGroup) el.stageCinemaGroup.dataset.participantCount = String(members.length);
+    if (el.stageSection) el.stageSection.dataset.participantCount = String(members.length);
+
     // In landscape mode, on desktop, or when only 1 participant:
     // keep participant in primary strip (bottom in portrait, right column in landscape)
     if (!isPortrait || members.length <= 1) {
-      if (el.participantTopArea) el.participantTopArea.classList.add('hidden');
+      if (el.participantTopArea) {
+        el.participantTopArea.classList.add('hidden');
+        el.participantTopArea.dataset.count = '0';
+      }
+      if (el.participantStripArea) {
+        el.participantStripArea.dataset.count = String(members.length);
+      }
       members.forEach(member => {
         el.participantStrip.appendChild(createParticipantTile(member));
       });
@@ -2630,6 +2641,9 @@
       const topCount = Math.floor(members.length / 2);
       const topMembers = members.slice(0, topCount);
       const bottomMembers = members.slice(topCount);
+
+      if (el.participantTopArea) el.participantTopArea.dataset.count = String(topMembers.length);
+      if (el.participantStripArea) el.participantStripArea.dataset.count = String(bottomMembers.length);
 
       if (el.participantStripTop) {
         topMembers.forEach(member => {
