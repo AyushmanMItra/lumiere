@@ -374,8 +374,9 @@
             <h4>Commercial Walled Gardens</h4>
             <span class="sub-label">TELEPARTY &amp; SCENER</span>
             <p>
-              Confined exclusively to paid catalog platforms like Netflix, Disney+, and Prime Video. Every single viewer must maintain an active, separate paid subscription. They offer zero support for personal MKVs, indie cinema, or home archives, while third-party browser extensions break frequently whenever streaming platforms update their DRM or web player DOM.
+              Traditional services lock you into paid catalogs with zero support for personal MKVs, indie cinema, or home rips. Lumière bridges both worlds: stream uncompressed local high-bitrate MKV files with zero disk wear, OR sync major streaming services (Netflix, Prime Video, JioHotstar, Zee5) with frame-accurate micro-steering alongside Lumière's integrated WebRTC voice, video, and cinema stage.
             </p>
+
           </div>
 
           <div class="compromise-card">
@@ -523,6 +524,72 @@
           <video id="screenSharePlayer" class="screen-share-player hidden" autoplay playsinline></video>
           <div id="youtubePlayerBox" class="youtube-player-box hidden">
             <div id="youtubeIframe"></div>
+          </div>
+
+          <!-- Streaming Platform Theater Stage (Netflix, Prime Video, JioHotstar, Zee5, etc.) -->
+          <div id="streamingPlayerBox" class="streaming-player-box hidden">
+            <div class="streaming-backdrop" id="streamingBackdrop"></div>
+            <div class="streaming-cinema-card">
+              <div class="streaming-badge-row">
+                <div class="streaming-platform-pill" id="streamingPlatformPill">
+                  <span class="streaming-platform-dot"></span>
+                  <span id="streamingPlatformName">Netflix</span>
+                </div>
+                <div class="streaming-live-tag">
+                  <span class="live-dot pulse"></span>
+                  <span>LUMIÈRE SYNC ACTIVE</span>
+                </div>
+              </div>
+
+              <h2 class="streaming-content-title" id="streamingContentTitle">Stranger Things</h2>
+
+              <p class="streaming-content-desc" id="streamingContentDesc">
+                Streaming party is live. Open your video to stay frame-synchronized via the Lumière Extension, or share this video tab directly into the theater stage!
+              </p>
+
+              <div class="streaming-actions-grid">
+                <a id="streamingLaunchBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary streaming-launch-action">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                  <span id="streamingLaunchText">Open in Netflix</span>
+                </a>
+
+                <button type="button" id="streamingShareTabBtn" class="btn btn-secondary streaming-share-action">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                  </svg>
+                  <span>Share Video into Theater</span>
+                </button>
+
+                <button type="button" id="streamingExtensionBtn" class="btn btn-glass streaming-ext-action">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  </svg>
+                  <span>Get Sync Extension</span>
+                </button>
+              </div>
+
+              <!-- Real-Time Playback Synchronization Metrics -->
+              <div class="streaming-sync-status-bar">
+                <div class="sync-status-metric">
+                  <span class="metric-label">PLAYBACK STATE</span>
+                  <span class="metric-value" id="streamingPlayStatus">Playing</span>
+                </div>
+                <div class="sync-status-metric">
+                  <span class="metric-label">CURRENT POSITION</span>
+                  <span class="metric-value" id="streamingTimeDisplay">00:00:00</span>
+                </div>
+                <div class="sync-status-metric">
+                  <span class="metric-label">MICRO-STEERING</span>
+                  <span class="metric-value green" id="streamingDriftStatus">Synchronized (&lt; 0.05s drift)</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Drag and Drop Subtitle File Target Overlay -->
@@ -1056,6 +1123,16 @@
                     <span class="more-menu-desc">Direct .mp4, .webm or live web stream</span>
                   </div>
                 </button>
+                <button type="button" class="more-menu-item" id="menuStreamingBtn" title="Streaming Watch Party">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+                    <polyline points="17 2 12 7 7 2"></polyline>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Streaming Party</span>
+                    <span class="more-menu-desc">Netflix, Prime Video, JioHotstar, Zee5</span>
+                  </div>
+                </button>
               </div>
             </div>
           </div>
@@ -1333,11 +1410,173 @@
         </div>
       </form>
     </div>
+  <!-- ============================================================ -->
+  <!-- 8.5 STREAMING WATCH PARTY MODAL (Netflix, Prime, JioHotstar, Zee5) -->
+  <!-- ============================================================ -->
+  <div id="streamingModal" class="modal-overlay hidden">
+    <div class="modal-card extra-feature-modal-card streaming-modal-card">
+      <div class="modal-header-row">
+        <div class="modal-title-with-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+            <polyline points="17 2 12 7 7 2"></polyline>
+          </svg>
+          <h3>Streaming Watch Party</h3>
+        </div>
+        <button id="closeStreamingBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <p class="modal-subtitle-text">
+        Synchronize Netflix, Prime Video, JioHotstar, Zee5, and more. All participants stay frame-locked via the Lumière Sync Extension while enjoying live WebRTC voice, video, and theater chat!
+      </p>
+
+      <form id="streamingForm" class="extra-feature-form">
+        <div class="form-group">
+          <label>SELECT STREAMING PLATFORM</label>
+          <div class="streaming-platform-selector" id="streamingPlatformSelector">
+            <button type="button" class="platform-chip active" data-platform="netflix" data-color="#E50914">
+              <span class="chip-dot" style="background:#E50914;"></span>
+              <span>Netflix</span>
+            </button>
+            <button type="button" class="platform-chip" data-platform="primevideo" data-color="#00A8E1">
+              <span class="chip-dot" style="background:#00A8E1;"></span>
+              <span>Prime Video</span>
+            </button>
+            <button type="button" class="platform-chip" data-platform="jiohotstar" data-color="#0C6EFD">
+              <span class="chip-dot" style="background:#0C6EFD;"></span>
+              <span>JioHotstar</span>
+            </button>
+            <button type="button" class="platform-chip" data-platform="zee5" data-color="#8230C6">
+              <span class="chip-dot" style="background:#8230C6;"></span>
+              <span>Zee5</span>
+            </button>
+            <button type="button" class="platform-chip" data-platform="disneyplus" data-color="#113CCF">
+              <span class="chip-dot" style="background:#113CCF;"></span>
+              <span>Disney+</span>
+            </button>
+            <button type="button" class="platform-chip" data-platform="sonyliv" data-color="#1F4A85">
+              <span class="chip-dot" style="background:#1F4A85;"></span>
+              <span>SonyLIV</span>
+            </button>
+          </div>
+          <input type="hidden" id="streamingPlatformInput" value="netflix">
+        </div>
+
+        <div class="form-group">
+          <label for="streamingTitleInput">TITLE / SHOW NAME</label>
+          <input type="text" id="streamingTitleInput" placeholder="e.g. Stranger Things, Mirzapur, Panchayat" class="form-input" required autocomplete="off">
+        </div>
+
+        <div class="form-group">
+          <label for="streamingUrlInput">CONTENT / WATCH URL (OPTIONAL)</label>
+          <input type="url" id="streamingUrlInput" placeholder="https://www.netflix.com/watch/... or platform link" class="form-input" autocomplete="off">
+          <span class="input-hint-sub">Paste the direct link to let room members jump straight to the title with one click!</span>
+        </div>
+
+        <div class="modal-actions-row">
+          <button type="button" id="openExtGuideBtn" class="btn btn-glass btn-sm">Extension Setup Guide</button>
+          <div style="flex:1"></div>
+          <button type="button" id="cancelStreamingBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="startStreamingBtn" class="btn btn-coral">Start Streaming Party</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 8.6 EXTENSION INSTALL & SETUP GUIDE MODAL                    -->
+  <!-- ============================================================ -->
+  <div id="extensionModal" class="modal-overlay hidden">
+    <div class="modal-card extra-feature-modal-card ext-modal-card">
+      <div class="modal-header-row">
+        <div class="modal-title-with-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          </svg>
+          <h3>Lumière Sync Browser Extension</h3>
+        </div>
+        <button id="closeExtensionBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <p class="modal-subtitle-text">
+        The Lumière extension synchronizes playback in real-time across Netflix, Prime Video, JioHotstar, Zee5, and more with zero lag.
+      </p>
+
+      <div class="ext-room-badge-banner">
+        <div class="ext-room-info-label">Active Lumière Room Code:</div>
+        <div class="ext-room-code-wrapper">
+          <span id="extModalRoomCode" class="ext-room-code-pill">---</span>
+          <button type="button" id="copyExtRoomCodeBtn" class="btn btn-sm btn-ghost" title="Copy Room Code">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>Copy Code</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="ext-steps-list">
+        <div class="ext-step-item">
+          <div class="ext-step-num">1</div>
+          <div class="ext-step-content">
+            <strong>Download Extension Package</strong>
+            <p>Download the pre-bundled extension zip archive directly from this Lumière server instance.</p>
+            <a href="/api/extension/download" id="downloadExtZipBtn" class="btn btn-primary btn-sm" download>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Download Extension (.ZIP)</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="ext-step-item">
+          <div class="ext-step-num">2</div>
+          <div class="ext-step-content">
+            <strong>Unpack the Zip &amp; Open Browser Extensions</strong>
+            <p>Extract the zip to a folder on your PC. In Chrome, Edge, or Brave, navigate to <code>chrome://extensions</code> and toggle <strong>Developer mode</strong> (top right).</p>
+          </div>
+        </div>
+
+        <div class="ext-step-item">
+          <div class="ext-step-num">3</div>
+          <div class="ext-step-content">
+            <strong>Click &quot;Load unpacked&quot;</strong>
+            <p>Select the extracted folder. The Lumière Watch Party Sync icon will appear in your browser toolbar.</p>
+          </div>
+        </div>
+
+        <div class="ext-step-item">
+          <div class="ext-step-num">4</div>
+          <div class="ext-step-content">
+            <strong>Play &amp; Watch Together!</strong>
+            <p>Open Netflix, Prime Video, JioHotstar, or Zee5. Click the extension icon, enter this room code, and enjoy seamless frame-synced playback alongside Lumière's WebRTC voice/video stage!</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions-row">
+        <div style="flex:1"></div>
+        <button type="button" id="dismissExtensionBtn" class="btn btn-secondary">Got It!</button>
+      </div>
+    </div>
   </div>
 
   <!-- ============================================================ -->
   <!-- 9. SUBTITLE SETTINGS & SYNC DELAY MODAL                      -->
   <!-- ============================================================ -->
+
   <div id="subtitleModal" class="modal-overlay hidden">
     <div class="modal-card extra-feature-modal-card">
       <div class="modal-header-row">

@@ -33,6 +33,10 @@ Watching high-quality local movie files (2GB+ `.mkv` or `.mp4` rips) remotely wi
 ## ✨ Features
 
 - **Decentralized Host Engine:** The movie never moves. It stays on the host's hard drive and streams on-the-fly directly to connected peers over Tailscale or local Wi-Fi.
+- **Major Streaming Platforms (Netflix, Prime Video, JioHotstar, Zee5, Disney+, etc.):**
+  - Synchronize commercial streaming catalogs directly with your Lumière room via the bundled Lumière Sync Extension.
+  - Seamless dual-mode: Friends with their own accounts enjoy frame-accurate micro-steering in their browser, while friends without accounts can watch via 1-click zero-latency WebRTC screen share into the theater stage.
+  - Keep full-mesh WebRTC voice, video cameras, and live reactions active while watching together on any streaming service.
 - **Universal Container Support (MKV, MP4, WebM):**
   - Instant memory remuxing via bundled FFmpeg (`-c:v copy`). Zero disk wear, zero duplicate files, and negligible CPU overhead.
   - **Dynamic Audio Track Switching:** Mid-movie switching between English, Japanese, Hindi, or commentary tracks without losing playback position.
@@ -135,6 +139,11 @@ Your terminal will display your active connection addresses:
 
 ```text
 lumiere/
+├── extension/              # Chrome/Edge browser extension for streaming sync (Netflix, Prime, JioHotstar, Zee5)
+│   ├── adapters/           # Platform-specific video player controllers
+│   ├── overlay/            # In-stream HUD and room chat overlay
+│   ├── popup/              # Quick room connection popup
+│   └── manifest.json       # Manifest V3 extension configuration
 ├── movies/                 # Put your .mkv, .mp4, and .webm movies here
 │   └── .gitkeep
 ├── public/                 # Modern web interface

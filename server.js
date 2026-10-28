@@ -8,6 +8,7 @@ const os = require('os');
 const cors = require('cors');
 const multer = require('multer');
 const selfsigned = require('selfsigned');
+const zlib = require('zlib');
 
 // Configure ffmpeg & ffprobe
 const ffmpeg = require('fluent-ffmpeg');
@@ -253,6 +254,152 @@ app.get('/api/support-info', (req, res) => {
     officialQrUrl: 'https://raw.githubusercontent.com/AyushmanMItra/lumiere/main/public/support-qr.png',
     tamperProtected: true
   });
+});
+
+// 3.7 Extension Info and Download
+const CRC_TABLE = new Uint32Array(256);
+for (let i = 0; i < 256; i++) {
+  let c = i;
+  for (let k = 0; k < 8; k++) {
+    c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+  }
+  CRC_TABLE[i] = c;
+}
+
+function calculateCrc32(buf) {
+  let crc = 0 ^ (-1);
+  for (let i = 0; i < buf.length; i++) {
+    crc = (crc >>> 8) ^ CRC_TABLE[(crc ^ buf[i]) & 0xFF];
+  }
+  return (crc ^ (-1)) >>> 0;
+}
+
+function packageZip(files) {
+  const localChunks = [];
+  const cdChunks = [];
+  let offset = 0;
+
+  for (const f of files) {
+    const nameBuf = Buffer.from(f.name.replace(/\\/g, '/'), 'utf8');
+    const dataBuf = f.data;
+    const deflated = zlib.deflateRawSync(dataBuf);
+    const useDeflate = deflated.length < dataBuf.length;
+    const compData = useDeflate ? deflated : dataBuf;
+    const method = useDeflate ? 8 : 0;
+    const crc = calculateCrc32(dataBuf);
+
+    // Local file header (30 bytes)
+    const lfh = Buffer.alloc(30);
+    lfh.writeUInt32LE(0x04034b50, 0);
+    lfh.writeUInt16LE(20, 4);
+    lfh.writeUInt16LE(0, 6);
+    lfh.writeUInt16LE(method, 8);
+    lfh.writeUInt16LE(0, 10);
+    lfh.writeUInt16LE(0, 12);
+    lfh.writeUInt32LE(crc, 14);
+    lfh.writeUInt32LE(compData.length, 18);
+    lfh.writeUInt32LE(dataBuf.length, 22);
+    lfh.writeUInt16LE(nameBuf.length, 26);
+    lfh.writeUInt16LE(0, 28);
+
+    localChunks.push(lfh, nameBuf, compData);
+
+    // Central directory header (46 bytes)
+    const cdh = Buffer.alloc(46);
+    cdh.writeUInt32LE(0x02014b50, 0);
+    cdh.writeUInt16LE(20, 4);
+    cdh.writeUInt16LE(20, 6);
+    cdh.writeUInt16LE(0, 8);
+    cdh.writeUInt16LE(method, 10);
+    cdh.writeUInt16LE(0, 12);
+    cdh.writeUInt16LE(0, 14);
+    cdh.writeUInt32LE(crc, 16);
+    cdh.writeUInt32LE(compData.length, 20);
+    cdh.writeUInt32LE(dataBuf.length, 24);
+    cdh.writeUInt16LE(nameBuf.length, 28);
+    cdh.writeUInt16LE(0, 30);
+    cdh.writeUInt16LE(0, 32);
+    cdh.writeUInt16LE(0, 34);
+    cdh.writeUInt16LE(0, 36);
+    cdh.writeUInt32LE(0, 38);
+    cdh.writeUInt32LE(offset, 42);
+
+    cdChunks.push(cdh, nameBuf);
+    offset += lfh.length + nameBuf.length + compData.length;
+  }
+
+  const cdOffset = offset;
+  let cdSize = 0;
+  for (const c of cdChunks) cdSize += c.length;
+
+  // End of central directory record (22 bytes)
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0);
+  eocd.writeUInt16LE(0, 4);
+  eocd.writeUInt16LE(0, 6);
+  eocd.writeUInt16LE(files.length, 8);
+  eocd.writeUInt16LE(files.length, 10);
+  eocd.writeUInt32LE(cdSize, 12);
+  eocd.writeUInt32LE(cdOffset, 16);
+  eocd.writeUInt16LE(0, 20);
+
+  return Buffer.concat([...localChunks, ...cdChunks, eocd]);
+}
+
+app.get('/api/extension/info', (req, res) => {
+  res.json({
+    name: 'Lumiere - Watch Party Sync',
+    version: '1.1.0',
+    description: 'Synchronize Netflix, Prime Video, JioHotstar, Zee5, Disney+, and SonyLIV with Lumiere.',
+    platforms: [
+      { id: 'netflix', name: 'Netflix', color: '#E50914', url: 'https://www.netflix.com' },
+      { id: 'primevideo', name: 'Prime Video', color: '#00A8E1', url: 'https://www.primevideo.com' },
+      { id: 'jiohotstar', name: 'JioHotstar', color: '#0C2044', url: 'https://www.hotstar.com' },
+      { id: 'zee5', name: 'Zee5', color: '#8230C6', url: 'https://www.zee5.com' },
+      { id: 'disneyplus', name: 'Disney+', color: '#113CCF', url: 'https://www.disneyplus.com' },
+      { id: 'sonyliv', name: 'SonyLIV', color: '#1F4A85', url: 'https://www.sonyliv.com' }
+    ],
+    downloadUrl: '/api/extension/download'
+  });
+});
+
+app.get('/api/extension/download', (req, res) => {
+  try {
+    const extDir = path.join(__dirname, 'extension');
+    if (!fs.existsSync(extDir)) {
+      return res.status(404).json({ error: 'Extension directory not found' });
+    }
+
+    function collectFiles(dir, baseDir = '') {
+      let results = [];
+      const list = fs.readdirSync(dir);
+      for (const file of list) {
+        const fullPath = path.join(dir, file);
+        const relPath = path.join(baseDir, file);
+        const stat = fs.statSync(fullPath);
+        if (stat.isDirectory()) {
+          results = results.concat(collectFiles(fullPath, relPath));
+        } else {
+          results.push({
+            name: relPath.replace(/\\/g, '/'),
+            data: fs.readFileSync(fullPath)
+          });
+        }
+      }
+      return results;
+    }
+
+    const files = collectFiles(extDir);
+    const zipBuffer = packageZip(files);
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="lumiere-watch-party-extension.zip"');
+    res.setHeader('Content-Length', zipBuffer.length);
+    res.send(zipBuffer);
+  } catch (err) {
+    console.error('[Extension Download Error]', err);
+    res.status(500).json({ error: 'Failed to generate extension zip', details: err.message });
+  }
 });
 
 // 4. Probe Movie (Audio tracks, Subtitles & Seekability)
@@ -563,11 +710,14 @@ io.on('connection', (socket) => {
 
     const randomColor = DISCORD_COLORS[Math.floor(Math.random() * DISCORD_COLORS.length)];
 
+    const hostMember = room.members.get(room.hostId);
+    const isHost = (room.hostId === socket.id) || Boolean(hostMember && username && hostMember.username === username);
+
     const memberInfo = {
       id: socket.id,
       username: username || `User_${socket.id.substring(0, 4)}`,
       color: randomColor,
-      isHost: room.hostId === socket.id,
+      isHost: isHost,
       isMuted: false,
       isDeafened: false,
       isCamOn: false,
@@ -643,6 +793,9 @@ io.on('connection', (socket) => {
     room.lastUpdate = Date.now();
 
     socket.to(roomId).emit('sync-play', { time: room.currentTime });
+    if (room.currentMovie?.type === 'streaming') {
+      socket.to(roomId).emit('sync-streaming-action', { action: 'play', time: room.currentTime });
+    }
   });
 
   socket.on('host-pause', ({ roomId, time }) => {
@@ -656,6 +809,9 @@ io.on('connection', (socket) => {
     room.lastUpdate = Date.now();
 
     socket.to(roomId).emit('sync-pause', { time: room.currentTime });
+    if (room.currentMovie?.type === 'streaming') {
+      socket.to(roomId).emit('sync-streaming-action', { action: 'pause', time: room.currentTime });
+    }
   });
 
   socket.on('host-seek', ({ roomId, time }) => {
@@ -666,6 +822,9 @@ io.on('connection', (socket) => {
     room.lastUpdate = Date.now();
 
     socket.to(roomId).emit('sync-seek', { time });
+    if (room.currentMovie?.type === 'streaming') {
+      socket.to(roomId).emit('sync-streaming-action', { action: 'seek', time });
+    }
   });
 
   socket.on('host-set-movie', ({ roomId, movie, audioTrack, subtitleTrack }) => {
@@ -733,6 +892,78 @@ io.on('connection', (socket) => {
     socket.to(roomId).emit('sync-youtube-action', { action, time });
   });
 
+  // Streaming Platform Watch Party Socket Events (Netflix, Prime Video, JioHotstar, Zee5, etc.)
+  socket.on('host-set-streaming', ({ roomId, platform, title, url }) => {
+    const room = rooms.get(roomId);
+    if (!room || !room.members.has(socket.id)) return;
+
+    const member = room.members.get(socket.id);
+    const plat = (platform || 'netflix').toLowerCase();
+    const mediaTitle = (typeof title === 'string' && title.trim()) ? title.trim() : `${plat.toUpperCase()} Party`;
+    const mediaUrl = (typeof url === 'string' && url.trim()) ? url.trim() : '';
+
+    room.currentMovie = {
+      type: 'streaming',
+      platform: plat,
+      title: mediaTitle,
+      url: mediaUrl,
+      filename: `${plat.toUpperCase()}: ${mediaTitle}`
+    };
+    room.currentTime = 0;
+    room.isPlaying = true;
+    room.lastUpdate = Date.now();
+
+    io.in(roomId).emit('sync-streaming-changed', {
+      platform: room.currentMovie.platform,
+      title: room.currentMovie.title,
+      url: room.currentMovie.url,
+      sharerName: member ? member.username : 'Host'
+    });
+    console.log(`[Room ${roomId}] Streaming party loaded: ${room.currentMovie.platform} - ${room.currentMovie.title} by ${member?.username}`);
+  });
+
+  socket.on('host-streaming-sync', ({ roomId, action, time }) => {
+    const room = rooms.get(roomId);
+    if (!room || !room.members.has(socket.id)) return;
+
+    if (action === 'play') {
+      room.isPlaying = true;
+      if (typeof time === 'number' && !isNaN(time) && time >= 0) {
+        room.currentTime = time;
+      }
+      room.lastUpdate = Date.now();
+    } else if (action === 'pause') {
+      room.isPlaying = false;
+      if (typeof time === 'number' && !isNaN(time) && time >= 0) {
+        room.currentTime = time;
+      }
+      room.lastUpdate = Date.now();
+    } else if (action === 'rewind10') {
+      room.currentTime = Math.max(0, (room.currentTime || 0) - 10);
+      room.lastUpdate = Date.now();
+    } else if (action === 'forward10') {
+      room.currentTime = (room.currentTime || 0) + 10;
+      room.lastUpdate = Date.now();
+    } else if (action === 'seek') {
+      if (typeof time === 'number' && !isNaN(time)) {
+        room.currentTime = Math.max(0, time);
+      }
+      room.lastUpdate = Date.now();
+    } else if (typeof time === 'number' && !isNaN(time) && time >= 0) {
+      room.currentTime = time;
+      room.lastUpdate = Date.now();
+    }
+
+    socket.to(roomId).emit('sync-streaming-action', { action, time: room.currentTime });
+    if (action === 'play') {
+      socket.to(roomId).emit('sync-play', { time: room.currentTime });
+    } else if (action === 'pause') {
+      socket.to(roomId).emit('sync-pause', { time: room.currentTime });
+    } else if (action === 'seek' || action === 'rewind10' || action === 'forward10') {
+      socket.to(roomId).emit('sync-seek', { time: room.currentTime });
+    }
+  });
+
   // Screen Share WebRTC & Broadcast Events
   socket.on('start-screen-share', ({ roomId, streamId, trackId, username }) => {
     const room = rooms.get(roomId);
@@ -782,7 +1013,12 @@ io.on('connection', (socket) => {
   // Host regular heartbeat (every 2-3s) to prevent client drift
   socket.on('host-heartbeat', ({ roomId, time, isPlaying }) => {
     const room = rooms.get(roomId);
-    if (!room || room.hostId !== socket.id) return;
+    if (!room) return;
+    const sender = room.members.get(socket.id);
+    const hostMember = room.members.get(room.hostId);
+    const isHostSender = (room.hostId === socket.id) || Boolean(sender && hostMember && sender.username === hostMember.username);
+
+    if (!isHostSender && room.currentMovie?.type !== 'streaming') return;
 
     room.currentTime = time;
     room.isPlaying = isPlaying;

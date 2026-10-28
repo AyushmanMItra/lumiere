@@ -6253,3 +6253,374 @@ body:not(.has-participants) .cinema-stage-wrapper {
   border-radius: 4px;
 }
 
+/* ==========================================================================
+   STREAMING WATCH PARTY STAGE & MODALS (Netflix, Prime, JioHotstar, Zee5)
+   ========================================================================== */
+
+.streaming-player-box {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #08090d;
+  z-index: 5;
+  overflow: hidden;
+  padding: 24px;
+}
+
+.streaming-backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(229, 9, 20, 0.15) 0%, rgba(8, 9, 13, 0.95) 75%);
+  transition: background 0.5s ease;
+  pointer-events: none;
+}
+
+.streaming-backdrop.bg-netflix {
+  background: radial-gradient(circle at center, rgba(229, 9, 20, 0.22) 0%, rgba(8, 9, 13, 0.95) 75%);
+}
+
+.streaming-backdrop.bg-primevideo {
+  background: radial-gradient(circle at center, rgba(0, 168, 225, 0.22) 0%, rgba(8, 9, 13, 0.95) 75%);
+}
+
+.streaming-backdrop.bg-jiohotstar {
+  background: radial-gradient(circle at center, rgba(12, 110, 253, 0.22) 0%, rgba(8, 9, 13, 0.95) 75%);
+}
+
+.streaming-backdrop.bg-zee5 {
+  background: radial-gradient(circle at center, rgba(130, 48, 198, 0.22) 0%, rgba(8, 9, 13, 0.95) 75%);
+}
+
+.streaming-backdrop.bg-disneyplus {
+  background: radial-gradient(circle at center, rgba(17, 60, 207, 0.22) 0%, rgba(8, 9, 13, 0.95) 75%);
+}
+
+.streaming-backdrop.bg-sonyliv {
+  background: radial-gradient(circle at center, rgba(31, 74, 133, 0.22) 0%, rgba(8, 9, 13, 0.95) 75%);
+}
+
+.streaming-cinema-card {
+  position: relative;
+  z-index: 2;
+  max-width: 640px;
+  width: 100%;
+  background: rgba(18, 19, 26, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 32px 36px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+  align-items: center;
+  animation: streamFadeIn 0.35s ease-out;
+}
+
+@keyframes streamFadeIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.streaming-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.streaming-platform-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.streaming-platform-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #E50914;
+}
+
+.streaming-live-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(87, 242, 135, 0.12);
+  border: 1px solid rgba(87, 242, 135, 0.3);
+  color: #57F287;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+}
+
+.streaming-content-title {
+  font-size: clamp(22px, 4vw, 32px);
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.25;
+  margin: 4px 0 0;
+  letter-spacing: -0.3px;
+}
+
+.streaming-content-desc {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #a3a6aa;
+  max-width: 520px;
+}
+
+.streaming-actions-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.streaming-launch-action {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.streaming-share-action,
+.streaming-ext-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 13.5px;
+}
+
+.streaming-sync-status-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-top: 8px;
+}
+
+.sync-status-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: center;
+}
+
+.sync-status-metric .metric-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #72767d;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.sync-status-metric .metric-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.sync-status-metric .metric-value.green {
+  color: #57F287;
+}
+
+/* Streaming Modal Selector Chips */
+.streaming-modal-card {
+  max-width: 520px !important;
+}
+
+.streaming-platform-selector {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.platform-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #dbdee1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  justify-content: flex-start;
+}
+
+.platform-chip:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.platform-chip.active {
+  background: rgba(88, 101, 242, 0.15);
+  border-color: #5865F2;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(88, 101, 242, 0.35);
+}
+
+.chip-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.input-hint-sub {
+  font-size: 11px;
+  color: #72767d;
+  margin-top: 3px;
+  display: block;
+}
+
+/* Extension Guide Modal */
+.ext-modal-card {
+  max-width: 560px !important;
+}
+
+.ext-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 16px 0;
+  text-align: left;
+}
+
+.ext-step-item {
+  display: flex;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 14px 16px;
+  align-items: flex-start;
+}
+
+.ext-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #5865F2;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.ext-step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #dbdee1;
+}
+
+.ext-step-content strong {
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.ext-step-content p {
+  color: #949ba4;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.ext-step-content code {
+  background: rgba(0, 0, 0, 0.5);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #e5a93c;
+  font-family: monospace;
+}
+
+@media (max-width: 640px) {
+  .streaming-cinema-card {
+    padding: 20px 16px;
+    gap: 12px;
+  }
+  .streaming-sync-status-bar {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .streaming-platform-selector {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.ext-room-badge-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(88, 101, 242, 0.12);
+  border: 1px solid rgba(88, 101, 242, 0.35);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ext-room-info-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #c9cdfb;
+}
+
+.ext-room-code-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ext-room-code-pill {
+  font-family: monospace;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  background: #111214;
+  color: #57f287;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(87, 242, 135, 0.3);
+}
+
+

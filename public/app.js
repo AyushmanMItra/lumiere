@@ -201,10 +201,42 @@
     menuScreenshareText: document.getElementById('menuScreenshareText'),
     menuYouTubeBtn: document.getElementById('menuYouTubeBtn'),
     menuUrlBtn: document.getElementById('menuUrlBtn'),
+    menuStreamingBtn: document.getElementById('menuStreamingBtn'),
 
     screenSharePlayer: document.getElementById('screenSharePlayer'),
     youtubePlayerBox: document.getElementById('youtubePlayerBox'),
     youtubeIframe: document.getElementById('youtubeIframe'),
+    streamingPlayerBox: document.getElementById('streamingPlayerBox'),
+    streamingBackdrop: document.getElementById('streamingBackdrop'),
+    streamingPlatformPill: document.getElementById('streamingPlatformPill'),
+    streamingPlatformName: document.getElementById('streamingPlatformName'),
+    streamingContentTitle: document.getElementById('streamingContentTitle'),
+    streamingContentDesc: document.getElementById('streamingContentDesc'),
+    streamingLaunchBtn: document.getElementById('streamingLaunchBtn'),
+    streamingLaunchText: document.getElementById('streamingLaunchText'),
+    streamingShareTabBtn: document.getElementById('streamingShareTabBtn'),
+    streamingExtensionBtn: document.getElementById('streamingExtensionBtn'),
+    streamingPlayStatus: document.getElementById('streamingPlayStatus'),
+    streamingTimeDisplay: document.getElementById('streamingTimeDisplay'),
+    streamingDriftStatus: document.getElementById('streamingDriftStatus'),
+
+    streamingModal: document.getElementById('streamingModal'),
+    streamingForm: document.getElementById('streamingForm'),
+    streamingPlatformSelector: document.getElementById('streamingPlatformSelector'),
+    streamingPlatformInput: document.getElementById('streamingPlatformInput'),
+    streamingTitleInput: document.getElementById('streamingTitleInput'),
+    streamingUrlInput: document.getElementById('streamingUrlInput'),
+    openExtGuideBtn: document.getElementById('openExtGuideBtn'),
+    cancelStreamingBtn: document.getElementById('cancelStreamingBtn'),
+    startStreamingBtn: document.getElementById('startStreamingBtn'),
+    closeStreamingBtn: document.getElementById('closeStreamingBtn'),
+
+    extensionModal: document.getElementById('extensionModal'),
+    closeExtensionBtn: document.getElementById('closeExtensionBtn'),
+    dismissExtensionBtn: document.getElementById('dismissExtensionBtn'),
+    extModalRoomCode: document.getElementById('extModalRoomCode'),
+    copyExtRoomCodeBtn: document.getElementById('copyExtRoomCodeBtn'),
+    downloadExtZipBtn: document.getElementById('downloadExtZipBtn'),
 
     youtubeModal: document.getElementById('youtubeModal'),
     youtubeForm: document.getElementById('youtubeForm'),
@@ -475,7 +507,11 @@
         if (el.stagePlaceholder) el.stagePlaceholder.classList.add('hidden');
         if (el.stageUsername) el.stageUsername.textContent = `${data.screenShare.sharerName}'s Screen`;
       } else if (data.currentMovie) {
-        loadMovieInTheater(data.currentMovie, data.audioTrack, data.subtitleTrack, data.currentTime, data.isPlaying);
+        if (data.currentMovie.type === 'streaming') {
+          loadStreamingInTheater(data.currentMovie.platform, data.currentMovie.title, data.currentMovie.url, data.currentTime, data.isPlaying);
+        } else {
+          loadMovieInTheater(data.currentMovie, data.audioTrack, data.subtitleTrack, data.currentTime, data.isPlaying);
+        }
       } else {
         stopMovieInTheater();
       }
@@ -529,6 +565,7 @@
 
     // Synchronized Movie Playback Engine
     s.on('sync-play', ({ time }) => {
+      if (state.currentMovie?.type === 'streaming' || state.currentMovie?.type === 'youtube') return;
       if (Math.abs(getEffectiveCurrentTime() - time) > 2.0) {
         seekMovie(time);
       }
@@ -540,6 +577,7 @@
     });
 
     s.on('sync-pause', ({ time }) => {
+      if (state.currentMovie?.type === 'streaming' || state.currentMovie?.type === 'youtube') return;
       el.moviePlayer.pause();
       el.moviePlayer.playbackRate = 1.0;
       updatePlayPauseIcons(false);
@@ -550,6 +588,7 @@
     });
 
     s.on('sync-seek', ({ time }) => {
+      if (state.currentMovie?.type === 'streaming' || state.currentMovie?.type === 'youtube') return;
       seekMovie(time);
     });
 
@@ -590,6 +629,25 @@
       setTimeout(() => { state.isYtSyncing = false; }, 700);
     });
 
+    // Streaming Platform Socket Synchronization (Netflix, Prime Video, JioHotstar, Zee5, etc.)
+    s.on('sync-streaming-changed', ({ platform, title, url, sharerName }) => {
+      loadStreamingInTheater(platform, title, url, 0, true);
+      showToast(`${sharerName || 'Host'} loaded ${platform ? platform.toUpperCase() : 'Streaming'}: ${title}`);
+    });
+
+    s.on('sync-streaming-action', ({ action, time }) => {
+      if (!state.currentMovie || state.currentMovie.type !== 'streaming') return;
+      if (action === 'play') {
+        updateStreamingPlaybackState(true, time);
+      } else if (action === 'pause') {
+        updateStreamingPlaybackState(false, time);
+      } else if (action === 'rewind10' || action === 'forward10' || action === 'seek') {
+        updateStreamingPlaybackState(state.streamingIsPlaying, time);
+      } else if (typeof time === 'number') {
+        updateStreamingPlaybackState(state.streamingIsPlaying, time);
+      }
+    });
+
     // Screen Share Socket Synchronization
     s.on('sync-screen-share-started', (sharer) => {
       state.screenSharer = sharer;
@@ -603,6 +661,7 @@
       }
       if (el.stagePlaceholder) el.stagePlaceholder.classList.add('hidden');
       if (el.youtubePlayerBox) el.youtubePlayerBox.classList.add('hidden');
+      if (el.streamingPlayerBox) el.streamingPlayerBox.classList.add('hidden');
       if (el.screenSharePlayer) el.screenSharePlayer.classList.remove('hidden');
 
       // Check if peer connection already has the track
@@ -628,6 +687,8 @@
       if (state.currentMovie) {
         if (state.currentMovie.type === 'youtube') {
           if (el.youtubePlayerBox) el.youtubePlayerBox.classList.remove('hidden');
+        } else if (state.currentMovie.type === 'streaming') {
+          if (el.streamingPlayerBox) el.streamingPlayerBox.classList.remove('hidden');
         } else {
           if (el.moviePlayer) el.moviePlayer.classList.remove('hidden');
         }
@@ -747,6 +808,7 @@
         if (el.moviePlayer) el.moviePlayer.classList.add('hidden');
         if (el.stagePlaceholder) el.stagePlaceholder.classList.add('hidden');
         if (el.youtubePlayerBox) el.youtubePlayerBox.classList.add('hidden');
+        if (el.streamingPlayerBox) el.streamingPlayerBox.classList.add('hidden');
         if (el.stageUsername) el.stageUsername.textContent = `${screenShare.sharerName}'s Screen`;
         return;
       }
@@ -754,6 +816,15 @@
       if (!currentMovie) {
         if (state.currentMovie) {
           stopMovieInTheater();
+        }
+        return;
+      }
+
+      if (currentMovie.type === 'streaming') {
+        if (!state.currentMovie || state.currentMovie.type !== 'streaming' || state.currentMovie.platform !== currentMovie.platform || state.currentMovie.title !== currentMovie.title) {
+          loadStreamingInTheater(currentMovie.platform, currentMovie.title, currentMovie.url, currentTime, isPlaying);
+        } else {
+          updateStreamingPlaybackState(isPlaying, currentTime);
         }
         return;
       }
@@ -1552,6 +1623,7 @@
       }
       if (el.stagePlaceholder) el.stagePlaceholder.classList.add('hidden');
       if (el.youtubePlayerBox) el.youtubePlayerBox.classList.add('hidden');
+      if (el.streamingPlayerBox) el.streamingPlayerBox.classList.add('hidden');
       if (el.stageUsername) el.stageUsername.textContent = `${state.username}'s Screen`;
 
       // Broadcast to room
@@ -1636,6 +1708,8 @@
     if (state.currentMovie) {
       if (state.currentMovie.type === 'youtube') {
         if (el.youtubePlayerBox) el.youtubePlayerBox.classList.remove('hidden');
+      } else if (state.currentMovie.type === 'streaming') {
+        if (el.streamingPlayerBox) el.streamingPlayerBox.classList.remove('hidden');
       } else {
         if (el.moviePlayer) el.moviePlayer.classList.remove('hidden');
       }
@@ -1662,6 +1736,7 @@
     }
     if (el.stagePlaceholder) el.stagePlaceholder.classList.add('hidden');
     if (el.youtubePlayerBox) el.youtubePlayerBox.classList.add('hidden');
+    if (el.streamingPlayerBox) el.streamingPlayerBox.classList.add('hidden');
     const sharerName = state.screenSharer?.sharerName || state.members.get(targetId)?.username || 'Remote User';
     if (el.stageUsername) el.stageUsername.textContent = `${sharerName}'s Screen`;
   }
@@ -1858,6 +1933,183 @@
         movie: movie
       });
     }
+  }
+
+  // ==========================================================================
+  // STREAMING WATCH PARTY ENGINE (Netflix, Prime Video, JioHotstar, Zee5, etc.)
+  // ==========================================================================
+
+  const STREAMING_PLATFORMS = {
+    netflix: { name: 'Netflix', color: '#E50914', defaultUrl: 'https://www.netflix.com' },
+    primevideo: { name: 'Prime Video', color: '#00A8E1', defaultUrl: 'https://www.primevideo.com' },
+    jiohotstar: { name: 'JioHotstar', color: '#0C6EFD', defaultUrl: 'https://www.hotstar.com' },
+    zee5: { name: 'Zee5', color: '#8230C6', defaultUrl: 'https://www.zee5.com' },
+    disneyplus: { name: 'Disney+', color: '#113CCF', defaultUrl: 'https://www.disneyplus.com' },
+    sonyliv: { name: 'SonyLIV', color: '#1F4A85', defaultUrl: 'https://www.sonyliv.com' }
+  };
+
+  function openStreamingModal() {
+    if (el.streamingModal) {
+      el.streamingModal.classList.remove('hidden');
+      if (el.streamingTitleInput) {
+        el.streamingTitleInput.value = '';
+        setTimeout(() => el.streamingTitleInput.focus(), 80);
+      }
+      if (el.streamingUrlInput) {
+        el.streamingUrlInput.value = '';
+      }
+    }
+  }
+
+  function closeStreamingModal() {
+    if (el.streamingModal) el.streamingModal.classList.add('hidden');
+  }
+
+  function openExtensionModal() {
+    if (el.extensionModal) {
+      if (el.extModalRoomCode) {
+        el.extModalRoomCode.textContent = state.roomId || '---';
+      }
+      el.extensionModal.classList.remove('hidden');
+    }
+  }
+
+  function closeExtensionModal() {
+    if (el.extensionModal) el.extensionModal.classList.add('hidden');
+  }
+
+  function handleStreamingSubmit(e) {
+    if (e) e.preventDefault();
+    const platform = (el.streamingPlatformInput?.value || 'netflix').toLowerCase();
+    const platInfo = STREAMING_PLATFORMS[platform] || { name: platform.toUpperCase(), defaultUrl: '' };
+    const titleVal = el.streamingTitleInput?.value?.trim();
+    const title = titleVal || `${platInfo.name} Party`;
+    const url = el.streamingUrlInput?.value?.trim() || platInfo.defaultUrl || '';
+
+    closeStreamingModal();
+
+    if (state.socket) {
+      state.socket.emit('host-set-streaming', {
+        roomId: state.roomId,
+        platform,
+        title,
+        url
+      });
+    }
+
+    loadStreamingInTheater(platform, title, url, 0, true);
+  }
+
+  function updateStreamingPlaybackState(isPlaying, time) {
+    state.streamingIsPlaying = !!isPlaying;
+    if (typeof time === 'number' && !isNaN(time) && time >= 0) {
+      state.streamingCurrentTime = time;
+    }
+
+    if (el.streamingPlayStatus) {
+      el.streamingPlayStatus.textContent = state.streamingIsPlaying ? 'Playing' : 'Paused';
+    }
+    if (el.streamingTimeDisplay) {
+      el.streamingTimeDisplay.textContent = formatTime(state.streamingCurrentTime || 0);
+    }
+    if (el.currentTimeDisplay) {
+      el.currentTimeDisplay.innerText = formatTime(state.streamingCurrentTime || 0);
+    }
+
+    updatePlayPauseIcons(state.streamingIsPlaying);
+
+    if (state.streamingTicker) {
+      clearInterval(state.streamingTicker);
+      state.streamingTicker = null;
+    }
+
+    if (state.streamingIsPlaying) {
+      state.streamingTicker = setInterval(() => {
+        state.streamingCurrentTime = (state.streamingCurrentTime || 0) + 1;
+        if (el.streamingTimeDisplay) {
+          el.streamingTimeDisplay.textContent = formatTime(state.streamingCurrentTime);
+        }
+        if (el.currentTimeDisplay) {
+          el.currentTimeDisplay.innerText = formatTime(state.streamingCurrentTime);
+        }
+      }, 1000);
+    }
+  }
+
+  function loadStreamingInTheater(platform, title, url, startTime = 0, isPlaying = true) {
+    const platformKey = (platform || 'netflix').toLowerCase();
+    const platInfo = STREAMING_PLATFORMS[platformKey] || { name: platformKey.toUpperCase(), color: '#E50914', defaultUrl: '' };
+    const movieTitle = title || `${platInfo.name} Party`;
+    const movieUrl = url || platInfo.defaultUrl || '';
+
+    state.currentMovie = {
+      type: 'streaming',
+      platform: platformKey,
+      title: movieTitle,
+      url: movieUrl,
+      filename: `${platInfo.name}: ${movieTitle}`
+    };
+
+    if (el.moviePlayer) {
+      el.moviePlayer.pause();
+      el.moviePlayer.classList.add('hidden');
+    }
+    if (el.screenSharePlayer) {
+      el.screenSharePlayer.classList.add('hidden');
+    }
+    if (el.youtubePlayerBox) {
+      el.youtubePlayerBox.classList.add('hidden');
+      if (state.ytPlayer && typeof state.ytPlayer.stopVideo === 'function') {
+        try { state.ytPlayer.stopVideo(); } catch (e) {}
+      }
+    }
+    if (el.stagePlaceholder) {
+      el.stagePlaceholder.classList.add('hidden');
+    }
+
+    if (el.streamingPlayerBox) {
+      el.streamingPlayerBox.classList.remove('hidden');
+    }
+
+    if (el.streamingBackdrop) {
+      el.streamingBackdrop.className = `streaming-backdrop bg-${platformKey}`;
+    }
+
+    if (el.streamingPlatformPill) {
+      const dot = el.streamingPlatformPill.querySelector('.streaming-platform-dot');
+      if (dot) dot.style.background = platInfo.color;
+    }
+    if (el.streamingPlatformName) {
+      el.streamingPlatformName.textContent = platInfo.name;
+    }
+    if (el.streamingContentTitle) {
+      el.streamingContentTitle.textContent = movieTitle;
+    }
+
+    if (el.streamingLaunchBtn) {
+      el.streamingLaunchBtn.href = movieUrl || platInfo.defaultUrl || '#';
+      if (el.streamingLaunchText) {
+        el.streamingLaunchText.textContent = `Open in ${platInfo.name}`;
+      }
+    }
+
+    if (el.stageUsername) {
+      el.stageUsername.textContent = platInfo.name;
+    }
+    if (el.durationDisplay) {
+      el.durationDisplay.innerText = 'Streaming';
+    }
+
+    if (el.modalNowPlayingBanner) {
+      el.modalNowPlayingBanner.classList.remove('hidden');
+    }
+    if (el.modalNowPlayingTitle) {
+      el.modalNowPlayingTitle.innerText = state.currentMovie.filename;
+    }
+    if (el.audioPickerGroup) el.audioPickerGroup.classList.add('hidden');
+    if (el.subtitlePickerGroup) el.subtitlePickerGroup.classList.add('hidden');
+
+    updateStreamingPlaybackState(isPlaying, startTime || 0);
   }
 
   // ==========================================================================
@@ -2885,16 +3137,22 @@
   }
 
   function getEffectiveDuration() {
+    if (state.currentMovie?.type === 'streaming') {
+      return 0;
+    }
     if (state.movieDuration && isFinite(state.movieDuration) && state.movieDuration > 0) {
       return state.movieDuration;
     }
-    if (el.moviePlayer.duration && isFinite(el.moviePlayer.duration) && el.moviePlayer.duration > 0) {
+    if (el.moviePlayer && el.moviePlayer.duration && isFinite(el.moviePlayer.duration) && el.moviePlayer.duration > 0) {
       return el.moviePlayer.duration;
     }
     return 0;
   }
 
   function getEffectiveCurrentTime() {
+    if (state.currentMovie?.type === 'streaming') {
+      return state.streamingCurrentTime || 0;
+    }
     const rawCur = el.moviePlayer.currentTime || 0;
     if (state.isLiveStream) {
       return (state.streamStartTime || 0) + rawCur;
@@ -2903,6 +3161,19 @@
   }
 
   function seekMovie(seekTime, shouldPlay = null) {
+    if (state.currentMovie?.type === 'streaming') {
+      const clamped = Math.max(0, seekTime);
+      updateStreamingPlaybackState(shouldPlay !== null ? shouldPlay : state.streamingIsPlaying, clamped);
+      if (state.socket) {
+        state.socket.emit('host-streaming-sync', {
+          roomId: state.roomId,
+          action: 'seek',
+          time: clamped
+        });
+      }
+      return;
+    }
+
     state.lastSyncSeekTime = Date.now();
     const dur = getEffectiveDuration();
     const clampedTime = dur > 0 ? Math.max(0, Math.min(dur, seekTime)) : Math.max(0, seekTime);
@@ -2960,6 +3231,17 @@
       }
     }
 
+    if (el.streamingPlayerBox) {
+      el.streamingPlayerBox.classList.add('hidden');
+    }
+
+    if (state.streamingTicker) {
+      clearInterval(state.streamingTicker);
+      state.streamingTicker = null;
+    }
+    state.streamingIsPlaying = false;
+    state.streamingCurrentTime = 0;
+
     if (el.screenSharePlayer) {
       el.screenSharePlayer.srcObject = null;
       try { el.screenSharePlayer.load(); } catch (e) {}
@@ -3003,6 +3285,12 @@
   async function loadMovieInTheater(movie, audioTrack = 0, subtitleTrack = 'off', startTime = 0, autoPlay = false) {
     if (!movie) return;
 
+    // 0. Streaming Platform Party (Netflix, Prime Video, JioHotstar, Zee5, etc.)
+    if (movie.type === 'streaming') {
+      loadStreamingInTheater(movie.platform, movie.title, movie.url, startTime, autoPlay);
+      return;
+    }
+
     // 1. YouTube Watch Party Stream
     if (movie.type === 'youtube' || movie.videoId) {
       loadYouTubeInTheater(movie.videoId, startTime, autoPlay);
@@ -3020,6 +3308,7 @@
 
       el.stagePlaceholder.classList.add('hidden');
       if (el.youtubePlayerBox) el.youtubePlayerBox.classList.add('hidden');
+      if (el.streamingPlayerBox) el.streamingPlayerBox.classList.add('hidden');
       if (el.screenSharePlayer) el.screenSharePlayer.classList.add('hidden');
       if (el.moviePlayer) el.moviePlayer.classList.remove('hidden');
 
@@ -3068,6 +3357,7 @@
     if (el.audioPickerGroup) el.audioPickerGroup.classList.remove('hidden');
     if (el.subtitlePickerGroup) el.subtitlePickerGroup.classList.remove('hidden');
     if (el.youtubePlayerBox) el.youtubePlayerBox.classList.add('hidden');
+    if (el.streamingPlayerBox) el.streamingPlayerBox.classList.add('hidden');
     if (el.screenSharePlayer) el.screenSharePlayer.classList.add('hidden');
     if (el.moviePlayer) el.moviePlayer.classList.remove('hidden');
 
@@ -3234,6 +3524,19 @@
       return;
     }
 
+    if (state.currentMovie?.type === 'streaming') {
+      const nextPlaying = !state.streamingIsPlaying;
+      updateStreamingPlaybackState(nextPlaying, state.streamingCurrentTime || 0);
+      if (state.socket) {
+        state.socket.emit('host-streaming-sync', {
+          roomId: state.roomId,
+          action: nextPlaying ? 'play' : 'pause',
+          time: state.streamingCurrentTime || 0
+        });
+      }
+      return;
+    }
+
     if (!state.currentMovie) {
       if (state.isHost) {
         showToast('No movie loaded. Tap "Load Movie" to pick a movie.');
@@ -3328,6 +3631,10 @@
             }
           }
         } catch (e) {}
+        return;
+      }
+
+      if (state.currentMovie?.type === 'streaming') {
         return;
       }
 
@@ -4433,10 +4740,64 @@
       closeAllDeviceMenus(false);
       openYouTubeModal();
     });
+    bindTap(el.menuStreamingBtn, () => {
+      closeAllDeviceMenus(false);
+      openStreamingModal();
+    });
     bindTap(el.menuUrlBtn, () => {
       closeAllDeviceMenus(false);
       openUrlModal();
     });
+
+    // YouTube Modal Submit & Close
+    if (el.closeYouTubeBtn) el.closeYouTubeBtn.onclick = closeYouTubeModal;
+    if (el.cancelYouTubeBtn) el.cancelYouTubeBtn.onclick = closeYouTubeModal;
+    if (el.youtubeForm) el.youtubeForm.onsubmit = handleYouTubeSubmit;
+
+    // URL Modal Submit & Close
+    if (el.closeUrlBtn) el.closeUrlBtn.onclick = closeUrlModal;
+    if (el.cancelUrlBtn) el.cancelUrlBtn.onclick = closeUrlModal;
+    if (el.urlForm) el.urlForm.onsubmit = handleUrlSubmit;
+
+    // Streaming Watch Party Modal & Platform Selector
+    if (el.closeStreamingBtn) el.closeStreamingBtn.onclick = closeStreamingModal;
+    if (el.cancelStreamingBtn) el.cancelStreamingBtn.onclick = closeStreamingModal;
+    if (el.streamingForm) el.streamingForm.onsubmit = handleStreamingSubmit;
+
+    if (el.streamingPlatformSelector) {
+      const chips = el.streamingPlatformSelector.querySelectorAll('.platform-chip');
+      chips.forEach(chip => {
+        chip.onclick = () => {
+          chips.forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          const plat = chip.getAttribute('data-platform') || 'netflix';
+          if (el.streamingPlatformInput) el.streamingPlatformInput.value = plat;
+        };
+      });
+    }
+
+    if (el.openExtGuideBtn) el.openExtGuideBtn.onclick = openExtensionModal;
+    if (el.streamingExtensionBtn) el.streamingExtensionBtn.onclick = openExtensionModal;
+    if (el.closeExtensionBtn) el.closeExtensionBtn.onclick = closeExtensionModal;
+    if (el.dismissExtensionBtn) el.dismissExtensionBtn.onclick = closeExtensionModal;
+
+    if (el.copyExtRoomCodeBtn) {
+      el.copyExtRoomCodeBtn.onclick = () => {
+        if (state.roomId) {
+          navigator.clipboard.writeText(state.roomId).then(() => {
+            showToast('Room code copied to clipboard!');
+          }).catch(() => {
+            showToast(`Room code: ${state.roomId}`);
+          });
+        }
+      };
+    }
+
+    if (el.streamingShareTabBtn) {
+      el.streamingShareTabBtn.onclick = () => {
+        toggleScreenShare();
+      };
+    }
 
     // Soundboard Modal
     if (el.closeSoundboardBtn) {
@@ -4691,6 +5052,16 @@
         } catch (e) {}
         return;
       }
+      if (state.currentMovie?.type === 'streaming') {
+        const cur = state.streamingCurrentTime || 0;
+        const newTime = Math.max(0, cur - 10);
+        updateStreamingPlaybackState(state.streamingIsPlaying, newTime);
+        if (state.socket) {
+          state.socket.emit('host-streaming-sync', { roomId: state.roomId, action: 'rewind10', time: newTime });
+        }
+        showToast('Rewound 10s');
+        return;
+      }
       const cur = getEffectiveCurrentTime();
       const newTime = Math.max(0, cur - 10);
       seekMovie(newTime);
@@ -4711,6 +5082,16 @@
           }
           showToast('Forwarded 10s');
         } catch (e) {}
+        return;
+      }
+      if (state.currentMovie?.type === 'streaming') {
+        const cur = state.streamingCurrentTime || 0;
+        const newTime = cur + 10;
+        updateStreamingPlaybackState(state.streamingIsPlaying, newTime);
+        if (state.socket) {
+          state.socket.emit('host-streaming-sync', { roomId: state.roomId, action: 'forward10', time: newTime });
+        }
+        showToast('Forwarded 10s');
         return;
       }
       const cur = getEffectiveCurrentTime();
@@ -4742,6 +5123,12 @@
         return;
       }
       if (el.youtubeModal && !el.youtubeModal.classList.contains('hidden')) {
+        return;
+      }
+      if (el.streamingModal && !el.streamingModal.classList.contains('hidden')) {
+        return;
+      }
+      if (el.extensionModal && !el.extensionModal.classList.contains('hidden')) {
         return;
       }
       if (el.urlModal && !el.urlModal.classList.contains('hidden')) {

@@ -1,0 +1,406 @@
+/* ==========================================================================
+   Lumiere Extension - Overlay Styles
+   Dark cinema theme matching Lumiere (#0b0c10 base)
+   ========================================================================== */
+
+#lumiere-overlay {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 2147483647;
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 13px;
+  color: #dbdee1;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+#lumiere-overlay * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+#lumiere-overlay.lumiere-minimized .lumiere-status-bar {
+  max-width: 42px;
+  overflow: hidden;
+  padding: 6px 10px;
+}
+
+#lumiere-overlay.lumiere-minimized .lumiere-status-bar > *:not(.lumiere-brand) {
+  display: none;
+}
+
+#lumiere-overlay.lumiere-minimized .lumiere-brand span {
+  display: none;
+}
+
+#lumiere-overlay.lumiere-minimized .lumiere-chat-panel {
+  display: none;
+}
+
+/* ======================== Status Bar ======================== */
+
+.lumiere-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(11, 12, 16, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 6px 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  transition: all 0.3s ease;
+}
+
+.lumiere-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+  cursor: grab;
+  user-select: none;
+}
+
+.lumiere-brand svg {
+  color: #e5a93c;
+}
+
+.lumiere-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #949ba4;
+}
+
+.lumiere-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #949ba4;
+  flex-shrink: 0;
+}
+
+.lumiere-dot-connected {
+  background-color: #57F287;
+  box-shadow: 0 0 8px rgba(87, 242, 135, 0.7);
+  animation: lumiere-pulse 2s infinite ease-in-out;
+}
+
+.lumiere-dot-disconnected {
+  background-color: #949ba4;
+}
+
+.lumiere-dot-error {
+  background-color: #da373c;
+  box-shadow: 0 0 8px rgba(218, 55, 60, 0.7);
+}
+
+@keyframes lumiere-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.lumiere-status-text {
+  white-space: nowrap;
+}
+
+/* ======================== Members ======================== */
+
+.lumiere-members {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+}
+
+.lumiere-member-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-left: 2px solid currentColor;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #dbdee1;
+  white-space: nowrap;
+}
+
+.lumiere-host-badge {
+  background: rgba(229, 169, 60, 0.2);
+  color: #e5a93c;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 3px;
+  letter-spacing: 0.5px;
+}
+
+/* ======================== Bar Actions ======================== */
+
+.lumiere-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.lumiere-bar-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #dbdee1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+}
+
+.lumiere-bar-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.lumiere-chat-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #da373c;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 14px;
+  height: 14px;
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.lumiere-chat-badge.hidden {
+  display: none;
+}
+
+/* ======================== Chat Panel ======================== */
+
+.lumiere-chat-panel {
+  margin-top: 8px;
+  width: 320px;
+  max-height: 420px;
+  background: rgba(11, 12, 16, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.lumiere-chat-panel.hidden {
+  display: none;
+}
+
+.lumiere-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 700;
+  font-size: 13px;
+  color: #ffffff;
+}
+
+.lumiere-chat-close {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: none;
+  border: none;
+  color: #949ba4;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lumiere-chat-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.lumiere-chat-messages {
+  flex: 1;
+  min-height: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lumiere-chat-messages::-webkit-scrollbar {
+  width: 4px;
+}
+
+.lumiere-chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lumiere-chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.lumiere-chat-msg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: baseline;
+}
+
+.lumiere-chat-user {
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.lumiere-chat-time {
+  font-size: 10px;
+  color: #949ba4;
+}
+
+.lumiere-chat-text {
+  width: 100%;
+  font-size: 13px;
+  color: #dbdee1;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.lumiere-chat-system {
+  font-size: 11px;
+  color: #949ba4;
+  font-style: italic;
+  text-align: center;
+  padding: 2px 0;
+}
+
+.lumiere-chat-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lumiere-chat-input-bar input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #dbdee1;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+.lumiere-chat-input-bar input:focus {
+  border-color: #5865f2;
+}
+
+.lumiere-chat-input-bar input::placeholder {
+  color: #6d6f78;
+}
+
+.lumiere-send-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: #5865f2;
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.lumiere-send-btn:hover {
+  background: #4752c4;
+}
+
+/* Title Change Notification Banner */
+.lumiere-title-banner {
+  position: fixed;
+  top: 60px;
+  right: 12px;
+  z-index: 2147483646;
+  background: rgba(17, 18, 20, 0.95);
+  border: 1px solid rgba(88, 101, 242, 0.5);
+  border-radius: 8px;
+  padding: 10px 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  color: #fff;
+  animation: lumiere-fade-in 0.3s ease;
+}
+
+.lumiere-title-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lumiere-nav-link {
+  background: #5865f2;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.lumiere-nav-link:hover {
+  background: #4752c4;
+}
+
+.lumiere-banner-close {
+  background: none;
+  border: none;
+  color: #949ba4;
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.lumiere-banner-close:hover {
+  color: #fff;
+}
