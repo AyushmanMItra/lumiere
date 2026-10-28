@@ -3536,7 +3536,7 @@ body {
     max-height: calc(100% - 4px);
     width: auto;
     aspect-ratio: 16 / 9;
-    max-width: calc(100% - 215px);
+    max-width: calc(100% - 232px);
     margin: 0;
     flex-shrink: 1;
     transition: height 0.45s cubic-bezier(0.25, 1, 0.5, 1);
