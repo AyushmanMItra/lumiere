@@ -1991,8 +1991,10 @@
             el.cinemaControls.classList.add('active');
             clearTimeout(hudHideTimeout);
             hudHideTimeout = setTimeout(() => {
-              if (el.cinemaControls) el.cinemaControls.classList.remove('active');
-            }, 4000);
+              if (el.cinemaControls && !el.cinemaControls.contains(document.activeElement)) {
+                el.cinemaControls.classList.remove('active');
+              }
+            }, 4500);
           }
         }
       }
@@ -2000,6 +2002,22 @@
       lastTapTime = currentTime;
       lastTapX = tapX;
     }, { passive: false });
+
+    // Keep HUD open while user is touching, scrolling or interacting with HUD buttons/selects
+    if (el.cinemaControls) {
+      const extendHudTimer = () => {
+        if (!el.cinemaControls.classList.contains('active')) return;
+        clearTimeout(hudHideTimeout);
+        hudHideTimeout = setTimeout(() => {
+          if (el.cinemaControls && !el.cinemaControls.contains(document.activeElement)) {
+            el.cinemaControls.classList.remove('active');
+          }
+        }, 4500);
+      };
+      ['touchstart', 'touchmove', 'click', 'input', 'change'].forEach(evt => {
+        el.cinemaControls.addEventListener(evt, extendHudTimer, { passive: true });
+      });
+    }
   }
 
   function triggerGestureIndicator(side) {
