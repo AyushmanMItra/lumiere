@@ -271,6 +271,7 @@
     activityGroup: document.getElementById('activityGroup'),
     activityBtn: document.getElementById('activityBtn'),
     activityMenu: document.getElementById('activityMenu'),
+    mobileSheetBackdrop: document.getElementById('mobileSheetBackdrop'),
     menuPollBtn: document.getElementById('menuPollBtn'),
     menuTriviaBtn: document.getElementById('menuTriviaBtn'),
     menuSoundboardBtn: document.getElementById('menuSoundboardBtn'),
@@ -382,7 +383,9 @@
         const isAnyModalOpen = Boolean(document.querySelector('.modal-overlay:not(.hidden)'));
         const isAnyMenuOpen = Boolean(document.querySelector('.action-sheet-dropdown:not(.hidden)')) ||
                               (el.micDeviceMenu && !el.micDeviceMenu.classList.contains('hidden')) ||
-                              (el.camDeviceMenu && !el.camDeviceMenu.classList.contains('hidden'));
+                              (el.camDeviceMenu && !el.camDeviceMenu.classList.contains('hidden')) ||
+                              (el.moreOptionsMenu && !el.moreOptionsMenu.classList.contains('hidden')) ||
+                              (el.activityMenu && !el.activityMenu.classList.contains('hidden'));
 
         if (!state.chatOpen && !isAnyModalOpen && !isAnyMenuOpen) {
           el.appContainer.classList.add('idle-mode');
@@ -3348,6 +3351,7 @@
   function toggleChat() {
     state.chatOpen = !state.chatOpen;
     el.chatSidebar.classList.toggle('hidden', !state.chatOpen);
+    document.body.classList.toggle('chat-is-open', state.chatOpen);
 
     if (state.chatOpen) {
       state.unreadMessages = 0;
@@ -3895,6 +3899,7 @@
               } catch (e) {}
             }
             el.micDeviceMenu.classList.add('hidden');
+            if (el.mobileSheetBackdrop) el.mobileSheetBackdrop.classList.add('hidden');
           };
           el.micDeviceList.appendChild(item);
         } else if (d.kind === 'videoinput') {
@@ -3903,6 +3908,7 @@
           item.innerText = d.label || `Camera ${el.camDeviceList.children.length + 1}`;
           item.onclick = () => {
             el.camDeviceMenu.classList.add('hidden');
+            if (el.mobileSheetBackdrop) el.mobileSheetBackdrop.classList.add('hidden');
           };
           el.camDeviceList.appendChild(item);
         }
@@ -4128,6 +4134,18 @@
       button.addEventListener('touchend', handler, { passive: false });
     };
 
+    const updateMobileSheetBackdrop = () => {
+      const isAnyMenuVisible = Boolean(
+        (el.micDeviceMenu && !el.micDeviceMenu.classList.contains('hidden')) ||
+        (el.camDeviceMenu && !el.camDeviceMenu.classList.contains('hidden')) ||
+        (el.moreOptionsMenu && !el.moreOptionsMenu.classList.contains('hidden')) ||
+        (el.activityMenu && !el.activityMenu.classList.contains('hidden'))
+      );
+      if (el.mobileSheetBackdrop) {
+        el.mobileSheetBackdrop.classList.toggle('hidden', !isAnyMenuVisible);
+      }
+    };
+
     const toggleDeviceMenu = (menuToOpen, menusToClose) => {
       if (!menuToOpen) return;
       const isCurrentlyHidden = menuToOpen.classList.contains('hidden');
@@ -4139,9 +4157,10 @@
         menuToOpen.classList.add('hidden');
         if (state.resetIdleTimer) state.resetIdleTimer();
       }
+      updateMobileSheetBackdrop();
     };
 
-    // Outside tap listener to dismiss dropdowns
+    // Outside tap listener to dismiss dropdowns & bottom sheets
     const handleOutsideMenuTap = (e) => {
       if (e && e.target && e.target.closest && e.target.closest('.device-menu, .split-dock-btn, .pill-btn, .pill-chevron-btn')) {
         return;
@@ -4151,9 +4170,20 @@
       el.moreOptionsMenu?.classList.add('hidden');
       el.activityMenu?.classList.add('hidden');
       document.querySelectorAll('.tile-volume-popover').forEach(p => p.classList.add('hidden'));
+      updateMobileSheetBackdrop();
     };
     document.addEventListener('click', handleOutsideMenuTap);
     document.addEventListener('touchend', handleOutsideMenuTap, { passive: true });
+
+    if (el.mobileSheetBackdrop) {
+      bindTap(el.mobileSheetBackdrop, () => {
+        el.micDeviceMenu?.classList.add('hidden');
+        el.camDeviceMenu?.classList.add('hidden');
+        el.moreOptionsMenu?.classList.add('hidden');
+        el.activityMenu?.classList.add('hidden');
+        updateMobileSheetBackdrop();
+      });
+    }
 
     // Prevent clicks/touches inside menus from bubbling up and closing the menu
     if (el.moreOptionsMenu) {
@@ -4194,14 +4224,17 @@
     // Activity Menu Items (Poll, Trivia, Soundboard)
     bindTap(el.menuPollBtn, () => {
       el.activityMenu?.classList.add('hidden');
+      updateMobileSheetBackdrop();
       openPollModal();
     });
     bindTap(el.menuTriviaBtn, () => {
       el.activityMenu?.classList.add('hidden');
+      updateMobileSheetBackdrop();
       openTriviaModal();
     });
     bindTap(el.menuSoundboardBtn, () => {
       el.activityMenu?.classList.add('hidden');
+      updateMobileSheetBackdrop();
       if (el.soundboardModal) el.soundboardModal.classList.remove('hidden');
     });
 
@@ -4209,17 +4242,21 @@
     bindTap(el.menuAmbientGlowBtn, () => {
       toggleAmbientGlow();
       el.moreOptionsMenu?.classList.add('hidden');
+      updateMobileSheetBackdrop();
     });
     bindTap(el.menuScreenshareBtn, () => {
       el.moreOptionsMenu?.classList.add('hidden');
+      updateMobileSheetBackdrop();
       toggleScreenShare();
     });
     bindTap(el.menuYouTubeBtn, () => {
       el.moreOptionsMenu?.classList.add('hidden');
+      updateMobileSheetBackdrop();
       openYouTubeModal();
     });
     bindTap(el.menuUrlBtn, () => {
       el.moreOptionsMenu?.classList.add('hidden');
+      updateMobileSheetBackdrop();
       openUrlModal();
     });
 
