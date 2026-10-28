@@ -702,6 +702,8 @@ body {
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .hud-left {
@@ -713,7 +715,8 @@ body {
 .hud-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  max-width: 100%;
 }
 
 /* Play/Pause Circular Glass Button */
@@ -891,19 +894,25 @@ body {
   .hud-left {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     width: 100%;
     gap: 6px;
+  }
+  .hud-left .hud-time {
+    margin-left: auto;
   }
   .hud-right {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     width: 100%;
     gap: 4px;
     overflow-x: auto;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+  }
+  .hud-right #ambientToggleBtn {
+    margin-left: auto;
   }
   .hud-circle-btn {
     width: 34px;
@@ -2951,7 +2960,7 @@ body {
   display: none;
 }
 
-@media (max-width: 768px), (max-height: 520px) and (orientation: landscape) {
+@media (max-width: 768px), (max-height: 600px) and (orientation: landscape), (max-width: 932px) and (orientation: landscape) {
   .mobile-sheet-backdrop {
     display: block;
     position: fixed;
@@ -3135,7 +3144,7 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: max(56px, calc(50px + env(safe-area-inset-top, 0px))) max(12px, env(safe-area-inset-right, 12px)) max(78px, calc(72px + env(safe-area-inset-bottom, 20px))) max(12px, env(safe-area-inset-left, 12px));
+    padding: max(56px, calc(50px + env(safe-area-inset-top, 0px))) max(12px, env(safe-area-inset-right, 12px)) max(92px, calc(84px + env(safe-area-inset-bottom, 24px))) max(12px, env(safe-area-inset-left, 12px));
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
@@ -3191,6 +3200,54 @@ body {
     height: calc(100% + 24px);
     filter: blur(36px) saturate(2);
     opacity: 0.65;
+  }
+
+  /* Portrait & Tablet Cinema Controls HUD (Clean 2-row layout) */
+  .cinema-controls-hud {
+    padding: 10px 12px 6px;
+    gap: 4px;
+    background: linear-gradient(to top, rgba(6, 7, 10, 0.98) 0%, rgba(6, 7, 10, 0.82) 65%, transparent 100%);
+  }
+  .hud-timeline-container {
+    padding: 3px 0;
+  }
+  .hud-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
+  }
+  .hud-left {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    gap: 6px;
+  }
+  .hud-left .hud-time {
+    margin-left: auto;
+    font-size: 11.5px;
+  }
+  .hud-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .hud-right #ambientToggleBtn {
+    margin-left: auto;
+  }
+  .hud-icon-btn {
+    width: 32px;
+    height: 32px;
+  }
+  .hud-pill-group {
+    height: 28px;
+    padding: 2px 7px;
   }
 
   /* 4. Balanced Participant Distribution Above & Below Cinema Stage */
@@ -3440,6 +3497,35 @@ body {
     width: 13px;
     height: 36px;
   }
+
+  /* Compact, tap-friendly HUD pills for phone portrait */
+  .hud-pill-group {
+    padding: 2px 4px !important;
+    gap: 2px !important;
+    height: 25px !important;
+    font-size: 10px !important;
+  }
+
+  .hud-pill-icon {
+    width: 11px !important;
+    height: 11px !important;
+  }
+
+  .hud-select {
+    max-width: 46px !important;
+    font-size: 10px !important;
+    padding: 0 1px !important;
+  }
+
+  .hud-icon-btn {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .hud-right {
+    gap: 3px !important;
+    flex-wrap: wrap !important;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -3491,11 +3577,11 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   Compact Height Portrait (height <= 700px, e.g. iPhone SE, compact Android)
+   Compact Height Portrait (height <= 760px, e.g. iPhone SE, Galaxy S8, compact Android)
    -------------------------------------------------------------------------- */
-@media (max-height: 700px) and (orientation: portrait) {
+@media (max-height: 760px) and (orientation: portrait) {
   .stage-section {
-    padding: max(50px, calc(46px + env(safe-area-inset-top, 0px))) max(10px, env(safe-area-inset-right, 10px)) max(72px, calc(68px + env(safe-area-inset-bottom, 16px))) max(10px, env(safe-area-inset-left, 10px));
+    padding: max(50px, calc(46px + env(safe-area-inset-top, 0px))) max(10px, env(safe-area-inset-right, 10px)) max(84px, calc(76px + env(safe-area-inset-bottom, 20px))) max(10px, env(safe-area-inset-left, 10px));
     gap: 8px;
   }
 
@@ -3504,7 +3590,7 @@ body {
   }
 
   .cinema-stage-wrapper {
-    max-height: 36dvh;
+    max-height: 35dvh;
   }
 
   .stage-cinema-group {
@@ -3519,6 +3605,7 @@ body {
     margin-top: 6px;
   }
 
+  .participant-tile:only-child,
   .participants-row:has(.participant-tile:only-child) .participant-tile {
     height: 95px !important;
     max-width: 190px !important;
@@ -3535,14 +3622,30 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   Mobile Landscape Theater Mode (max-height: 520px and orientation: landscape)
+   Mobile Landscape Theater Mode (max-height: 600px and orientation: landscape)
    With Concurrent Watch + Chat Split View
    -------------------------------------------------------------------------- */
-@media (max-height: 520px) and (orientation: landscape) {
+@media (max-height: 600px) and (orientation: landscape), (max-width: 932px) and (orientation: landscape) {
   .top-bar {
-    height: 34px;
+    height: 38px;
     padding: 0 max(12px, env(safe-area-inset-right, 12px)) 0 max(12px, env(safe-area-inset-left, 12px));
     padding-top: max(0px, env(safe-area-inset-top, 0px));
+  }
+
+  .top-bar-right .icon-btn {
+    width: 36px !important;
+    height: 36px !important;
+    position: relative !important;
+  }
+
+  .top-bar-right .icon-btn::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 44px !important;
+    height: 44px !important;
   }
 
   .speaker-icon {
@@ -3555,7 +3658,7 @@ body {
   }
 
   .stage-section {
-    padding: 36px 10px 48px;
+    padding: 38px 10px 48px;
     flex-direction: row !important;
     align-items: center;
     justify-content: center;
@@ -3574,7 +3677,7 @@ body {
     max-height: calc(100vh - 86px);
     max-height: calc(100dvh - 86px);
     max-width: calc(100% - 225px);
-    width: auto;
+    width: 100%;
     height: auto;
     margin: 0;
     flex-shrink: 1;
@@ -3601,39 +3704,124 @@ body {
     overflow: hidden;
   }
 
-  /* Sleek HUD controls fitting inside cinema-box in landscape so buttons are never cut off */
+  /* Sleek HUD controls fitting inside cinema-box in landscape so all buttons are visible and tap-friendly */
   .cinema-controls-hud {
-    padding: 10px 12px 8px;
-    gap: 4px;
+    padding: 8px 10px 6px !important;
+    gap: 4px !important;
+    background: linear-gradient(to top, rgba(6, 7, 10, 0.98) 0%, rgba(6, 7, 10, 0.85) 60%, transparent 100%) !important;
+  }
+
+  .hud-timeline-container {
+    padding: 3px 0 !important;
   }
 
   .hud-row {
-    gap: 4px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    width: 100% !important;
+  }
+
+  .hud-left {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    gap: 5px !important;
+  }
+
+  .hud-left .hud-time {
+    margin-left: auto !important;
+    font-size: 11px !important;
+  }
+
+  .hud-right {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    gap: 3px !important;
+    flex-wrap: wrap !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .hud-right #ambientToggleBtn {
+    margin-left: auto !important;
   }
 
   .hud-circle-btn {
-    width: 30px;
-    height: 30px;
+    width: 32px !important;
+    height: 32px !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+    touch-action: manipulation !important;
+  }
+
+  .hud-circle-btn::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 40px !important;
+    height: 40px !important;
   }
 
   .hud-circle-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 15px !important;
+    height: 15px !important;
   }
 
   .hud-icon-btn {
-    width: 28px;
-    height: 28px;
+    width: 28px !important;
+    height: 28px !important;
+    padding: 2px !important;
+    flex-shrink: 0 !important;
+    border-radius: 6px !important;
+    position: relative !important;
+    touch-action: manipulation !important;
+  }
+
+  .hud-icon-btn::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 38px !important;
+    height: 38px !important;
   }
 
   .hud-icon-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 15px !important;
+    height: 15px !important;
   }
 
   .hud-pill-group {
-    padding: 2px 6px;
-    font-size: 11px;
+    padding: 2px 4px !important;
+    gap: 2px !important;
+    height: 25px !important;
+    font-size: 10px !important;
+    border-radius: 6px !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+  }
+
+  .hud-pill-icon {
+    width: 11px !important;
+    height: 11px !important;
+  }
+
+  .hud-select {
+    font-size: 10px !important;
+    max-width: 46px !important;
+    padding: 0 1px !important;
+  }
+
+  .hud-sub-gear-btn {
+    padding: 2px !important;
   }
 
   /* In landscape mode, top area is hidden; all participants stack in right column */
@@ -3730,19 +3918,43 @@ body {
   }
 
   .pill-btn {
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
+    position: relative;
+    touch-action: manipulation;
+  }
+
+  .pill-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
   }
 
   .pill-btn svg {
-    width: 15px;
-    height: 15px;
+    width: 16px;
+    height: 16px;
     pointer-events: none;
   }
 
   .pill-chevron-btn {
-    width: 11px;
-    height: 30px;
+    width: 12px;
+    height: 34px;
+    position: relative;
+    touch-action: manipulation;
+  }
+
+  .pill-chevron-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 40px;
   }
 
   /* Concurrent Watch + Chat Split Mode in Landscape */
@@ -3773,23 +3985,6 @@ body {
   }
   body.chat-is-open .participants-tile-area {
     width: 95px !important;
-  }
-
-  /* In landscape mobile HUD: single compact row since width is 800px+ */
-  .hud-row {
-    flex-direction: row !important;
-    justify-content: space-between !important;
-    gap: 6px !important;
-  }
-
-  .hud-left {
-    width: auto !important;
-    gap: 6px !important;
-  }
-
-  .hud-right {
-    width: auto !important;
-    gap: 4px !important;
   }
 }
 

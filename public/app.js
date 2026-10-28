@@ -419,6 +419,7 @@
 
     state.username = username;
     state.roomId = roomId;
+    state.inRoom = true;
     window.location.hash = roomId;
 
     try {
@@ -457,6 +458,7 @@
     s.on('room-joined', async (data) => {
       state.selfId = data.selfId;
       state.isHost = data.isHost;
+      state.inRoom = true;
 
       state.members.clear();
       data.members.forEach(m => state.members.set(m.id, m));
@@ -2587,21 +2589,22 @@
 
   function renderParticipantStrip() {
     if (!el.participantStrip) return;
+    state.renderCount = (state.renderCount || 0) + 1;
     el.participantStrip.innerHTML = '';
     if (el.participantStripTop) el.participantStripTop.innerHTML = '';
 
     const members = Array.from(state.members.values());
     const isPortrait = isPortraitMode();
 
-    // In landscape mode, on desktop, or when 2 or fewer participants:
-    // keep all participants in the primary strip (bottom in portrait, right column in landscape)
-    if (!isPortrait || members.length <= 2) {
+    // In landscape mode, on desktop, or when only 1 participant:
+    // keep participant in primary strip (bottom in portrait, right column in landscape)
+    if (!isPortrait || members.length <= 1) {
       if (el.participantTopArea) el.participantTopArea.classList.add('hidden');
       members.forEach(member => {
         el.participantStrip.appendChild(createParticipantTile(member));
       });
     } else {
-      // In portrait mode with 3 or more participants:
+      // In portrait mode with 2 or more participants:
       // Dynamically distribute participants above and below the cinema screen
       // so the cinema screen always remains in the exact vertical center!
       if (el.participantTopArea) el.participantTopArea.classList.remove('hidden');
@@ -4777,17 +4780,19 @@
       });
     }
 
+    const handleOrientationOrResize = () => {
+      if (state.inRoom) renderParticipantStrip();
+    };
+
     let orientationTimer = null;
     window.addEventListener('resize', () => {
+      handleOrientationOrResize();
       clearTimeout(orientationTimer);
-      orientationTimer = setTimeout(() => {
-        if (state.inRoom) renderParticipantStrip();
-      }, 100);
+      orientationTimer = setTimeout(handleOrientationOrResize, 100);
     });
     window.addEventListener('orientationchange', () => {
-      setTimeout(() => {
-        if (state.inRoom) renderParticipantStrip();
-      }, 150);
+      handleOrientationOrResize();
+      setTimeout(handleOrientationOrResize, 100);
     });
   }
 
@@ -4801,6 +4806,8 @@
   window.addEventListener('beforeunload', () => {
     try { disableMicrophone(); } catch (e) {}
   });
+
+  window.__lumiere = { state, renderParticipantStrip, isPortraitMode };
 
   window.addEventListener('DOMContentLoaded', init);
 })();
