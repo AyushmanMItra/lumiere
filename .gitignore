@@ -1,3 +1,5 @@
+# Lumière - Git Ignore Configuration
+
 # Dependencies
 node_modules/
 
@@ -26,3 +28,5 @@ feedback.json
 .gemini/
 .idea/
 .vscode/
+
+tests/results.json

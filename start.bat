@@ -1,7 +1,7 @@
 @echo off
-title WatchParty Movie Theater
+title Lumière Theater
 echo ====================================================
-echo        Starting WatchParty Theater Server...
+echo        Starting Lumière Theater Server...
 echo ====================================================
 node server.js
 pause

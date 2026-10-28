@@ -328,7 +328,7 @@
   async function init() {
     let savedUser = '';
     try {
-      savedUser = localStorage.getItem('lumiere_username') || localStorage.getItem('reeltime_username');
+      savedUser = localStorage.getItem('lumiere_username');
     } catch (e) {}
     el.usernameInput.value = savedUser || '';
 
