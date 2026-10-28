@@ -3055,9 +3055,14 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   Mobile Portrait Base Layout (max-width: 768px)
+   PORTRAIT MODE LAYOUT (Phones, Foldables & Tablets up to 1024px)
+   Strictly follows user red box specification:
+     - Top Bar: Left Room Title/Host Badge + Right Chat Button
+     - Cinema Stage: 16:9 Aspect Ratio spanning width, center-balanced
+     - Participant Card: Generous 322px x 181px box for single user (or balanced pairs/grid)
+     - Floating Pill Dock: Wide ~512px dock, centered with comfortable bottom clearance
    -------------------------------------------------------------------------- */
-@media (max-width: 768px) {
+@media (max-width: 1024px) and (orientation: portrait) {
   html, body, .app-container {
     overflow-x: hidden;
     width: 100vw;
@@ -3065,16 +3070,64 @@ body {
     height: 100dvh;
   }
 
+  /* 1. Top Bar (Matches Top-Left and Top-Right Red Boxes) */
   .top-bar {
-    height: 44px;
-    padding: max(0px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 12px)) 0 max(12px, env(safe-area-inset-left, 12px));
+    height: 50px;
+    padding: max(0px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 16px)) 0 max(16px, env(safe-area-inset-left, 16px));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .speaker-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
   }
 
   .room-heading {
-    font-size: 15px;
+    font-size: 15.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  /* Center stage flex layout with optical vertical centering */
+  .host-indicator {
+    display: inline-flex !important;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+    background: rgba(87, 242, 135, 0.15);
+    color: #57f287;
+    border: 1px solid rgba(87, 242, 135, 0.3);
+    flex-shrink: 0;
+  }
+
+  .top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .top-bar-right .icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* 2. Main Stage Area (Vertically Balanced Theater) */
   .stage-section {
     flex: 1;
     min-height: 0;
@@ -3082,16 +3135,16 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 44px max(10px, env(safe-area-inset-right, 10px)) 70px max(10px, env(safe-area-inset-left, 10px));
+    padding: 16px max(12px, env(safe-area-inset-right, 12px)) 20px max(12px, env(safe-area-inset-left, 12px));
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
-    gap: 10px;
+    gap: 16px;
     transition: padding 0.45s cubic-bezier(0.25, 1, 0.5, 1);
   }
 
   .idle-mode .stage-section {
-    padding: 14px max(10px, env(safe-area-inset-right, 10px)) 14px max(10px, env(safe-area-inset-left, 10px));
+    padding: 14px max(12px, env(safe-area-inset-right, 12px)) 14px max(12px, env(safe-area-inset-left, 12px));
   }
 
   .stage-cinema-group {
@@ -3100,23 +3153,23 @@ body {
     align-items: center;
     width: 100%;
     max-width: 100%;
-    gap: 10px;
+    gap: 20px;
     transform: translateY(0);
     transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
     will-change: transform;
   }
 
-  /* When after 3 seconds of inactivity the panel drops down, smooth natural centering */
+  /* Inactivity Idle Mode: Cinema screen gently glides into full center */
   .idle-mode .stage-cinema-group {
     transform: translateY(clamp(6px, 2vh, 16px));
   }
 
-  /* Cinema Stage fills mobile width in natural 16:9 ratio */
+  /* 3. Cinema Stage Wrapper (Matches Big Center Red Box: 100% width, 16:9 aspect ratio) */
   .cinema-stage-wrapper {
     width: 100%;
     max-width: 100%;
     aspect-ratio: 16 / 9;
-    max-height: min(48dvh, calc(100dvh - 220px));
+    max-height: min(440px, 46dvh);
     margin: 0 auto;
     flex-shrink: 0;
     position: relative;
@@ -3125,8 +3178,8 @@ body {
   .cinema-box {
     width: 100%;
     height: 100%;
-    border-radius: 10px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    border-radius: 12px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
   }
 
   .ambient-glow-canvas {
@@ -3140,18 +3193,91 @@ body {
     opacity: 0.65;
   }
 
+  /* 4. Participant Tile Area (Matches Participant Red Box: 322px x 181px for single user) */
   .participants-tile-area {
     width: 100%;
-    margin-top: 2px;
+    margin-top: 0;
     padding: 0 4px;
     flex-shrink: 0;
+    display: flex;
+    justify-content: center;
   }
 
-  /* Floating Pill Dock: centered, spacious, no squished buttons */
+  .participants-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 4px;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* 1 Participant: Matches User's Exact Red Box (322px x 181px) */
+  .participant-tile:only-child {
+    width: min(322px, 92vw) !important;
+    max-width: 322px !important;
+    height: 181px !important;
+    border-radius: 12px !important;
+    flex: 0 0 auto !important;
+  }
+
+  .participant-tile:only-child .tile-avatar-center {
+    width: 68px !important;
+    height: 68px !important;
+    font-size: 26px !important;
+  }
+
+  .participant-tile:only-child .tile-name-badge {
+    font-size: 13px !important;
+    padding: 4px 10px !important;
+    bottom: 8px !important;
+    left: 8px !important;
+  }
+
+  /* 2 Participants: 2 Generous Side-by-Side Cards */
+  .participant-tile:first-child:nth-last-child(2),
+  .participant-tile:first-child:nth-last-child(2) ~ .participant-tile {
+    flex: 0 1 calc(50% - 10px) !important;
+    max-width: 270px !important;
+    height: 150px !important;
+    border-radius: 10px !important;
+  }
+
+  .participant-tile:first-child:nth-last-child(2) .tile-avatar-center,
+  .participant-tile:first-child:nth-last-child(2) ~ .participant-tile .tile-avatar-center {
+    width: 52px !important;
+    height: 52px !important;
+    font-size: 20px !important;
+  }
+
+  /* 3 or 4 Participants */
+  .participant-tile {
+    flex: 0 1 calc(50% - 8px);
+    max-width: 220px;
+    min-width: 120px;
+    height: 115px;
+    border-radius: 9px;
+  }
+
+  .tile-avatar-center {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+
+  .tile-name-badge {
+    font-size: 10.5px;
+    padding: 2px 7px;
+  }
+
+  /* 5. Floating Pill Dock (Matches Bottom Red Box: ~512px wide, floating gracefully above bottom) */
   .dock-wrapper {
-    height: 64px;
-    padding: 0 12px;
-    padding-bottom: max(8px, env(safe-area-inset-bottom, 0));
+    height: 76px;
+    padding: 0 16px;
+    padding-bottom: max(28px, env(safe-area-inset-bottom, 28px));
+    flex-shrink: 0;
   }
 
   .dock-container {
@@ -3159,34 +3285,36 @@ body {
     width: 100%;
   }
 
-  /* Hide redundant corner buttons on mobile to free up space for pill dock */
   #dockInviteBtn,
   #theaterFullscreenBtn {
     display: none !important;
   }
 
   .floating-pill-dock {
-    gap: 6px;
-    padding: 4px 10px;
-    max-width: 100%;
+    gap: 8px;
+    padding: 6px 14px;
+    max-width: min(512px, calc(100vw - 24px));
+    width: auto;
+    border-radius: 16px;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08);
     overflow: visible !important;
   }
 
   .pill-btn {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     flex-shrink: 0;
   }
 
   .pill-btn svg {
-    width: 18px;
-    height: 18px;
+    width: 19px;
+    height: 19px;
     pointer-events: none;
   }
 
   .pill-chevron-btn {
     width: 14px;
-    height: 36px;
+    height: 40px;
   }
 
   /* Fullscreen Chat in Portrait */
@@ -3208,127 +3336,60 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   Ultra-Tall Phones (19.5:9 to 20.5:9, height > 720px)
-   e.g. iPhone 13-16 Pro, Galaxy S21-S24, Pixel 7-9
+   Narrow Phone Portrait Tweaks (width <= 440px)
    -------------------------------------------------------------------------- */
-@media (max-width: 768px) and (min-height: 721px) {
-  .stage-section {
-    justify-content: center;
-    gap: 12px;
+@media (max-width: 440px) and (orientation: portrait) {
+  .top-bar {
+    height: 44px;
+    padding: 0 12px;
   }
 
-  .cinema-stage-wrapper {
-    max-height: min(52dvh, calc(100dvh - 230px));
+  .room-heading {
+    font-size: 14.5px;
   }
 
-  .stage-cinema-group {
-    gap: 14px;
+  .participant-tile:only-child {
+    width: min(290px, 90vw) !important;
+    height: 160px !important;
   }
 
-  .participants-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 4px;
-    flex-wrap: wrap;
-    max-width: 100%;
+  .dock-wrapper {
+    height: 64px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
   }
 
-  .participant-tile {
-    flex: 0 1 calc(50% - 6px);
-    max-width: 180px;
-    min-width: 120px;
-    height: 92px;
-    border-radius: 9px;
+  .floating-pill-dock {
+    gap: 6px;
+    padding: 4px 10px;
   }
 
-  .tile-avatar-center {
-    width: 38px;
-    height: 38px;
-    font-size: 16px;
+  .pill-btn {
+    width: 36px;
+    height: 36px;
   }
 
-  .tile-name-badge {
-    font-size: 10px;
-    padding: 2px 6px;
+  .pill-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .pill-chevron-btn {
+    width: 13px;
+    height: 36px;
   }
 }
 
 /* --------------------------------------------------------------------------
-   Compact Standard Phones (16:9 to 18:9, height <= 720px)
-   e.g. iPhone SE, iPhone 7/8, budget Androids
-   Horizontal participant carousel prevents bottom cutoff
+   Ultra-Narrow Phone Portrait (width <= 360px, e.g. Galaxy Z Fold Cover)
    -------------------------------------------------------------------------- */
-@media (max-width: 768px) and (max-height: 720px) {
-  .stage-section {
-    padding: 38px 6px 60px;
-    justify-content: flex-start;
-    gap: 6px;
-  }
-
-  .cinema-stage-wrapper {
-    max-height: 42dvh;
-  }
-
-  .stage-cinema-group {
-    gap: 6px;
-  }
-
-  /* Sleek horizontal scroll shelf so participant tiles NEVER push off bottom */
-  .participants-row {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    justify-content: flex-start !important;
-    align-items: center !important;
-    gap: 6px !important;
-    padding: 2px 4px !important;
-    width: 100% !important;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .participants-row::-webkit-scrollbar {
-    display: none;
-  }
-
-  .participant-tile {
-    flex: 0 0 100px !important;
-    min-width: 100px !important;
-    max-width: 100px !important;
-    height: 64px !important;
-    border-radius: 7px !important;
-  }
-
-  .tile-avatar-center {
-    width: 28px !important;
-    height: 28px !important;
-    font-size: 13px !important;
-  }
-
-  .tile-name-badge {
-    font-size: 9px !important;
-    padding: 1px 4px !important;
-    bottom: 2px !important;
-    left: 2px !important;
-  }
-}
-
-/* --------------------------------------------------------------------------
-   Ultra-Narrow Displays (21:9 to 23:9, width <= 360px)
-   e.g. Galaxy Z Fold Cover Screen (344px), Sony Xperia, compact devices
-   -------------------------------------------------------------------------- */
-@media (max-width: 360px) {
+@media (max-width: 360px) and (orientation: portrait) {
   .top-bar {
     padding: 0 6px !important;
     gap: 4px !important;
   }
 
   .room-heading {
-    font-size: 13.5px !important;
+    font-size: 13px !important;
   }
 
   .host-indicator {
@@ -3351,20 +3412,60 @@ body {
   }
 
   .pill-btn svg {
-    width: 16px !important;
-    height: 16px !important;
+    width: 15px !important;
+    height: 15px !important;
   }
 
   .pill-chevron-btn {
-    width: 12px !important;
+    width: 11px !important;
     height: 32px !important;
   }
 
-  .participant-tile {
-    flex: 0 0 92px !important;
-    min-width: 92px !important;
-    max-width: 92px !important;
-    height: 58px !important;
+  .participant-tile:only-child {
+    width: min(260px, 92vw) !important;
+    height: 140px !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Compact Height Portrait (height <= 700px, e.g. iPhone SE, compact Android)
+   -------------------------------------------------------------------------- */
+@media (max-height: 700px) and (orientation: portrait) {
+  .stage-section {
+    padding: 28px 6px 56px;
+    gap: 8px;
+  }
+
+  .cinema-stage-wrapper {
+    max-height: 40dvh;
+  }
+
+  .stage-cinema-group {
+    gap: 10px;
+  }
+
+  /* When more than 2 participants on short screens, horizontal shelf */
+  .participants-row:has(.participant-tile:nth-child(3)) {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    padding: 2px 4px !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .participants-row:has(.participant-tile:nth-child(3))::-webkit-scrollbar {
+    display: none;
+  }
+
+  .participants-row:has(.participant-tile:nth-child(3)) .participant-tile {
+    flex: 0 0 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+    height: 64px !important;
+    border-radius: 7px !important;
   }
 }
 
@@ -3569,56 +3670,6 @@ body {
   .hud-right {
     width: auto !important;
     gap: 4px !important;
-  }
-}
-
-/* --------------------------------------------------------------------------
-   Tablets & Foldable Inner Displays (4:3, 3:2, square, 769px to 1024px)
-   e.g. iPad Mini/Air/Pro Portrait, Galaxy Z Fold Unfolded (768x884, 884x1104)
-   -------------------------------------------------------------------------- */
-@media (min-width: 769px) and (max-width: 1024px) and (orientation: portrait) {
-  .stage-section {
-    padding: 50px 16px 80px;
-    justify-content: center;
-  }
-
-  .cinema-stage-wrapper {
-    max-width: 920px;
-    max-height: 52vh;
-    aspect-ratio: 16 / 9;
-  }
-
-  .participants-tile-area {
-    width: 100%;
-    max-width: 920px;
-    margin-top: 10px;
-  }
-
-  .participants-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    width: 100%;
-  }
-
-  .participant-tile {
-    flex: 0 1 calc(25% - 8px);
-    max-width: 210px;
-    min-width: 140px;
-    height: 100px;
-  }
-
-  /* Tablet portrait chat: elegant slide-over drawer so it doesn't squish stage */
-  .chat-panel {
-    position: fixed !important;
-    top: 0 !important;
-    bottom: 0 !important;
-    right: 0 !important;
-    width: 360px !important;
-    height: 100dvh !important;
-    z-index: 1200 !important;
-    box-shadow: -10px 0 35px rgba(0, 0, 0, 0.7) !important;
   }
 }
 
