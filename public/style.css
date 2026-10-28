@@ -3252,7 +3252,54 @@ body {
     font-size: 20px !important;
   }
 
-  /* 3 or 4 Participants */
+  /* 3 Participants Special Layout: The 3rd overflowing participant is positioned above cinema screen */
+  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) {
+    position: relative;
+    padding-top: 128px;
+    gap: 12px;
+  }
+
+  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(3) {
+    position: absolute !important;
+    top: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: min(220px, 58vw) !important;
+    max-width: 220px !important;
+    height: 115px !important;
+    border-radius: 9px !important;
+    z-index: 10;
+  }
+
+  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(3) .tile-avatar-center {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 18px !important;
+  }
+
+  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(3) .tile-name-badge {
+    font-size: 11px !important;
+    padding: 2px 7px !important;
+    bottom: 4px !important;
+    left: 4px !important;
+  }
+
+  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(1),
+  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(2) {
+    flex: 0 1 calc(50% - 8px) !important;
+    max-width: 220px !important;
+    height: 115px !important;
+    border-radius: 9px !important;
+  }
+
+  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(1) .tile-avatar-center,
+  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(2) .tile-avatar-center {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 18px !important;
+  }
+
+  /* 4+ Participants (Grid distribution) */
   .participant-tile {
     flex: 0 1 calc(50% - 8px);
     max-width: 220px;
@@ -3471,6 +3518,27 @@ body {
     gap: 10px;
   }
 
+  /* 3 Participants in compact portrait: smaller heights to fit within 667px-700px screens */
+  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) {
+    padding-top: 98px !important;
+    gap: 8px !important;
+  }
+
+  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .cinema-stage-wrapper {
+    max-height: 33dvh !important;
+  }
+
+  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(3) {
+    height: 88px !important;
+    max-width: 180px !important;
+  }
+
+  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(1),
+  .stage-cinema-group:has(.participants-row > .participant-tile:nth-child(3):last-child) .participant-tile:nth-child(2) {
+    height: 88px !important;
+    max-width: 180px !important;
+  }
+
   /* When more than 2 participants on short screens, horizontal shelf */
   .participants-row:has(.participant-tile:nth-child(3)) {
     flex-wrap: nowrap !important;
@@ -3530,26 +3598,72 @@ body {
     padding: 6px 10px 6px;
   }
 
-  /* Video fills available height prominently */
+  /* Video fits available height and width strictly without clipping right column */
   .cinema-stage-wrapper {
-    height: calc(100vh - 86px);
-    max-height: calc(100% - 4px);
-    width: auto;
     aspect-ratio: 16 / 9;
-    max-width: calc(100% - 232px);
+    max-height: calc(100vh - 86px);
+    max-height: calc(100dvh - 86px);
+    max-width: calc(100% - 225px);
+    width: auto;
+    height: auto;
     margin: 0;
     flex-shrink: 1;
-    transition: height 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: max-height 0.45s cubic-bezier(0.25, 1, 0.5, 1);
   }
 
   .idle-mode .cinema-stage-wrapper {
-    height: calc(100dvh - 16px);
+    max-height: calc(100dvh - 16px);
+    max-width: 100%;
   }
 
   .cinema-box {
     width: 100%;
     height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    aspect-ratio: 16 / 9;
     border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Sleek HUD controls fitting inside cinema-box in landscape so buttons are never cut off */
+  .cinema-controls-hud {
+    padding: 10px 12px 8px;
+    gap: 4px;
+  }
+
+  .hud-row {
+    gap: 4px;
+  }
+
+  .hud-circle-btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .hud-circle-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .hud-icon-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .hud-icon-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .hud-pill-group {
+    padding: 2px 6px;
+    font-size: 11px;
   }
 
   /* Participants stacked in right column matching user red box: width ~200px, height ~134px */
