@@ -152,14 +152,6 @@ lumiere/
 
 ---
 
-## 👥 Credits & Acknowledgements
-
-- **Built by:** [Ayushman Mitra](https://github.com/AyushmanMItra) (India)
-- **Special Mention:** **Yashvi Singh** for sparking the concept and providing real-user feedback that shaped the product.
-- **Feedback & Contact:** [mitraayushman00@gmail.com](mailto:mitraayushman00@gmail.com)
-
----
-
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
