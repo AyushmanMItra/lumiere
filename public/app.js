@@ -2621,12 +2621,27 @@
 
     // In landscape mode, on desktop, or when only 1 participant:
     // keep participant in primary strip (bottom in portrait, right column in landscape)
+    if (members.length === 0) {
+      if (el.participantTopArea) {
+        el.participantTopArea.classList.add('hidden');
+        el.participantTopArea.dataset.count = '0';
+      }
+      if (el.participantStripArea) {
+        el.participantStripArea.classList.add('hidden');
+        el.participantStripArea.dataset.count = '0';
+      }
+      document.body.classList.remove('has-participants');
+      return;
+    }
+
+    document.body.classList.add('has-participants');
     if (!isPortrait || members.length <= 1) {
       if (el.participantTopArea) {
         el.participantTopArea.classList.add('hidden');
         el.participantTopArea.dataset.count = '0';
       }
       if (el.participantStripArea) {
+        el.participantStripArea.classList.remove('hidden');
         el.participantStripArea.dataset.count = String(members.length);
       }
       members.forEach(member => {
@@ -3421,22 +3436,72 @@
   // DISCORD CHAT PANEL (Matching Image 3)
   // ==========================================================================
 
-  function toggleChat() {
-    state.chatOpen = !state.chatOpen;
-    el.chatSidebar.classList.toggle('hidden', !state.chatOpen);
-    document.body.classList.toggle('chat-is-open', state.chatOpen);
+  let chatClosingTimer = null;
+  let chatOpeningTimer = null;
+  let closeAllDeviceMenus = null;
 
-    if (state.chatOpen) {
+  function toggleChat(forceOpen) {
+    const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !state.chatOpen;
+    if (state.chatOpen === shouldOpen && !chatClosingTimer) return;
+
+    if (chatClosingTimer) {
+      clearTimeout(chatClosingTimer);
+      chatClosingTimer = null;
+    }
+    if (chatOpeningTimer) {
+      clearTimeout(chatOpeningTimer);
+      chatOpeningTimer = null;
+    }
+
+    if (shouldOpen) {
+      state.chatOpen = true;
+      if (el.chatSidebar) {
+        el.chatSidebar.classList.remove('hidden', 'chat-panel-closing');
+        el.chatSidebar.classList.add('chat-panel-opening');
+      }
+      document.body.classList.add('chat-is-open');
+      document.body.classList.remove('chat-is-closing');
       state.unreadMessages = 0;
-      el.chatBadge.classList.add('hidden');
-      if (window.innerWidth > 768 && !window.matchMedia('(pointer: coarse)').matches) {
+      if (el.chatBadge) el.chatBadge.classList.add('hidden');
+      if (window.innerWidth > 768 && !window.matchMedia('(pointer: coarse)').matches && el.chatInput) {
         el.chatInput.focus();
       }
       requestAnimationFrame(() => {
-        el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+        if (el.chatMessages) el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
       });
+
+      chatOpeningTimer = setTimeout(() => {
+        if (state.chatOpen && el.chatSidebar) {
+          el.chatSidebar.classList.remove('chat-panel-opening');
+        }
+        chatOpeningTimer = null;
+      }, 280);
     } else {
-      if (el.chatSidebar) el.chatSidebar.style.height = '';
+      state.chatOpen = false;
+      document.body.classList.remove('chat-is-open');
+      document.body.classList.add('chat-is-closing');
+
+      if (el.chatSidebar && !el.chatSidebar.classList.contains('hidden')) {
+        el.chatSidebar.classList.remove('chat-panel-opening');
+        el.chatSidebar.classList.add('chat-panel-closing');
+
+        chatClosingTimer = setTimeout(() => {
+          if (!state.chatOpen && el.chatSidebar) {
+            el.chatSidebar.classList.add('hidden');
+            el.chatSidebar.classList.remove('chat-panel-closing');
+            el.chatSidebar.style.height = '';
+          }
+          document.body.classList.remove('chat-is-closing');
+          chatClosingTimer = null;
+        }, 240);
+      } else {
+        if (el.chatSidebar) {
+          el.chatSidebar.classList.add('hidden');
+          el.chatSidebar.classList.remove('chat-panel-opening', 'chat-panel-closing');
+          el.chatSidebar.style.height = '';
+        }
+        document.body.classList.remove('chat-is-closing');
+      }
     }
   }
 
@@ -4207,30 +4272,85 @@
       button.addEventListener('touchend', handler, { passive: false });
     };
 
+    let menuClosingTimer = null;
+
     const updateMobileSheetBackdrop = () => {
       const isAnyMenuVisible = Boolean(
-        (el.micDeviceMenu && !el.micDeviceMenu.classList.contains('hidden')) ||
-        (el.camDeviceMenu && !el.camDeviceMenu.classList.contains('hidden')) ||
-        (el.moreOptionsMenu && !el.moreOptionsMenu.classList.contains('hidden')) ||
-        (el.activityMenu && !el.activityMenu.classList.contains('hidden'))
+        (el.micDeviceMenu && !el.micDeviceMenu.classList.contains('hidden') && !el.micDeviceMenu.classList.contains('sheet-closing')) ||
+        (el.camDeviceMenu && !el.camDeviceMenu.classList.contains('hidden') && !el.camDeviceMenu.classList.contains('sheet-closing')) ||
+        (el.moreOptionsMenu && !el.moreOptionsMenu.classList.contains('hidden') && !el.moreOptionsMenu.classList.contains('sheet-closing')) ||
+        (el.activityMenu && !el.activityMenu.classList.contains('hidden') && !el.activityMenu.classList.contains('sheet-closing'))
       );
       if (el.mobileSheetBackdrop) {
         el.mobileSheetBackdrop.classList.toggle('hidden', !isAnyMenuVisible);
       }
     };
 
+    closeAllDeviceMenus = (animate = true) => {
+      const allMenus = [el.micDeviceMenu, el.camDeviceMenu, el.moreOptionsMenu, el.activityMenu];
+      const activeMenus = allMenus.filter(m => m && !m.classList.contains('hidden'));
+      if (activeMenus.length === 0) return;
+
+      if (!animate) {
+        if (menuClosingTimer) {
+          clearTimeout(menuClosingTimer);
+          menuClosingTimer = null;
+        }
+        activeMenus.forEach(m => {
+          m.classList.add('hidden');
+          m.classList.remove('sheet-closing', 'sheet-opening');
+        });
+        if (el.mobileSheetBackdrop) {
+          el.mobileSheetBackdrop.classList.add('hidden');
+          el.mobileSheetBackdrop.classList.remove('backdrop-closing');
+        }
+        return;
+      }
+
+      activeMenus.forEach(m => {
+        m.classList.remove('sheet-opening');
+        m.classList.add('sheet-closing');
+      });
+      if (el.mobileSheetBackdrop) {
+        el.mobileSheetBackdrop.classList.add('backdrop-closing');
+      }
+
+      if (menuClosingTimer) clearTimeout(menuClosingTimer);
+      menuClosingTimer = setTimeout(() => {
+        activeMenus.forEach(m => {
+          m.classList.add('hidden');
+          m.classList.remove('sheet-closing');
+        });
+        if (el.mobileSheetBackdrop) {
+          el.mobileSheetBackdrop.classList.add('hidden');
+          el.mobileSheetBackdrop.classList.remove('backdrop-closing');
+        }
+        menuClosingTimer = null;
+      }, 220);
+    };
+
     const toggleDeviceMenu = (menuToOpen, menusToClose) => {
       if (!menuToOpen) return;
-      const isCurrentlyHidden = menuToOpen.classList.contains('hidden');
-      menusToClose.forEach(m => m?.classList.add('hidden'));
+      if (menuClosingTimer) {
+        clearTimeout(menuClosingTimer);
+        menuClosingTimer = null;
+      }
+
+      const isCurrentlyHidden = menuToOpen.classList.contains('hidden') || menuToOpen.classList.contains('sheet-closing');
+      menusToClose.forEach(m => {
+        m?.classList.add('hidden');
+        m?.classList.remove('sheet-closing', 'sheet-opening');
+      });
+
       if (isCurrentlyHidden) {
-        menuToOpen.classList.remove('hidden');
+        menuToOpen.classList.remove('hidden', 'sheet-closing');
+        menuToOpen.classList.add('sheet-opening');
         if (state.resetIdleTimer) state.resetIdleTimer();
+        updateMobileSheetBackdrop();
       } else {
-        menuToOpen.classList.add('hidden');
+        closeAllDeviceMenus(true);
         if (state.resetIdleTimer) state.resetIdleTimer();
       }
-      updateMobileSheetBackdrop();
     };
 
     // Outside tap listener to dismiss dropdowns & bottom sheets
@@ -4238,23 +4358,15 @@
       if (e && e.target && e.target.closest && e.target.closest('.device-menu, .split-dock-btn, .pill-btn, .pill-chevron-btn')) {
         return;
       }
-      el.micDeviceMenu?.classList.add('hidden');
-      el.camDeviceMenu?.classList.add('hidden');
-      el.moreOptionsMenu?.classList.add('hidden');
-      el.activityMenu?.classList.add('hidden');
+      closeAllDeviceMenus(true);
       document.querySelectorAll('.tile-volume-popover').forEach(p => p.classList.add('hidden'));
-      updateMobileSheetBackdrop();
     };
     document.addEventListener('click', handleOutsideMenuTap);
     document.addEventListener('touchend', handleOutsideMenuTap, { passive: true });
 
     if (el.mobileSheetBackdrop) {
       bindTap(el.mobileSheetBackdrop, () => {
-        el.micDeviceMenu?.classList.add('hidden');
-        el.camDeviceMenu?.classList.add('hidden');
-        el.moreOptionsMenu?.classList.add('hidden');
-        el.activityMenu?.classList.add('hidden');
-        updateMobileSheetBackdrop();
+        closeAllDeviceMenus(true);
       });
     }
 
@@ -4296,40 +4408,33 @@
 
     // Activity Menu Items (Poll, Trivia, Soundboard)
     bindTap(el.menuPollBtn, () => {
-      el.activityMenu?.classList.add('hidden');
-      updateMobileSheetBackdrop();
+      closeAllDeviceMenus(false);
       openPollModal();
     });
     bindTap(el.menuTriviaBtn, () => {
-      el.activityMenu?.classList.add('hidden');
-      updateMobileSheetBackdrop();
+      closeAllDeviceMenus(false);
       openTriviaModal();
     });
     bindTap(el.menuSoundboardBtn, () => {
-      el.activityMenu?.classList.add('hidden');
-      updateMobileSheetBackdrop();
+      closeAllDeviceMenus(false);
       if (el.soundboardModal) el.soundboardModal.classList.remove('hidden');
     });
 
     // More Options Menu Items (Ambient Glow, Screenshare, YouTube, Direct URL)
     bindTap(el.menuAmbientGlowBtn, () => {
       toggleAmbientGlow();
-      el.moreOptionsMenu?.classList.add('hidden');
-      updateMobileSheetBackdrop();
+      closeAllDeviceMenus(true);
     });
     bindTap(el.menuScreenshareBtn, () => {
-      el.moreOptionsMenu?.classList.add('hidden');
-      updateMobileSheetBackdrop();
+      closeAllDeviceMenus(true);
       toggleScreenShare();
     });
     bindTap(el.menuYouTubeBtn, () => {
-      el.moreOptionsMenu?.classList.add('hidden');
-      updateMobileSheetBackdrop();
+      closeAllDeviceMenus(false);
       openYouTubeModal();
     });
     bindTap(el.menuUrlBtn, () => {
-      el.moreOptionsMenu?.classList.add('hidden');
-      updateMobileSheetBackdrop();
+      closeAllDeviceMenus(false);
       openUrlModal();
     });
 
@@ -4839,7 +4944,13 @@
     try { disableMicrophone(); } catch (e) {}
   });
 
-  window.__lumiere = { state, renderParticipantStrip, isPortraitMode };
+  window.__lumiere = {
+    state,
+    renderParticipantStrip,
+    isPortraitMode,
+    toggleChat,
+    closeAllDeviceMenus: (...args) => closeAllDeviceMenus && closeAllDeviceMenus(...args)
+  };
 
   window.addEventListener('DOMContentLoaded', init);
 })();
