@@ -171,6 +171,22 @@ termux-wake-lock
 
 ---
 
+### Option C: Native Android App (Install `.apk` on Phone)
+
+For an optimal mobile theater experience, install the dedicated native Android application:
+- **Direct Download**: Download [`lumiere.apk`](lumiere.apk) directly from this repository or via your running server at `http://<server-ip>:3000/lumiere.apk`.
+- **Key Features**:
+  - **Edge-to-Edge Immersive Cinema**: True fullscreen dark theater mode without browser address bars or navigation clutter.
+  - **Seamless WebRTC Permissions**: Camera and microphone access automatically granted for synchronized group video and voice chat.
+  - **Native Picture-in-Picture (PiP)**: Keep watching and listening to friends when switching to WhatsApp, Discord, or your home screen.
+  - **Screen Timeout Prevention**: Keeps your phone display awake throughout long movie screenings (`FLAG_KEEP_SCREEN_ON`).
+  - **Local SSL Bypass**: Automatic handling for local self-signed HTTPS connections (port 3443).
+  - **Quick Server Switcher**: Connect to Localhost (Termux), Phone Hotspot (`192.168.43.1`), Home Wi-Fi, or Tailscale with 1 tap.
+- **Building from Source**: Run `python build_apk.py` or open the [`android/`](android/) project in Android Studio.
+
+
+---
+
 ## 🌐 Connecting With Friends
 
 ### On the Same Wi-Fi / Phone Hotspot (Zero Internet Data):
@@ -205,6 +221,9 @@ lumiere/
 │   └── style.css           # Modern dark cinema theme
 ├── cert.pem / key.pem      # Auto-generated self-signed SSL for WebRTC
 ├── package.json
+├── android/                # Native Android Studio app project (Java/Gradle)
+├── build_apk.py            # Automated command-line APK builder & signer
+├── lumiere.apk             # Pre-built installable Android APK
 ├── server.js               # Express, Socket.io, FFmpeg streaming pipeline
 ├── start.bat               # 1-click Windows launcher
 ├── start.sh                # 1-click Linux / macOS / Android Termux launcher

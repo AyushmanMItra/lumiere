@@ -30,3 +30,8 @@ feedback.json
 .vscode/
 
 tests/results.json
+
+# Android build directories
+.gradle/
+android/app/build/
+android/build_tmp/

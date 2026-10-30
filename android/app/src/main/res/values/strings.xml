@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Lumière</string>
+    <string name="connect_dialog_title">Lumière Theater Connection</string>
+    <string name="server_url_hint">Server Address (e.g. 192.168.1.100:3000)</string>
+    <string name="btn_connect">Connect to Theater</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_presets">Quick Connect Presets:</string>
+    <string name="preset_localhost">Localhost (127.0.0.1:3000)</string>
+    <string name="preset_hotspot">Hotspot (192.168.43.1:3000)</string>
+    <string name="preset_https">Local HTTPS (192.168.43.1:3443)</string>
+</resources>

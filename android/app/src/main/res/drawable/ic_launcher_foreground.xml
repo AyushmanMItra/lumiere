@@ -1,0 +1,61 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <!-- Center Lumière Projector Reel Logo -->
+    <path
+        android:strokeWidth="26"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M 131,131 L 381,131 A 36,36 0 0,1 417,167 L 417,345 A 36,36 0 0,1 381,381 L 131,381 A 36,36 0 0,1 95,345 L 95,167 A 36,36 0 0,1 131,131 Z">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="95"
+                android:startY="95"
+                android:endX="417"
+                android:endY="417"
+                android:type="linear">
+                <item android:color="#eb459e" android:offset="0.0"/>
+                <item android:color="#5865f2" android:offset="1.0"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Left Sprocket Track -->
+    <path
+        android:strokeWidth="26"
+        android:pathData="M 194,131 L 194,381">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="95"
+                android:startY="95"
+                android:endX="417"
+                android:endY="417"
+                android:type="linear">
+                <item android:color="#eb459e" android:offset="0.0"/>
+                <item android:color="#5865f2" android:offset="1.0"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Right Sprocket Track -->
+    <path
+        android:strokeWidth="26"
+        android:pathData="M 318,131 L 318,381">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:startX="95"
+                android:startY="95"
+                android:endX="417"
+                android:endY="417"
+                android:type="linear">
+                <item android:color="#eb459e" android:offset="0.0"/>
+                <item android:color="#5865f2" android:offset="1.0"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Center Play Icon -->
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M 241,221 L 284,256 L 241,291 Z" />
+</vector>

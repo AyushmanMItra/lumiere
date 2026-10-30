@@ -1,0 +1,11 @@
+<resources>
+    <color name="bg_dark">#0b0c10</color>
+    <color name="bg_card">#13141c</color>
+    <color name="bg_surface">#1f2330</color>
+    <color name="primary_accent">#5865f2</color>
+    <color name="primary_pink">#eb459e</color>
+    <color name="text_white">#ffffff</color>
+    <color name="text_muted">#9ca3af</color>
+    <color name="status_bar">#07080a</color>
+    <color name="ic_launcher_background">#0b0c10</color>
+</resources>

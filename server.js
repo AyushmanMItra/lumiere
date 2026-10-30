@@ -388,6 +388,18 @@ app.get('/api/extension/info', (req, res) => {
   });
 });
 
+// Android APK Direct Download Endpoint
+app.get(['/lumiere.apk', '/download/apk', '/apk'], (req, res) => {
+  const apkPath = path.join(__dirname, 'lumiere.apk');
+  if (fs.existsSync(apkPath)) {
+    res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+    res.setHeader('Content-Disposition', 'attachment; filename="lumiere.apk"');
+    res.sendFile(apkPath);
+  } else {
+    res.status(404).send('APK not found. Run python build_apk.py to generate it.');
+  }
+});
+
 app.get('/api/extension/download', (req, res) => {
   try {
     const extDir = path.join(__dirname, 'extension');
