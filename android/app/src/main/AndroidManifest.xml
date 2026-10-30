@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.ayushman.lumiere">
+    package="com.ayushman.lumiere"
+    android:versionCode="1"
+    android:versionName="1.0.0">
+
+    <!-- Screen compatibility for all phone and tablet form factors -->
+    <supports-screens
+        android:smallScreens="true"
+        android:normalScreens="true"
+        android:largeScreens="true"
+        android:xlargeScreens="true"
+        android:anyDensity="true" />
+
+    <!-- Minimum Android 5.0 (API 21), Target Android 14 (API 34) -->
+    <uses-sdk
+        android:minSdkVersion="21"
+        android:targetSdkVersion="34" />
 
     <!-- Essential Network Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -11,7 +26,6 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    <uses-permission android:name="android.permission.AUDIO_CAPTURE" />
 
     <!-- Cinema Playback Display & Wake Lock -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />

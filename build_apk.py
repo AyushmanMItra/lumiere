@@ -90,7 +90,20 @@ def build_apk():
         sys.exit(1)
 
     print('[2/8] Linking APK and generating R.java...')
-    res = subprocess.run([aapt2, 'link', '-I', platform_jar, compiled_res, '--manifest', manifest, '--java', gen_dir, '-o', unaligned_apk, '--auto-add-overlay'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    link_cmd = [
+        aapt2, 'link',
+        '-I', platform_jar,
+        compiled_res,
+        '--manifest', manifest,
+        '--java', gen_dir,
+        '--min-sdk-version', '21',
+        '--target-sdk-version', '34',
+        '--version-code', '1',
+        '--version-name', '1.0.0',
+        '-o', unaligned_apk,
+        '--auto-add-overlay'
+    ]
+    res = subprocess.run(link_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     if res.returncode != 0:
         print('aapt2 link error:', res.stderr)
         sys.exit(1)
@@ -109,7 +122,8 @@ def build_apk():
         for f in files:
             if f.endswith('.class'):
                 class_files.append(os.path.join(root, f))
-    res = subprocess.run([d8, '--lib', platform_jar, '--output', dex_dir] + class_files, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
+    d8_cmd = [d8, '--lib', platform_jar, '--min-api', '21', '--output', dex_dir] + class_files
+    res = subprocess.run(d8_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
     if res.returncode != 0:
         print('d8 error:', res.stderr)
         sys.exit(1)
@@ -126,7 +140,15 @@ def build_apk():
         sys.exit(1)
 
     print('[7/8] Signing APK with apksigner...')
-    res = subprocess.run([apksigner, 'sign', '--ks', keystore, '--ks-pass', 'pass:android', '--out', final_apk, aligned_apk], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
+    sign_cmd = [
+        apksigner, 'sign',
+        '--ks', keystore,
+        '--ks-pass', 'pass:android',
+        '--min-sdk-version', '21',
+        '--out', final_apk,
+        aligned_apk
+    ]
+    res = subprocess.run(sign_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
     if res.returncode != 0:
         print('apksigner error:', res.stderr)
         sys.exit(1)
