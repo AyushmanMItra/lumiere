@@ -3077,10 +3077,21 @@ body:not(.has-participants) .cinema-stage-wrapper {
   flex-shrink: 0;
   border: 1px solid rgba(255, 255, 255, 0.04);
   transition: background-color 0.15s ease, border-color 0.15s ease;
+  min-width: 0;
+  box-sizing: border-box;
 }
 .movie-card-row:hover {
   background-color: #35373c;
   border-color: rgba(255, 255, 255, 0.08);
+}
+
+.movie-card-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .movie-card-title {
@@ -3090,10 +3101,49 @@ body:not(.has-participants) .cinema-stage-wrapper {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.movie-card-filename {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 380px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.movie-card-row .play-btn {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+/* On phones / portrait mobile views: stack movie info and Play button so it is never pushed out or blocked */
+@media (max-width: 600px), (max-width: 768px) and (orientation: portrait) {
+  .movie-card-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 12px 14px !important;
+  }
+
+  .movie-card-info {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .movie-card-row .play-btn {
+    width: 100% !important;
+    height: 38px !important;
+    justify-content: center !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    letter-spacing: 0.2px !important;
+  }
 }
 
 /* Discord Sleek Scrollbars */
@@ -4951,7 +5001,15 @@ body:not(.has-participants) .cinema-stage-wrapper {
   }
 
   #movieModal .movie-card-row {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     padding: 7px 12px !important;
+    gap: 10px !important;
+  }
+  #movieModal .movie-card-row .play-btn {
+    width: auto !important;
+    height: 30px !important;
   }
 }
 

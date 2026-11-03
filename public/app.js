@@ -4984,14 +4984,17 @@
 
         const extTag = (m.extension || '').replace('.', '').toUpperCase();
         row.innerHTML = `
-          <div>
+          <div class="movie-card-info">
             <div class="movie-card-title">
-              <span>${m.filename}</span>
+              <span class="movie-card-filename" title="${m.filename}">${m.filename}</span>
               <span class="movie-card-badge badge-${extTag.toLowerCase()}">${extTag}</span>
             </div>
             <div class="movie-card-size">${m.size}</div>
           </div>
-          <button class="btn btn-primary btn-sm play-btn">Play in Room</button>
+          <button class="btn btn-primary btn-sm play-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+            <span>Play in Room</span>
+          </button>
         `;
 
         row.querySelector('.play-btn').onclick = () => {
