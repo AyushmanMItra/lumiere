@@ -1,13 +1,13 @@
 /**
- * Test Suite: Screen Resize & Reposition Feature and Playback Speed Icon
- * Verifies DOM elements, CSS classes, speed icon vector replacement, and JavaScript handlers.
+ * Test Suite: Windows-Style Resizable & Repositionable Windows
+ * Verifies movie screen & webcam video tile window management, title bars, 8-way resize handles, and speed icon.
  */
 
 const fs = require('fs');
 const assert = require('assert');
 
 console.log('================================================================');
-console.log('  TEST SUITE: SCREEN RESIZE & REPOSITION FEATURE');
+console.log('  TEST SUITE: WINDOWS-STYLE RESIZE & REPOSITION (WINDOW MANAGER)');
 console.log('================================================================');
 
 const html = fs.readFileSync('public/index.html', 'utf8');
@@ -29,7 +29,7 @@ function test(name, fn) {
   }
 }
 
-// 1. Playback Speed Selector Icon
+// 1. Playback Speed Selector Vector Icon
 test('Speed picker group has SVG element instead of flash emoji', () => {
   const speedGroup = html.substring(html.indexOf('id="speedPickerGroup"'), html.indexOf('id="speedPickerGroup"') + 600);
   assert(!speedGroup.includes('⚡'), 'Speed picker must not contain flash emoji');
@@ -40,84 +40,82 @@ test('Zero occurrences of flash emoji in public/index.html', () => {
   assert(!html.includes('⚡'), 'index.html must not contain flash emoji');
 });
 
-// 2. DOM Elements for Screen Transform Feature
-test('index.html contains videoHoldIndicator with circular progress ring', () => {
+// 2. Movie Screen Window & Title Bar
+test('index.html contains movieWindowTitleBar with title, size badge, reset, and dock buttons', () => {
+  assert(html.includes('id="movieWindowTitleBar"'), 'movieWindowTitleBar must exist');
+  assert(html.includes('id="movieWindowSizeBadge"'), 'movieWindowSizeBadge must exist');
+  assert(html.includes('id="movieWindowResetBtn"'), 'movieWindowResetBtn must exist');
+  assert(html.includes('id="movieWindowDockBtn"'), 'movieWindowDockBtn must exist');
+});
+
+test('index.html contains 8 Windows-style resize handles on cinema stage wrapper', () => {
+  assert(html.includes('class="window-resize-handle handle-n"'), 'handle-n must exist');
+  assert(html.includes('class="window-resize-handle handle-s"'), 'handle-s must exist');
+  assert(html.includes('class="window-resize-handle handle-e"'), 'handle-e must exist');
+  assert(html.includes('class="window-resize-handle handle-w"'), 'handle-w must exist');
+  assert(html.includes('class="window-resize-handle handle-ne"'), 'handle-ne must exist');
+  assert(html.includes('class="window-resize-handle handle-nw"'), 'handle-nw must exist');
+  assert(html.includes('class="window-resize-handle handle-se"'), 'handle-se must exist');
+  assert(html.includes('class="window-resize-handle handle-sw"'), 'handle-sw must exist');
+});
+
+test('index.html contains videoHoldIndicator for press-and-hold trigger', () => {
   assert(html.includes('id="videoHoldIndicator"'), 'videoHoldIndicator must exist');
   assert(html.includes('id="holdRingProgress"'), 'holdRingProgress must exist');
 });
 
-test('index.html contains videoTransformGuide framing overlay', () => {
-  assert(html.includes('id="videoTransformGuide"'), 'videoTransformGuide overlay must exist');
-  assert(html.includes('transform-corner top-left'), 'Corner brackets must exist');
-});
-
-test('index.html contains videoTransformHUD with scale slider and +/- buttons', () => {
-  assert(html.includes('id="videoTransformHUD"'), 'videoTransformHUD dialog must exist');
-  assert(html.includes('id="videoScaleSlider"'), 'videoScaleSlider must exist');
-  assert(html.includes('id="scaleMinusBtn"'), 'scaleMinusBtn must exist');
-  assert(html.includes('id="scalePlusBtn"'), 'scalePlusBtn must exist');
-  assert(html.includes('id="transformScaleBadge"'), 'transformScaleBadge must exist');
-});
-
-test('index.html contains fit presets (Fit, Cover, Stretch, 1.25x)', () => {
-  assert(html.includes('id="transformFitPresets"'), 'transformFitPresets must exist');
-  assert(html.includes('data-fit="contain"'), 'contain preset must exist');
-  assert(html.includes('data-fit="cover"'), 'cover preset must exist');
-  assert(html.includes('data-fit="fill"'), 'fill preset must exist');
-  assert(html.includes('data-fit="zoom125"'), 'zoom125 preset must exist');
-});
-
-test('index.html contains directional D-pad nudge buttons and center snap', () => {
-  assert(html.includes('id="nudgeUpBtn"'), 'nudgeUpBtn must exist');
-  assert(html.includes('id="nudgeDownBtn"'), 'nudgeDownBtn must exist');
-  assert(html.includes('id="nudgeLeftBtn"'), 'nudgeLeftBtn must exist');
-  assert(html.includes('id="nudgeRightBtn"'), 'nudgeRightBtn must exist');
-  assert(html.includes('id="centerTransformBtn"'), 'centerTransformBtn must exist');
-  assert(html.includes('id="transformOffsetBadge"'), 'transformOffsetBadge must exist');
-});
-
-test('index.html contains reset and done action buttons', () => {
-  assert(html.includes('id="resetTransformBtn"'), 'resetTransformBtn must exist');
-  assert(html.includes('id="doneTransformBtn"'), 'doneTransformBtn must exist');
-  assert(html.includes('id="closeTransformHudBtn"'), 'closeTransformHudBtn must exist');
-});
-
-test('moreOptionsMenu contains menuTransformBtn secondary trigger', () => {
+test('moreOptionsMenu contains menuTransformBtn window pop-out toggle', () => {
   assert(html.includes('id="menuTransformBtn"'), 'menuTransformBtn must exist in moreOptionsMenu');
+  assert(html.includes('id="menuTransformTitle"'), 'menuTransformTitle must exist in moreOptionsMenu');
 });
 
-// 3. CSS Classes & Styles
-test('style.css defines styling for hold indicator, guide, and transform HUD', () => {
-  assert(css.includes('.video-hold-indicator'), 'CSS for video-hold-indicator must exist');
-  assert(css.includes('.video-transform-hud'), 'CSS for video-transform-hud must exist');
-  assert(css.includes('.video-transform-guide'), 'CSS for video-transform-guide must exist');
-  assert(css.includes('.cinema-box.is-transforming'), 'CSS for is-transforming must exist');
-  assert(css.includes('.cinema-box.is-transforming.is-dragging'), 'CSS for is-dragging must exist');
+// 3. CSS Window Styles
+test('style.css defines floating window styles for movie screen and webcam tiles', () => {
+  assert(css.includes('.cinema-stage-wrapper.is-floating-window'), 'cinema-stage-wrapper floating styles must exist');
+  assert(css.includes('.participant-tile.is-floating-window'), 'participant-tile floating styles must exist');
+  assert(css.includes('.window-title-bar'), 'window-title-bar styles must exist');
+  assert(css.includes('.window-resize-handle'), 'window-resize-handle styles must exist');
+  assert(css.includes('.window-dock-btn'), 'window-dock-btn styles must exist');
+  assert(css.includes('.participant-tile-placeholder'), 'participant-tile-placeholder styles must exist');
+});
+
+test('style.css defines correct cursor resize directions for 8 handles', () => {
+  assert(css.includes('cursor: ns-resize'), 'ns-resize cursor must exist');
+  assert(css.includes('cursor: ew-resize'), 'ew-resize cursor must exist');
+  assert(css.includes('cursor: nwse-resize'), 'nwse-resize cursor must exist');
+  assert(css.includes('cursor: nesw-resize'), 'nesw-resize cursor must exist');
 });
 
 // 4. JS Application Logic & Handlers
-test('app.js declares screenTransformState and initVideoTransformFeature', () => {
-  assert(app.includes('const screenTransformState = {'), 'screenTransformState must be declared');
-  assert(app.includes('function initVideoTransformFeature()'), 'initVideoTransformFeature must be defined');
-  assert(app.includes('initVideoTransformFeature();'), 'initVideoTransformFeature must be called in init()');
+test('app.js declares windowManager and initWindowManagement', () => {
+  assert(app.includes('const windowManager = {'), 'windowManager must be declared');
+  assert(app.includes('function initWindowManagement()'), 'initWindowManagement must be defined');
+  assert(app.includes('initWindowManagement();'), 'initWindowManagement must be called in init()');
 });
 
-test('app.js implements press-and-hold (450ms) and disambiguates taps/clicks', () => {
-  assert(app.includes('HOLD_MS = 450'), 'Hold duration must be 450ms');
-  assert(app.includes('screenTransformState.suppressTap'), 'suppressTap flag must guard clicks/taps');
-  assert(app.includes('screenTransformState.isTransforming'), 'isTransforming must guard cinemaBox interactions');
+test('app.js implements popOutMovieWindow and dockMovieWindow', () => {
+  assert(app.includes('function popOutMovieWindow('), 'popOutMovieWindow must be defined');
+  assert(app.includes('function dockMovieWindow()'), 'dockMovieWindow must be defined');
 });
 
-test('app.js implements direct dragging, pinch-to-zoom, and mouse wheel zoom', () => {
-  assert(app.includes('isDragging = true;'), 'Direct drag must be implemented');
-  assert(app.includes('initialPinchDist'), 'Pinch-to-zoom must be supported');
-  assert(app.includes('deltaY < 0 ? 0.05 : -0.05'), 'Wheel zoom must be supported');
+test('app.js implements popOutParticipantWindow and dockParticipantWindow for webcams', () => {
+  assert(app.includes('function popOutParticipantWindow('), 'popOutParticipantWindow must be defined');
+  assert(app.includes('function dockParticipantWindow('), 'dockParticipantWindow must be defined');
 });
 
-test('app.js persists transform settings to localStorage and restores them', () => {
-  assert(app.includes('lumiere_screen_transform'), 'localStorage key must be used');
-  assert(app.includes('function saveScreenTransform()'), 'saveScreenTransform must be implemented');
-  assert(app.includes('function loadSavedScreenTransform()'), 'loadSavedScreenTransform must be implemented');
+test('app.js implements title bar drag (handleDragStart) and 8-way resize (handleResizeStart)', () => {
+  assert(app.includes('function handleDragStart('), 'handleDragStart must be defined');
+  assert(app.includes('function handleResizeStart('), 'handleResizeStart must be defined');
+});
+
+test('app.js attaches title bar and 8 resize handles to each participant tile', () => {
+  assert(app.includes('participant-window-title-bar'), 'participant title bar must be constructed');
+  assert(app.includes('setupParticipantWindowHandlers(tile);'), 'setupParticipantWindowHandlers must be called');
+});
+
+test('app.js implements 450ms click-and-hold trigger and click suppression', () => {
+  assert(app.includes('windowManager.suppressClick = true;'), 'Click suppression must be implemented');
+  assert(app.includes('windowManager.suppressClick'), 'suppressClick must guard moviePlayer clicks');
 });
 
 console.log('================================================================');

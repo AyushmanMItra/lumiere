@@ -203,24 +203,14 @@
     menuUrlBtn: document.getElementById('menuUrlBtn'),
     menuStreamingBtn: document.getElementById('menuStreamingBtn'),
     menuTransformBtn: document.getElementById('menuTransformBtn'),
+    menuTransformTitle: document.getElementById('menuTransformTitle'),
+    cinemaStageWrapper: document.getElementById('cinemaStageWrapper'),
+    movieWindowTitleBar: document.getElementById('movieWindowTitleBar'),
+    movieWindowSizeBadge: document.getElementById('movieWindowSizeBadge'),
+    movieWindowResetBtn: document.getElementById('movieWindowResetBtn'),
+    movieWindowDockBtn: document.getElementById('movieWindowDockBtn'),
     videoHoldIndicator: document.getElementById('videoHoldIndicator'),
     holdRingProgress: document.getElementById('holdRingProgress'),
-    videoTransformGuide: document.getElementById('videoTransformGuide'),
-    videoTransformHUD: document.getElementById('videoTransformHUD'),
-    closeTransformHudBtn: document.getElementById('closeTransformHudBtn'),
-    videoScaleSlider: document.getElementById('videoScaleSlider'),
-    transformScaleBadge: document.getElementById('transformScaleBadge'),
-    scaleMinusBtn: document.getElementById('scaleMinusBtn'),
-    scalePlusBtn: document.getElementById('scalePlusBtn'),
-    transformFitPresets: document.getElementById('transformFitPresets'),
-    transformOffsetBadge: document.getElementById('transformOffsetBadge'),
-    nudgeUpBtn: document.getElementById('nudgeUpBtn'),
-    nudgeDownBtn: document.getElementById('nudgeDownBtn'),
-    nudgeLeftBtn: document.getElementById('nudgeLeftBtn'),
-    nudgeRightBtn: document.getElementById('nudgeRightBtn'),
-    centerTransformBtn: document.getElementById('centerTransformBtn'),
-    resetTransformBtn: document.getElementById('resetTransformBtn'),
-    doneTransformBtn: document.getElementById('doneTransformBtn'),
 
     screenSharePlayer: document.getElementById('screenSharePlayer'),
     youtubePlayerBox: document.getElementById('youtubePlayerBox'),
@@ -2225,15 +2215,15 @@
 
     el.cinemaBox.addEventListener('touchend', (e) => {
       // If user tapped a button, select, or scrubber inside the cinema box, let it interact normally
-      if (e.target.closest('button, select, input, a, .hud-timeline-container, .device-menu, .active-poll-widget, .video-transform-hud')) {
+      if (e.target.closest('button, select, input, a, .hud-timeline-container, .device-menu, .active-poll-widget, .window-title-bar, .window-resize-handle')) {
         return;
       }
 
       const currentTime = Date.now();
       const tapLength = currentTime - lastTapTime;
       const touch = e.changedTouches[0];
-      if (typeof screenTransformState !== 'undefined' && (screenTransformState.isTransforming || screenTransformState.suppressTap)) {
-        screenTransformState.suppressTap = false;
+      if (typeof windowManager !== 'undefined' && windowManager.suppressClick) {
+        windowManager.suppressClick = false;
         return;
       }
       if (!touch) return;
@@ -2311,352 +2301,517 @@
   }
 
   // ==========================================================================
-  // SCREEN RESIZE & REPOSITION (CLICK-AND-HOLD / DIRECT DRAG / ZOOM / FIT)
+  // WINDOWS-STYLE RESIZABLE & REPOSITIONABLE WINDOW MANAGER
+  // (Supports both Entire Movie Screen and Participant Webcam Videos)
   // ==========================================================================
 
-  const screenTransformState = {
-    scale: 1.0,
-    x: 0,
-    y: 0,
-    fit: 'contain',
-    isTransforming: false,
-    suppressTap: false
+  const windowManager = {
+    highestZIndex: 1250,
+    suppressClick: false
   };
 
-  function initVideoTransformFeature() {
-    loadSavedScreenTransform();
+  function bringWindowToFront(win) {
+    if (!win) return;
+    windowManager.highestZIndex += 2;
+    win.style.zIndex = windowManager.highestZIndex;
+  }
 
+  function initWindowManagement() {
+    initMovieWindowHandlers();
+    loadSavedMovieWindowLayout();
+  }
+
+  function initMovieWindowHandlers() {
+    const stage = el.cinemaStageWrapper;
     const box = el.cinemaBox;
-    if (!box) return;
+    if (!stage || !box) return;
 
-    let holdTimer = null;
-    let holdStartX = 0;
-    let holdStartY = 0;
-    const HOLD_MS = 450;
+    const titleBar = el.movieWindowTitleBar;
+    if (titleBar) {
+      titleBar.addEventListener('mousedown', (e) => handleDragStart(e, stage));
+      titleBar.addEventListener('touchstart', (e) => handleDragStart(e, stage), { passive: false });
 
-    // Direct Drag State while in Transform Mode
-    let isDragging = false;
-    let dragStartX = 0;
-    let dragStartY = 0;
-    let originX = 0;
-    let originY = 0;
+      if (el.movieWindowDockBtn) {
+        el.movieWindowDockBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          dockMovieWindow();
+        });
+      }
+      if (el.movieWindowResetBtn) {
+        el.movieWindowResetBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          resetMovieWindowSize();
+        });
+      }
+    }
 
-    // Pinch-to-zoom on Mobile
-    let initialPinchDist = 0;
-    let initialPinchScale = 1.0;
+    const handles = stage.querySelectorAll('.window-resize-handle');
+    handles.forEach(h => {
+      const dir = h.getAttribute('data-direction');
+      h.addEventListener('mousedown', (e) => handleResizeStart(e, stage, dir));
+      h.addEventListener('touchstart', (e) => handleResizeStart(e, stage, dir), { passive: false });
+    });
 
-    const onPointerDown = (e) => {
-      // If clicked inside HUD or interactive overlay controls, let it interact normally
-      if (e.target.closest('button, select, input, a, .hud-timeline-container, .device-menu, .active-poll-widget, .video-transform-hud')) {
+    // Hold on cinemaBox (450ms) to pop out into floating window
+    let movieHoldTimer = null;
+    let movieHoldStartX = 0;
+    let movieHoldStartY = 0;
+
+    const onBoxDown = (e) => {
+      if (e.target.closest('button, select, input, a, .hud-timeline-container, .device-menu, .active-poll-widget, .window-title-bar, .window-resize-handle')) {
         return;
       }
-
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      movieHoldStartX = clientX;
+      movieHoldStartY = clientY;
 
-      // If already in transform mode, start direct dragging immediately!
-      if (screenTransformState.isTransforming) {
-        if (e.touches && e.touches.length === 2) {
-          initialPinchDist = Math.hypot(
-            e.touches[0].clientX - e.touches[1].clientX,
-            e.touches[0].clientY - e.touches[1].clientY
-          );
-          initialPinchScale = screenTransformState.scale;
-          return;
-        }
+      clearTimeout(movieHoldTimer);
+      showHoldIndicator(clientX, clientY, stage.classList.contains('is-floating-window') ? 'Hold to Dock Screen' : 'Hold for Floating Screen');
 
-        isDragging = true;
-        dragStartX = clientX;
-        dragStartY = clientY;
-        originX = screenTransformState.x;
-        originY = screenTransformState.y;
-        box.classList.add('is-dragging');
-        return;
-      }
-
-      // Not in transform mode yet: Start Press-and-Hold Detection
-      holdStartX = clientX;
-      holdStartY = clientY;
-      clearTimeout(holdTimer);
-
-      showHoldIndicator(clientX, clientY);
-
-      holdTimer = setTimeout(() => {
-        holdTimer = null;
-        screenTransformState.suppressTap = true;
+      movieHoldTimer = setTimeout(() => {
+        movieHoldTimer = null;
+        windowManager.suppressClick = true;
         if (navigator.vibrate) {
           try { navigator.vibrate(40); } catch (_) {}
         }
         pulseHoldIndicatorSuccess();
         setTimeout(() => {
           hideHoldIndicator();
-          openTransformHUD();
+          if (stage.classList.contains('is-floating-window')) {
+            dockMovieWindow();
+          } else {
+            popOutMovieWindow();
+          }
         }, 220);
-      }, HOLD_MS);
+      }, 450);
     };
 
-    const onPointerMove = (e) => {
+    const onBoxMove = (e) => {
+      if (!movieHoldTimer) return;
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-      // Cancel hold if moved significantly before timer completes
-      if (holdTimer) {
-        const dist = Math.hypot(clientX - holdStartX, clientY - holdStartY);
-        if (dist > 12) {
-          clearTimeout(holdTimer);
-          holdTimer = null;
-          hideHoldIndicator();
-        }
-      }
-
-      // If in transform mode and dragging screen
-      if (screenTransformState.isTransforming && isDragging) {
-        if (e.touches && e.touches.length > 1) return;
-        if (e.cancelable && e.type.startsWith('touch')) e.preventDefault();
-        const dx = clientX - dragStartX;
-        const dy = clientY - dragStartY;
-        screenTransformState.x = Math.round(originX + dx);
-        screenTransformState.y = Math.round(originY + dy);
-        applyScreenTransform();
-        updateTransformHUDReadout();
-      }
-
-      // If in transform mode and pinching
-      if (screenTransformState.isTransforming && e.touches && e.touches.length === 2 && initialPinchDist > 0) {
-        e.preventDefault();
-        const currentDist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        const ratio = currentDist / initialPinchDist;
-        const nextScale = Math.min(2.5, Math.max(0.5, Math.round(initialPinchScale * ratio * 100) / 100));
-        screenTransformState.scale = nextScale;
-        applyScreenTransform();
-        updateTransformHUDReadout();
-      }
-    };
-
-    const onPointerUp = () => {
-      if (holdTimer) {
-        clearTimeout(holdTimer);
-        holdTimer = null;
+      if (Math.hypot(clientX - movieHoldStartX, clientY - movieHoldStartY) > 12) {
+        clearTimeout(movieHoldTimer);
+        movieHoldTimer = null;
         hideHoldIndicator();
       }
+    };
 
-      if (isDragging) {
-        isDragging = false;
-        box.classList.remove('is-dragging');
-        saveScreenTransform();
-      }
-
-      if (initialPinchDist > 0) {
-        initialPinchDist = 0;
-        saveScreenTransform();
+    const onBoxUp = () => {
+      if (movieHoldTimer) {
+        clearTimeout(movieHoldTimer);
+        movieHoldTimer = null;
+        hideHoldIndicator();
       }
     };
 
-    box.addEventListener('mousedown', onPointerDown);
-    box.addEventListener('touchstart', onPointerDown, { passive: true });
+    box.addEventListener('mousedown', onBoxDown);
+    box.addEventListener('touchstart', onBoxDown, { passive: true });
+    window.addEventListener('mousemove', onBoxMove);
+    window.addEventListener('touchmove', onBoxMove, { passive: false });
+    window.addEventListener('mouseup', onBoxUp);
+    window.addEventListener('touchend', onBoxUp, { passive: false });
 
-    window.addEventListener('mousemove', onPointerMove);
-    window.addEventListener('touchmove', onPointerMove, { passive: false });
-
-    window.addEventListener('mouseup', onPointerUp);
-    window.addEventListener('touchend', onPointerUp, { passive: false });
-    window.addEventListener('touchcancel', onPointerUp, { passive: false });
-
-    // Desktop Mouse Wheel Zoom while in transform mode
-    box.addEventListener('wheel', (e) => {
-      if (!screenTransformState.isTransforming) return;
-      e.preventDefault();
-      const delta = e.deltaY < 0 ? 0.05 : -0.05;
-      const nextScale = Math.min(2.5, Math.max(0.5, Math.round((screenTransformState.scale + delta) * 100) / 100));
-      screenTransformState.scale = nextScale;
-      applyScreenTransform();
-      updateTransformHUDReadout();
-      saveScreenTransform();
-    }, { passive: false });
-
-    // Secondary trigger from More Options menu
     if (el.menuTransformBtn) {
       el.menuTransformBtn.onclick = () => {
         closeAllDeviceMenus?.();
-        openTransformHUD();
-      };
-    }
-
-    setupTransformHudControls();
-  }
-
-  function setupTransformHudControls() {
-    if (el.closeTransformHudBtn) {
-      el.closeTransformHudBtn.onclick = closeTransformHUD;
-    }
-    if (el.doneTransformBtn) {
-      el.doneTransformBtn.onclick = () => {
-        saveScreenTransform();
-        closeTransformHUD();
-      };
-    }
-    if (el.resetTransformBtn) {
-      el.resetTransformBtn.onclick = resetScreenTransform;
-    }
-
-    // Slider
-    if (el.videoScaleSlider) {
-      el.videoScaleSlider.addEventListener('input', (e) => {
-        const val = parseInt(e.target.value, 10);
-        screenTransformState.scale = Math.round((val / 100) * 100) / 100;
-        applyScreenTransform();
-        updateTransformHUDReadout();
-      });
-      el.videoScaleSlider.addEventListener('change', () => {
-        saveScreenTransform();
-      });
-    }
-
-    // Step +/- buttons
-    if (el.scaleMinusBtn) {
-      el.scaleMinusBtn.onclick = () => {
-        const next = Math.max(0.5, Math.round((screenTransformState.scale - 0.05) * 100) / 100);
-        screenTransformState.scale = next;
-        applyScreenTransform();
-        updateTransformHUDReadout();
-        saveScreenTransform();
-      };
-    }
-    if (el.scalePlusBtn) {
-      el.scalePlusBtn.onclick = () => {
-        const next = Math.min(2.5, Math.round((screenTransformState.scale + 0.05) * 100) / 100);
-        screenTransformState.scale = next;
-        applyScreenTransform();
-        updateTransformHUDReadout();
-        saveScreenTransform();
-      };
-    }
-
-    // Fit Presets
-    const presetBtns = el.transformFitPresets ? el.transformFitPresets.querySelectorAll('.transform-preset-btn') : [];
-    presetBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const fit = btn.getAttribute('data-fit');
-        if (fit === 'zoom125') {
-          screenTransformState.scale = 1.25;
-          screenTransformState.fit = 'contain';
-        } else if (fit === 'cover') {
-          screenTransformState.fit = 'cover';
-          screenTransformState.scale = Math.max(1.0, screenTransformState.scale);
-        } else if (fit === 'fill') {
-          screenTransformState.fit = 'fill';
+        if (stage.classList.contains('is-floating-window')) {
+          dockMovieWindow();
         } else {
-          screenTransformState.fit = 'contain';
+          popOutMovieWindow();
         }
-        applyScreenTransform();
-        updateTransformHUDReadout();
-        saveScreenTransform();
-      });
-    });
-
-    // D-Pad Nudge Buttons
-    const NUDGE_STEP = 15;
-    if (el.nudgeUpBtn) {
-      el.nudgeUpBtn.onclick = () => {
-        screenTransformState.y -= NUDGE_STEP;
-        applyScreenTransform();
-        updateTransformHUDReadout();
-        saveScreenTransform();
       };
     }
-    if (el.nudgeDownBtn) {
-      el.nudgeDownBtn.onclick = () => {
-        screenTransformState.y += NUDGE_STEP;
-        applyScreenTransform();
-        updateTransformHUDReadout();
-        saveScreenTransform();
-      };
-    }
-    if (el.nudgeLeftBtn) {
-      el.nudgeLeftBtn.onclick = () => {
-        screenTransformState.x -= NUDGE_STEP;
-        applyScreenTransform();
-        updateTransformHUDReadout();
-        saveScreenTransform();
-      };
-    }
-    if (el.nudgeRightBtn) {
-      el.nudgeRightBtn.onclick = () => {
-        screenTransformState.x += NUDGE_STEP;
-        applyScreenTransform();
-        updateTransformHUDReadout();
-        saveScreenTransform();
-      };
-    }
-    if (el.centerTransformBtn) {
-      el.centerTransformBtn.onclick = () => {
-        screenTransformState.x = 0;
-        screenTransformState.y = 0;
-        applyScreenTransform();
-        updateTransformHUDReadout();
-        saveScreenTransform();
-      };
-    }
-
-    initTransformHudDraggable();
   }
 
-  function initTransformHudDraggable() {
-    const hud = el.videoTransformHUD;
-    if (!hud) return;
-    const header = hud.querySelector('.transform-hud-header');
-    if (!header) return;
+  function handleDragStart(e, targetWindow) {
+    if (e.target.closest('button, select, input, a')) return;
+    e.preventDefault();
+    e.stopPropagation();
 
-    let isDraggingHud = false;
-    let startX = 0;
-    let startY = 0;
-    let initialLeft = 0;
-    let initialTop = 0;
+    bringWindowToFront(targetWindow);
 
-    header.addEventListener('mousedown', (e) => {
-      if (e.target.closest('button')) return;
-      isDraggingHud = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      const rect = hud.getBoundingClientRect();
-      const parentRect = hud.offsetParent ? hud.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
-      initialLeft = rect.left - parentRect.left;
-      initialTop = rect.top - parentRect.top;
-      hud.style.bottom = 'auto';
-      hud.style.right = 'auto';
-      hud.style.left = `${initialLeft}px`;
-      hud.style.top = `${initialTop}px`;
-      e.preventDefault();
-    });
+    const isTouch = !!e.touches;
+    const startPointerX = isTouch ? e.touches[0].clientX : e.clientX;
+    const startPointerY = isTouch ? e.touches[0].clientY : e.clientY;
 
-    window.addEventListener('mousemove', (e) => {
-      if (!isDraggingHud) return;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      hud.style.left = `${Math.max(0, initialLeft + dx)}px`;
-      hud.style.top = `${Math.max(0, initialTop + dy)}px`;
-    });
+    const rect = targetWindow.getBoundingClientRect();
+    const startLeft = rect.left;
+    const startTop = rect.top;
 
-    window.addEventListener('mouseup', () => {
-      isDraggingHud = false;
-    });
+    targetWindow.classList.add('is-dragging-window');
+    document.body.classList.add('window-dragging-active');
+
+    const onMove = (moveEvt) => {
+      const curX = moveEvt.touches ? moveEvt.touches[0].clientX : moveEvt.clientX;
+      const curY = moveEvt.touches ? moveEvt.touches[0].clientY : moveEvt.clientY;
+      const dx = curX - startPointerX;
+      const dy = curY - startPointerY;
+
+      const maxLeft = window.innerWidth - 60;
+      const maxTop = window.innerHeight - 40;
+      const newLeft = Math.max(-targetWindow.offsetWidth + 60, Math.min(maxLeft, startLeft + dx));
+      const newTop = Math.max(0, Math.min(maxTop, startTop + dy));
+
+      targetWindow.style.left = `${Math.round(newLeft)}px`;
+      targetWindow.style.top = `${Math.round(newTop)}px`;
+    };
+
+    const onUp = () => {
+      targetWindow.classList.remove('is-dragging-window');
+      document.body.classList.remove('window-dragging-active');
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onUp);
+      if (targetWindow === el.cinemaStageWrapper) saveMovieWindowLayout();
+    };
+
+    window.addEventListener('mousemove', onMove, { passive: false });
+    window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onUp);
   }
 
-  function showHoldIndicator(clientX, clientY) {
+  function handleResizeStart(e, targetWindow, direction) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    bringWindowToFront(targetWindow);
+
+    const isTouch = !!e.touches;
+    const startPointerX = isTouch ? e.touches[0].clientX : e.clientX;
+    const startPointerY = isTouch ? e.touches[0].clientY : e.clientY;
+
+    const rect = targetWindow.getBoundingClientRect();
+    const startLeft = rect.left;
+    const startTop = rect.top;
+    const startWidth = rect.width;
+    const startHeight = rect.height;
+
+    const isMovie = targetWindow === el.cinemaStageWrapper;
+    const minW = isMovie ? 320 : 160;
+    const minH = isMovie ? 180 : 110;
+    const maxW = window.innerWidth - 20;
+    const maxH = window.innerHeight - 20;
+
+    targetWindow.classList.add('is-resizing');
+    document.body.classList.add('window-resizing-active');
+
+    const onMove = (moveEvt) => {
+      const curX = moveEvt.touches ? moveEvt.touches[0].clientX : moveEvt.clientX;
+      const curY = moveEvt.touches ? moveEvt.touches[0].clientY : moveEvt.clientY;
+      const dx = curX - startPointerX;
+      const dy = curY - startPointerY;
+
+      let newWidth = startWidth;
+      let newHeight = startHeight;
+      let newLeft = startLeft;
+      let newTop = startTop;
+
+      if (direction.includes('e')) {
+        newWidth = Math.max(minW, Math.min(maxW, startWidth + dx));
+      } else if (direction.includes('w')) {
+        const prospectiveWidth = startWidth - dx;
+        if (prospectiveWidth >= minW && prospectiveWidth <= maxW) {
+          newWidth = prospectiveWidth;
+          newLeft = startLeft + dx;
+        } else if (prospectiveWidth < minW) {
+          newWidth = minW;
+          newLeft = startLeft + (startWidth - minW);
+        }
+      }
+
+      if (direction.includes('s')) {
+        newHeight = Math.max(minH, Math.min(maxH, startHeight + dy));
+      } else if (direction.includes('n')) {
+        const prospectiveHeight = startHeight - dy;
+        if (prospectiveHeight >= minH && prospectiveHeight <= maxH) {
+          newHeight = prospectiveHeight;
+          newTop = startTop + dy;
+        } else if (prospectiveHeight < minH) {
+          newHeight = minH;
+          newTop = startTop + (startHeight - minH);
+        }
+      }
+
+      targetWindow.style.width = `${Math.round(newWidth)}px`;
+      targetWindow.style.height = `${Math.round(newHeight)}px`;
+      targetWindow.style.left = `${Math.round(newLeft)}px`;
+      targetWindow.style.top = `${Math.round(newTop)}px`;
+
+      if (isMovie && el.movieWindowSizeBadge) {
+        el.movieWindowSizeBadge.innerText = `${Math.round(newWidth)}×${Math.round(newHeight)}`;
+      }
+    };
+
+    const onUp = () => {
+      targetWindow.classList.remove('is-resizing');
+      document.body.classList.remove('window-resizing-active');
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onUp);
+      if (isMovie) saveMovieWindowLayout();
+    };
+
+    window.addEventListener('mousemove', onMove, { passive: false });
+    window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onUp);
+  }
+
+  function popOutMovieWindow(savedLayout = null) {
+    const stage = el.cinemaStageWrapper;
+    if (!stage) return;
+    if (stage.classList.contains('is-floating-window')) return;
+
+    const rect = stage.getBoundingClientRect();
+    const defaultW = Math.min(window.innerWidth - 40, Math.max(560, Math.round(rect.width || 720)));
+    const defaultH = Math.min(window.innerHeight - 80, Math.max(340, Math.round((defaultW * 9 / 16) + 34)));
+    const defaultL = Math.max(20, Math.min(window.innerWidth - defaultW - 20, Math.round(rect.left || 40)));
+    const defaultT = Math.max(20, Math.min(window.innerHeight - defaultH - 20, Math.round(rect.top || 40)));
+
+    const width = savedLayout?.width || defaultW;
+    const height = savedLayout?.height || defaultH;
+    const left = savedLayout?.left || defaultL;
+    const top = savedLayout?.top || defaultT;
+
+    stage.classList.add('is-floating-window');
+    stage.style.position = 'fixed';
+    stage.style.left = `${left}px`;
+    stage.style.top = `${top}px`;
+    stage.style.width = `${width}px`;
+    stage.style.height = `${height}px`;
+
+    bringWindowToFront(stage);
+
+    if (el.movieWindowTitleBar) {
+      el.movieWindowTitleBar.classList.remove('hidden');
+    }
+    if (el.movieWindowSizeBadge) {
+      el.movieWindowSizeBadge.innerText = `${Math.round(width)}×${Math.round(height)}`;
+    }
+    if (el.menuTransformTitle) {
+      el.menuTransformTitle.innerText = 'Dock Movie Window';
+    }
+
+    saveMovieWindowLayout();
+  }
+
+  function dockMovieWindow() {
+    const stage = el.cinemaStageWrapper;
+    if (!stage) return;
+
+    stage.classList.remove('is-floating-window');
+    stage.classList.remove('is-dragging-window');
+    stage.classList.remove('is-resizing');
+
+    stage.style.position = '';
+    stage.style.left = '';
+    stage.style.top = '';
+    stage.style.width = '';
+    stage.style.height = '';
+    stage.style.zIndex = '';
+
+    if (el.movieWindowTitleBar) {
+      el.movieWindowTitleBar.classList.add('hidden');
+    }
+    if (el.menuTransformTitle) {
+      el.menuTransformTitle.innerText = 'Pop Out Movie Window';
+    }
+
+    try {
+      localStorage.removeItem('lumiere_movie_window_layout');
+    } catch (_) {}
+  }
+
+  function resetMovieWindowSize() {
+    const stage = el.cinemaStageWrapper;
+    if (!stage || !stage.classList.contains('is-floating-window')) return;
+    const defaultW = Math.min(window.innerWidth - 40, 800);
+    const defaultH = Math.round((defaultW * 9 / 16) + 34);
+    stage.style.width = `${defaultW}px`;
+    stage.style.height = `${defaultH}px`;
+    if (el.movieWindowSizeBadge) {
+      el.movieWindowSizeBadge.innerText = `${defaultW}×${defaultH}`;
+    }
+    saveMovieWindowLayout();
+  }
+
+  function saveMovieWindowLayout() {
+    const stage = el.cinemaStageWrapper;
+    if (!stage || !stage.classList.contains('is-floating-window')) return;
+    try {
+      const data = {
+        width: parseInt(stage.style.width, 10),
+        height: parseInt(stage.style.height, 10),
+        left: parseInt(stage.style.left, 10),
+        top: parseInt(stage.style.top, 10)
+      };
+      localStorage.setItem('lumiere_movie_window_layout', JSON.stringify(data));
+    } catch (_) {}
+  }
+
+  function loadSavedMovieWindowLayout() {
+    try {
+      const raw = localStorage.getItem('lumiere_movie_window_layout');
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data && typeof data.width === 'number' && typeof data.height === 'number') {
+          popOutMovieWindow(data);
+        }
+      }
+    } catch (_) {}
+  }
+
+  function popOutParticipantWindow(tile) {
+    if (!tile || tile.classList.contains('is-floating-window')) return;
+
+    const rect = tile.getBoundingClientRect();
+    const defaultW = Math.max(220, Math.round(rect.width || 220));
+    const defaultH = Math.max(160, Math.round(rect.height || 160) + 28);
+    const defaultL = Math.max(20, Math.min(window.innerWidth - defaultW - 20, Math.round(rect.left || 20)));
+    const defaultT = Math.max(20, Math.min(window.innerHeight - defaultH - 20, Math.round(rect.top || 80)));
+
+    let placeholder = document.getElementById(`placeholder-${tile.id}`);
+    if (!placeholder && tile.parentNode) {
+      placeholder = document.createElement('div');
+      placeholder.className = 'participant-tile-placeholder';
+      placeholder.id = `placeholder-${tile.id}`;
+      placeholder.innerText = 'Floating Cam';
+      tile.parentNode.insertBefore(placeholder, tile);
+    }
+
+    tile.classList.add('is-floating-window');
+    tile.style.position = 'fixed';
+    tile.style.left = `${defaultL}px`;
+    tile.style.top = `${defaultT}px`;
+    tile.style.width = `${defaultW}px`;
+    tile.style.height = `${defaultH}px`;
+
+    bringWindowToFront(tile);
+
+    const titleBar = tile.querySelector('.window-title-bar');
+    if (titleBar) titleBar.classList.remove('hidden');
+  }
+
+  function dockParticipantWindow(tile) {
+    if (!tile) return;
+
+    tile.classList.remove('is-floating-window');
+    tile.classList.remove('is-dragging-window');
+    tile.classList.remove('is-resizing');
+
+    tile.style.position = '';
+    tile.style.left = '';
+    tile.style.top = '';
+    tile.style.width = '';
+    tile.style.height = '';
+    tile.style.zIndex = '';
+
+    const titleBar = tile.querySelector('.window-title-bar');
+    if (titleBar) titleBar.classList.add('hidden');
+
+    const placeholder = document.getElementById(`placeholder-${tile.id}`);
+    if (placeholder && placeholder.parentNode) {
+      placeholder.parentNode.insertBefore(tile, placeholder);
+      placeholder.remove();
+    }
+  }
+
+  function setupParticipantWindowHandlers(tile) {
+    const titleBar = tile.querySelector('.window-title-bar');
+    if (titleBar) {
+      titleBar.addEventListener('mousedown', (e) => handleDragStart(e, tile));
+      titleBar.addEventListener('touchstart', (e) => handleDragStart(e, tile), { passive: false });
+
+      const dockBtn = titleBar.querySelector('.window-dock-btn');
+      if (dockBtn) {
+        dockBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          dockParticipantWindow(tile);
+        });
+      }
+    }
+
+    const handles = tile.querySelectorAll('.window-resize-handle');
+    handles.forEach(h => {
+      const dir = h.getAttribute('data-direction');
+      h.addEventListener('mousedown', (e) => handleResizeStart(e, tile, dir));
+      h.addEventListener('touchstart', (e) => handleResizeStart(e, tile, dir), { passive: false });
+    });
+
+    let tileHoldTimer = null;
+    let tileHoldStartX = 0;
+    let tileHoldStartY = 0;
+
+    const onDown = (e) => {
+      if (e.target.closest('button, select, input, a, .window-title-bar, .window-resize-handle')) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      tileHoldStartX = clientX;
+      tileHoldStartY = clientY;
+
+      clearTimeout(tileHoldTimer);
+      showHoldIndicator(clientX, clientY, tile.classList.contains('is-floating-window') ? 'Hold to Dock Cam' : 'Hold for Floating Cam');
+
+      tileHoldTimer = setTimeout(() => {
+        tileHoldTimer = null;
+        windowManager.suppressClick = true;
+        if (navigator.vibrate) {
+          try { navigator.vibrate(40); } catch (_) {}
+        }
+        pulseHoldIndicatorSuccess();
+        setTimeout(() => {
+          hideHoldIndicator();
+          if (tile.classList.contains('is-floating-window')) {
+            dockParticipantWindow(tile);
+          } else {
+            popOutParticipantWindow(tile);
+          }
+        }, 220);
+      }, 450);
+    };
+
+    const onMove = (e) => {
+      if (!tileHoldTimer) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      if (Math.hypot(clientX - tileHoldStartX, clientY - tileHoldStartY) > 12) {
+        clearTimeout(tileHoldTimer);
+        tileHoldTimer = null;
+        hideHoldIndicator();
+      }
+    };
+
+    const onUp = () => {
+      if (tileHoldTimer) {
+        clearTimeout(tileHoldTimer);
+        tileHoldTimer = null;
+        hideHoldIndicator();
+      }
+    };
+
+    tile.addEventListener('mousedown', onDown);
+    tile.addEventListener('touchstart', onDown, { passive: true });
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchend', onUp, { passive: false });
+  }
+
+  function showHoldIndicator(clientX, clientY, label = 'Hold to Pop Out Window') {
     const indicator = el.videoHoldIndicator;
     const ring = el.holdRingProgress;
-    const box = el.cinemaBox;
-    if (!indicator || !ring || !box) return;
+    if (!indicator || !ring) return;
 
-    const rect = box.getBoundingClientRect();
-    const relX = Math.max(50, Math.min(rect.width - 50, clientX - rect.left));
-    const relY = Math.max(50, Math.min(rect.height - 50, clientY - rect.top));
+    indicator.style.left = `${clientX}px`;
+    indicator.style.top = `${clientY}px`;
+    const badge = indicator.querySelector('.hold-tooltip-badge');
+    if (badge) badge.innerText = label;
 
-    indicator.style.left = `${relX}px`;
-    indicator.style.top = `${relY}px`;
     indicator.classList.remove('hidden');
     indicator.classList.remove('hold-success');
 
@@ -2683,103 +2838,6 @@
     const indicator = el.videoHoldIndicator;
     if (!indicator) return;
     indicator.classList.add('hold-success');
-  }
-
-  function openTransformHUD() {
-    if (!el.videoTransformHUD || !el.cinemaBox) return;
-    screenTransformState.isTransforming = true;
-    el.videoTransformHUD.classList.remove('hidden');
-    if (el.videoTransformGuide) el.videoTransformGuide.classList.remove('hidden');
-    el.cinemaBox.classList.add('is-transforming');
-    updateTransformHUDReadout();
-  }
-
-  function closeTransformHUD() {
-    if (!el.videoTransformHUD || !el.cinemaBox) return;
-    screenTransformState.isTransforming = false;
-    el.videoTransformHUD.classList.add('hidden');
-    if (el.videoTransformGuide) el.videoTransformGuide.classList.add('hidden');
-    el.cinemaBox.classList.remove('is-transforming');
-  }
-
-  function updateTransformHUDReadout() {
-    const pct = Math.round(screenTransformState.scale * 100);
-    if (el.videoScaleSlider) el.videoScaleSlider.value = pct;
-    if (el.transformScaleBadge) el.transformScaleBadge.innerText = `${pct}%`;
-    if (el.transformOffsetBadge) {
-      el.transformOffsetBadge.innerText = `X: ${screenTransformState.x}px • Y: ${screenTransformState.y}px`;
-    }
-    if (el.transformFitPresets) {
-      const btns = el.transformFitPresets.querySelectorAll('.transform-preset-btn');
-      btns.forEach(b => {
-        const fit = b.getAttribute('data-fit');
-        if (fit === 'zoom125') {
-          b.classList.toggle('active', screenTransformState.scale === 1.25);
-        } else {
-          b.classList.toggle('active', screenTransformState.fit === fit && screenTransformState.scale === 1.0);
-        }
-      });
-    }
-  }
-
-  function applyScreenTransform() {
-    const targets = [
-      el.moviePlayer,
-      el.screenSharePlayer,
-      el.youtubePlayerBox,
-      el.streamingPlayerBox
-    ].filter(Boolean);
-
-    const { scale, x, y, fit } = screenTransformState;
-    targets.forEach(target => {
-      target.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
-      target.style.transformOrigin = 'center center';
-      if (fit === 'fill') {
-        target.style.objectFit = 'fill';
-      } else if (fit === 'cover') {
-        target.style.objectFit = 'cover';
-      } else {
-        target.style.objectFit = 'contain';
-      }
-    });
-  }
-
-  function resetScreenTransform() {
-    screenTransformState.scale = 1.0;
-    screenTransformState.x = 0;
-    screenTransformState.y = 0;
-    screenTransformState.fit = 'contain';
-    applyScreenTransform();
-    updateTransformHUDReadout();
-    saveScreenTransform();
-  }
-
-  function saveScreenTransform() {
-    try {
-      localStorage.setItem('lumiere_screen_transform', JSON.stringify({
-        scale: screenTransformState.scale,
-        x: screenTransformState.x,
-        y: screenTransformState.y,
-        fit: screenTransformState.fit
-      }));
-    } catch (_) {}
-  }
-
-  function loadSavedScreenTransform() {
-    try {
-      const raw = localStorage.getItem('lumiere_screen_transform');
-      if (raw) {
-        const data = JSON.parse(raw);
-        if (typeof data.scale === 'number') {
-          screenTransformState.scale = Math.min(2.5, Math.max(0.5, data.scale));
-        }
-        if (typeof data.x === 'number') screenTransformState.x = data.x;
-        if (typeof data.y === 'number') screenTransformState.y = data.y;
-        if (['contain', 'cover', 'fill'].includes(data.fit)) screenTransformState.fit = data.fit;
-        applyScreenTransform();
-        updateTransformHUDReadout();
-      }
-    } catch (_) {}
   }
 
   // ==========================================================================
@@ -3558,6 +3616,36 @@
       }
     }
 
+    // Windows-style Title Bar & 8 Resize Handles for Floating Webcam Window
+    const titleBar = document.createElement('div');
+    titleBar.className = 'window-title-bar participant-window-title-bar hidden';
+    titleBar.innerHTML = `
+      <div class="window-title-left">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M23 7l-7 5 7 5V7z"></path>
+          <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+        </svg>
+        <span class="window-title-name">${member.username}</span>
+      </div>
+      <div class="window-title-right">
+        <button type="button" class="window-action-btn window-dock-btn" title="Dock back into participant strip">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M4 10h6m0 0V4m0 6L3 3m17 7h-6m0 0V4m0 6l7-7"></path></svg>
+          <span>Dock</span>
+        </button>
+      </div>
+    `;
+    tile.insertBefore(titleBar, tile.firstChild);
+
+    // 8 Windows-style resize handles
+    ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].forEach(dir => {
+      const h = document.createElement('div');
+      h.className = `window-resize-handle handle-${dir}`;
+      h.setAttribute('data-direction', dir);
+      tile.appendChild(h);
+    });
+
+    setupParticipantWindowHandlers(tile);
+
     return tile;
   }
 
@@ -4094,8 +4182,7 @@
     });
 
     player.addEventListener('loadedmetadata', () => {
-      applyScreenTransform();
-      const dur = getEffectiveDuration();
+            const dur = getEffectiveDuration();
       if (dur > 0) {
         el.durationDisplay.innerText = formatTime(dur);
       }
@@ -5746,8 +5833,8 @@
     el.moviePlayer.onclick = (e) => {
       // On mobile / touch devices, tapping the screen toggles HUD controls; desktop clicks toggle play/pause
       if (window.matchMedia('(pointer: coarse)').matches) return;
-      if (typeof screenTransformState !== 'undefined' && (screenTransformState.isTransforming || screenTransformState.suppressTap)) {
-        screenTransformState.suppressTap = false;
+      if (typeof windowManager !== 'undefined' && windowManager.suppressClick) {
+        windowManager.suppressClick = false;
         return;
       }
       handlePlayPauseToggle();
@@ -5801,7 +5888,7 @@
     initAmbientGlow();
     initMobileGestures();
     initSubtitleDragAndDrop();
-    initVideoTransformFeature();
+    initWindowManagement();
 
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', () => {
