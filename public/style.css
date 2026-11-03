@@ -6903,43 +6903,141 @@ body:not(.has-participants) .cinema-stage-wrapper {
 /* 2. Floating Window State for Entire Movie Screen */
 .cinema-stage-wrapper.is-floating-window {
   position: fixed !important;
-  z-index: 1300 !important;
+  z-index: 2200 !important;
   margin: 0 !important;
   display: flex !important;
   flex-direction: column !important;
   border-radius: 12px;
   background: #000;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.88), 0 0 0 1px rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.18) !important;
   overflow: visible !important;
   user-select: none;
-  min-width: 320px;
-  min-height: 200px;
+  min-width: 360px;
+  min-height: 220px;
+  max-width: none !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+  transition: none !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+.cinema-stage-wrapper.is-floating-window * {
+  transition: none !important;
 }
 
 .cinema-stage-wrapper.is-floating-window .cinema-box {
-  flex: 1 1 auto !important;
+  flex: 1 1 0px !important;
   width: 100% !important;
   height: calc(100% - 34px) !important;
+  min-height: 0 !important;
   aspect-ratio: auto !important;
   border-top-left-radius: 0 !important;
   border-top-right-radius: 0 !important;
   border-bottom-left-radius: 12px !important;
   border-bottom-right-radius: 12px !important;
+  position: relative !important;
+}
+
+.cinema-stage-wrapper.is-floating-window .cinema-video,
+.cinema-stage-wrapper.is-floating-window .video-overlay,
+.cinema-stage-wrapper.is-floating-window .custom-video-player,
+.cinema-stage-wrapper.is-floating-window .stream-player-container {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .cinema-stage-wrapper.is-floating-window #ambientGlowCanvas {
   position: absolute;
   inset: -12px;
-  width: calc(100% + 24px);
-  height: calc(100% + 24px);
+  width: calc(100% + 24px) !important;
+  height: calc(100% + 24px) !important;
   border-radius: 16px;
   pointer-events: none;
+  z-index: -1;
+}
+
+.cinema-stage-placeholder {
+  width: 100%;
+  max-width: 1160px;
+  aspect-ratio: 16 / 9;
+  max-height: calc(100vh - 250px);
+  border: 1.5px dashed rgba(0, 210, 255, 0.35);
+  border-radius: 12px;
+  background: rgba(10, 14, 23, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  backdrop-filter: blur(8px);
+  margin: 0 auto;
+}
+
+.cinema-stage-placeholder-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #949ba4;
+  text-align: center;
+  padding: 24px;
+}
+
+.placeholder-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(0, 210, 255, 0.1);
+  color: #00d2ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 210, 255, 0.25);
+}
+
+.placeholder-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.placeholder-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f2f3f5;
+  letter-spacing: 0.3px;
+}
+
+.placeholder-sub {
+  font-size: 12px;
+  color: #949ba4;
+}
+
+.placeholder-dock-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: rgba(0, 210, 255, 0.15);
+  color: #00d2ff;
+  border: 1px solid rgba(0, 210, 255, 0.4);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.placeholder-dock-btn:hover {
+  background: rgba(0, 210, 255, 0.28);
+  color: #fff;
+  border-color: #00d2ff;
 }
 
 /* 3. Floating Window State for Participant Webcam Video Tiles */
 .participant-tile.is-floating-window {
   position: fixed !important;
-  z-index: 1400 !important;
+  z-index: 2300 !important;
   margin: 0 !important;
   display: flex !important;
   flex-direction: column !important;
@@ -6948,8 +7046,18 @@ body:not(.has-participants) .cinema-stage-wrapper {
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.18) !important;
   overflow: visible !important;
   user-select: none;
-  min-width: 160px;
+  min-width: 180px;
   min-height: 120px;
+  max-width: none !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+  transition: none !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+.participant-tile.is-floating-window * {
+  transition: none !important;
 }
 
 .participant-tile.is-floating-window .tile-video {

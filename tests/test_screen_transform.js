@@ -118,6 +118,33 @@ test('app.js implements 450ms click-and-hold trigger and click suppression', () 
   assert(app.includes('windowManager.suppressClick'), 'suppressClick must guard moviePlayer clicks');
 });
 
+// 5. Reparenting, 1:1 Cursor Lock & Boundary Clamping
+test('app.js reparents floating windows to document.body and restores on dock', () => {
+  assert(app.includes('document.body.appendChild(stage);'), 'popOutMovieWindow must reparent stage to document.body');
+  assert(app.includes('movieStagePlaceholder'), 'movieStagePlaceholder must be created and inserted');
+  assert(app.includes('placeholder.parentNode.insertBefore(stage, placeholder);'), 'dockMovieWindow must restore stage before placeholder');
+});
+
+test('app.js implements 1:1 cursor locking via grabOffset and viewport boundary clamping', () => {
+  assert(app.includes('grabOffsetX = startPointerX - rect.left'), 'handleDragStart must calculate grabOffsetX');
+  assert(app.includes('grabOffsetY = startPointerY - rect.top'), 'handleDragStart must calculate grabOffsetY');
+  assert(app.includes('desiredLeft = curX - grabOffsetX'), 'onMove must maintain 1:1 cursor anchor');
+  assert(app.includes('boundedLeft = Math.max(minLeft'), 'onMove must clamp left within viewport');
+  assert(app.includes('boundedTop = Math.max(minTop'), 'onMove must clamp top within viewport');
+});
+
+test('app.js clamps saved window layout on load and handles viewport resize', () => {
+  assert(app.includes('window.addEventListener(\'resize\''), 'Window resize listener must be attached');
+  assert(app.includes('loadSavedMovieWindowLayout'), 'loadSavedMovieWindowLayout must validate bounds');
+});
+
+test('style.css defines cinema-stage-placeholder and zero-transition drag locking', () => {
+  assert(css.includes('.cinema-stage-placeholder'), 'cinema-stage-placeholder styles must exist');
+  assert(css.includes('.placeholder-dock-btn'), 'placeholder-dock-btn styles must exist');
+  assert(css.includes('.cinema-stage-wrapper.is-floating-window'), 'floating window styles must exist');
+  assert(css.includes('transition: none !important;'), 'floating window must disable transitions for zero lag');
+});
+
 console.log('================================================================');
 console.log(`  RESULTS: ${passed}/${total} passed`);
 console.log('================================================================');

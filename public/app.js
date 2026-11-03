@@ -2319,6 +2319,31 @@
   function initWindowManagement() {
     initMovieWindowHandlers();
     loadSavedMovieWindowLayout();
+
+    window.addEventListener('resize', () => {
+      const stage = el.cinemaStageWrapper;
+      if (stage && stage.classList.contains('is-floating-window')) {
+        const winW = window.innerWidth;
+        const winH = window.innerHeight;
+        let w = stage.offsetWidth;
+        let h = stage.offsetHeight;
+        let l = parseInt(stage.style.left, 10) || 20;
+        let t = parseInt(stage.style.top, 10) || 50;
+
+        if (w > winW - 20) {
+          w = Math.max(360, winW - 20);
+          stage.style.width = `${w}px`;
+        }
+        if (h > winH - 60) {
+          h = Math.max(220, winH - 60);
+          stage.style.height = `${h}px`;
+        }
+        const maxL = Math.max(10, winW - w - 10);
+        const maxT = Math.max(10, winH - 60);
+        stage.style.left = `${Math.max(10, Math.min(maxL, l))}px`;
+        stage.style.top = `${Math.max(10, Math.min(maxT, t))}px`;
+      }
+    });
   }
 
   function initMovieWindowHandlers() {
@@ -2437,25 +2462,38 @@
     const startPointerY = isTouch ? e.touches[0].clientY : e.clientY;
 
     const rect = targetWindow.getBoundingClientRect();
-    const startLeft = rect.left;
-    const startTop = rect.top;
+    // grabOffset is the exact vector between cursor and the window top-left
+    const grabOffsetX = startPointerX - rect.left;
+    const grabOffsetY = startPointerY - rect.top;
 
     targetWindow.classList.add('is-dragging-window');
     document.body.classList.add('window-dragging-active');
 
     const onMove = (moveEvt) => {
+      moveEvt.preventDefault();
       const curX = moveEvt.touches ? moveEvt.touches[0].clientX : moveEvt.clientX;
       const curY = moveEvt.touches ? moveEvt.touches[0].clientY : moveEvt.clientY;
-      const dx = curX - startPointerX;
-      const dy = curY - startPointerY;
 
-      const maxLeft = window.innerWidth - 60;
-      const maxTop = window.innerHeight - 40;
-      const newLeft = Math.max(-targetWindow.offsetWidth + 60, Math.min(maxLeft, startLeft + dx));
-      const newTop = Math.max(0, Math.min(maxTop, startTop + dy));
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+      const wWidth = targetWindow.offsetWidth;
+      const wHeight = targetWindow.offsetHeight;
 
-      targetWindow.style.left = `${Math.round(newLeft)}px`;
-      targetWindow.style.top = `${Math.round(newTop)}px`;
+      let desiredLeft = curX - grabOffsetX;
+      let desiredTop = curY - grabOffsetY;
+
+      // Keep window cleanly within screen bounds:
+      // Minimum 10px from edges, title bar always accessible, window never lost
+      const minLeft = 10;
+      const maxLeft = Math.max(minLeft, winW - wWidth - 10);
+      const minTop = 10;
+      const maxTop = Math.max(minTop, winH - 60);
+
+      const boundedLeft = Math.max(minLeft, Math.min(maxLeft, desiredLeft));
+      const boundedTop = Math.max(minTop, Math.min(maxTop, desiredTop));
+
+      targetWindow.style.left = `${Math.round(boundedLeft)}px`;
+      targetWindow.style.top = `${Math.round(boundedTop)}px`;
     };
 
     const onUp = () => {
@@ -2484,56 +2522,54 @@
     const startPointerX = isTouch ? e.touches[0].clientX : e.clientX;
     const startPointerY = isTouch ? e.touches[0].clientY : e.clientY;
 
-    const rect = targetWindow.getBoundingClientRect();
-    const startLeft = rect.left;
-    const startTop = rect.top;
-    const startWidth = rect.width;
-    const startHeight = rect.height;
+    const startRect = targetWindow.getBoundingClientRect();
+    const startLeft = startRect.left;
+    const startTop = startRect.top;
+    const startWidth = startRect.width;
+    const startHeight = startRect.height;
 
     const isMovie = targetWindow === el.cinemaStageWrapper;
-    const minW = isMovie ? 320 : 160;
-    const minH = isMovie ? 180 : 110;
-    const maxW = window.innerWidth - 20;
-    const maxH = window.innerHeight - 20;
+    const minW = isMovie ? 360 : 180;
+    const minH = isMovie ? 220 : 120;
 
     targetWindow.classList.add('is-resizing');
     document.body.classList.add('window-resizing-active');
 
     const onMove = (moveEvt) => {
+      moveEvt.preventDefault();
       const curX = moveEvt.touches ? moveEvt.touches[0].clientX : moveEvt.clientX;
       const curY = moveEvt.touches ? moveEvt.touches[0].clientY : moveEvt.clientY;
       const dx = curX - startPointerX;
       const dy = curY - startPointerY;
+
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
 
       let newWidth = startWidth;
       let newHeight = startHeight;
       let newLeft = startLeft;
       let newTop = startTop;
 
+      // Horizontal resize
       if (direction.includes('e')) {
+        const maxW = winW - startLeft - 10;
         newWidth = Math.max(minW, Math.min(maxW, startWidth + dx));
       } else if (direction.includes('w')) {
-        const prospectiveWidth = startWidth - dx;
-        if (prospectiveWidth >= minW && prospectiveWidth <= maxW) {
-          newWidth = prospectiveWidth;
-          newLeft = startLeft + dx;
-        } else if (prospectiveWidth < minW) {
-          newWidth = minW;
-          newLeft = startLeft + (startWidth - minW);
-        }
+        const maxW = startLeft + startWidth - 10;
+        const requestedWidth = startWidth - dx;
+        newWidth = Math.max(minW, Math.min(maxW, requestedWidth));
+        newLeft = startLeft + (startWidth - newWidth);
       }
 
+      // Vertical resize
       if (direction.includes('s')) {
+        const maxH = winH - startTop - 10;
         newHeight = Math.max(minH, Math.min(maxH, startHeight + dy));
       } else if (direction.includes('n')) {
-        const prospectiveHeight = startHeight - dy;
-        if (prospectiveHeight >= minH && prospectiveHeight <= maxH) {
-          newHeight = prospectiveHeight;
-          newTop = startTop + dy;
-        } else if (prospectiveHeight < minH) {
-          newHeight = minH;
-          newTop = startTop + (startHeight - minH);
-        }
+        const maxH = startTop + startHeight - 10;
+        const requestedHeight = startHeight - dy;
+        newHeight = Math.max(minH, Math.min(maxH, requestedHeight));
+        newTop = startTop + (startHeight - newHeight);
       }
 
       targetWindow.style.width = `${Math.round(newWidth)}px`;
@@ -2541,8 +2577,9 @@
       targetWindow.style.left = `${Math.round(newLeft)}px`;
       targetWindow.style.top = `${Math.round(newTop)}px`;
 
-      if (isMovie && el.movieWindowSizeBadge) {
-        el.movieWindowSizeBadge.innerText = `${Math.round(newWidth)}×${Math.round(newHeight)}`;
+      const badge = targetWindow.querySelector('.window-size-badge');
+      if (badge) {
+        badge.innerText = `${Math.round(newWidth)}×${Math.round(newHeight)}`;
       }
     };
 
@@ -2567,16 +2604,89 @@
     if (!stage) return;
     if (stage.classList.contains('is-floating-window')) return;
 
-    const rect = stage.getBoundingClientRect();
-    const defaultW = Math.min(window.innerWidth - 40, Math.max(560, Math.round(rect.width || 720)));
-    const defaultH = Math.min(window.innerHeight - 80, Math.max(340, Math.round((defaultW * 9 / 16) + 34)));
-    const defaultL = Math.max(20, Math.min(window.innerWidth - defaultW - 20, Math.round(rect.left || 40)));
-    const defaultT = Math.max(20, Math.min(window.innerHeight - defaultH - 20, Math.round(rect.top || 40)));
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
 
-    const width = savedLayout?.width || defaultW;
-    const height = savedLayout?.height || defaultH;
-    const left = savedLayout?.left || defaultL;
-    const top = savedLayout?.top || defaultT;
+    // Calculate a comfortable, elegant default floating size (~58% viewport width, 16:9 ratio)
+    let defaultW = Math.min(winW - 40, Math.max(520, Math.min(920, Math.round(winW * 0.58))));
+    let defaultH = Math.round((defaultW * 9 / 16) + 34);
+
+    // Keep within viewport height with safe margin for top nav and bottom controls
+    if (defaultH > winH - 120) {
+      defaultH = Math.max(300, winH - 120);
+      defaultW = Math.round((defaultH - 34) * 16 / 9);
+    }
+
+    // Default position: centered horizontally, placed in comfortable upper-mid viewport
+    let defaultL = Math.max(20, Math.round((winW - defaultW) / 2));
+    let defaultT = Math.max(50, Math.min(winH - defaultH - 80, Math.round((winH - defaultH) / 2 - 20)));
+
+    let width = defaultW;
+    let height = defaultH;
+    let left = defaultL;
+    let top = defaultT;
+
+    if (savedLayout && typeof savedLayout.width === 'number' && typeof savedLayout.height === 'number') {
+      width = Math.max(360, Math.min(winW - 20, savedLayout.width));
+      height = Math.max(220, Math.min(winH - 20, savedLayout.height));
+      const maxL = Math.max(10, winW - width - 10);
+      const maxT = Math.max(10, winH - 60);
+      left = Math.max(10, Math.min(maxL, savedLayout.left ?? defaultL));
+      top = Math.max(10, Math.min(maxT, savedLayout.top ?? defaultT));
+    }
+
+    // Create / insert stage placeholder into stage's original spot
+    let placeholder = document.getElementById('movieStagePlaceholder');
+    if (!placeholder) {
+      placeholder = document.createElement('div');
+      placeholder.id = 'movieStagePlaceholder';
+      placeholder.className = 'cinema-stage-placeholder';
+      placeholder.innerHTML = `
+        <div class="cinema-stage-placeholder-inner">
+          <div class="placeholder-icon-wrap">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+          </div>
+          <div class="placeholder-info">
+            <span class="placeholder-title">Movie Screen is Floating</span>
+            <span class="placeholder-sub">Drag, resize anywhere or click dock to return</span>
+          </div>
+          <button type="button" class="placeholder-dock-btn" id="moviePlaceholderDockBtn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M4 10h6m0 0V4m0 6L3 3m17 7h-6m0 0V4m0 6l7-7"></path></svg>
+            <span>Dock Screen</span>
+          </button>
+        </div>
+      `;
+    }
+
+    const wasPlaying = (el.cinemaVideo && !el.cinemaVideo.paused);
+    const currTime = el.cinemaVideo ? el.cinemaVideo.currentTime : 0;
+
+    if (stage.parentNode && stage.parentNode !== document.body) {
+      stage.parentNode.insertBefore(placeholder, stage);
+      const dockBtn = placeholder.querySelector('#moviePlaceholderDockBtn');
+      if (dockBtn) {
+        dockBtn.onclick = (e) => {
+          e.stopPropagation();
+          dockMovieWindow();
+        };
+      }
+    }
+
+    // Reparent directly to document.body so containing block is 100% the viewport
+    document.body.appendChild(stage);
+
+    if (el.cinemaVideo) {
+      if (currTime && Math.abs(el.cinemaVideo.currentTime - currTime) > 0.5) {
+        el.cinemaVideo.currentTime = currTime;
+      }
+      if (wasPlaying) {
+        el.cinemaVideo.play().catch(() => {});
+      }
+    }
 
     stage.classList.add('is-floating-window');
     stage.style.position = 'fixed';
@@ -2598,6 +2708,7 @@
     }
 
     saveMovieWindowLayout();
+    showToast('Movie Screen popped out. Drag title bar to move.');
   }
 
   function dockMovieWindow() {
@@ -2615,6 +2726,26 @@
     stage.style.height = '';
     stage.style.zIndex = '';
 
+    const wasPlaying = (el.cinemaVideo && !el.cinemaVideo.paused);
+    const currTime = el.cinemaVideo ? el.cinemaVideo.currentTime : 0;
+
+    const placeholder = document.getElementById('movieStagePlaceholder');
+    if (placeholder && placeholder.parentNode) {
+      placeholder.parentNode.insertBefore(stage, placeholder);
+      placeholder.remove();
+    } else if (el.stageCinemaGroup) {
+      el.stageCinemaGroup.insertBefore(stage, el.stageCinemaGroup.firstChild);
+    }
+
+    if (el.cinemaVideo) {
+      if (currTime && Math.abs(el.cinemaVideo.currentTime - currTime) > 0.5) {
+        el.cinemaVideo.currentTime = currTime;
+      }
+      if (wasPlaying) {
+        el.cinemaVideo.play().catch(() => {});
+      }
+    }
+
     if (el.movieWindowTitleBar) {
       el.movieWindowTitleBar.classList.add('hidden');
     }
@@ -2625,19 +2756,36 @@
     try {
       localStorage.removeItem('lumiere_movie_window_layout');
     } catch (_) {}
+
+    showToast('Movie Screen docked to theater');
   }
 
   function resetMovieWindowSize() {
     const stage = el.cinemaStageWrapper;
     if (!stage || !stage.classList.contains('is-floating-window')) return;
-    const defaultW = Math.min(window.innerWidth - 40, 800);
-    const defaultH = Math.round((defaultW * 9 / 16) + 34);
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+
+    let defaultW = Math.min(winW - 60, Math.max(480, Math.min(840, Math.round(winW * 0.55))));
+    let defaultH = Math.round((defaultW * 9 / 16) + 34);
+    if (defaultH > winH - 120) {
+      defaultH = winH - 120;
+      defaultW = Math.round((defaultH - 34) * 16 / 9);
+    }
+
+    const left = Math.round((winW - defaultW) / 2);
+    const top = Math.max(20, Math.round((winH - defaultH) / 2 - 20));
+
     stage.style.width = `${defaultW}px`;
     stage.style.height = `${defaultH}px`;
+    stage.style.left = `${left}px`;
+    stage.style.top = `${top}px`;
+
     if (el.movieWindowSizeBadge) {
       el.movieWindowSizeBadge.innerText = `${defaultW}×${defaultH}`;
     }
     saveMovieWindowLayout();
+    showToast('Movie window reset to center');
   }
 
   function saveMovieWindowLayout() {
@@ -2660,7 +2808,13 @@
       if (raw) {
         const data = JSON.parse(raw);
         if (data && typeof data.width === 'number' && typeof data.height === 'number') {
-          popOutMovieWindow(data);
+          const winW = window.innerWidth;
+          const winH = window.innerHeight;
+          const w = Math.max(360, Math.min(winW - 20, data.width));
+          const h = Math.max(220, Math.min(winH - 20, data.height));
+          const l = Math.max(10, Math.min(winW - w - 10, data.left ?? 40));
+          const t = Math.max(10, Math.min(winH - h - 60, data.top ?? 40));
+          popOutMovieWindow({ width: w, height: h, left: l, top: t });
         }
       }
     } catch (_) {}
@@ -2669,11 +2823,14 @@
   function popOutParticipantWindow(tile) {
     if (!tile || tile.classList.contains('is-floating-window')) return;
 
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+
     const rect = tile.getBoundingClientRect();
-    const defaultW = Math.max(220, Math.round(rect.width || 220));
-    const defaultH = Math.max(160, Math.round(rect.height || 160) + 28);
-    const defaultL = Math.max(20, Math.min(window.innerWidth - defaultW - 20, Math.round(rect.left || 20)));
-    const defaultT = Math.max(20, Math.min(window.innerHeight - defaultH - 20, Math.round(rect.top || 80)));
+    const defaultW = Math.max(220, Math.min(360, Math.round(rect.width || 240)));
+    const defaultH = Math.max(160, Math.min(260, Math.round(rect.height || 160) + 28));
+    const defaultL = Math.max(16, Math.min(winW - defaultW - 16, Math.round(rect.left || 30)));
+    const defaultT = Math.max(16, Math.min(winH - defaultH - 60, Math.round(rect.top || 80)));
 
     let placeholder = document.getElementById(`placeholder-${tile.id}`);
     if (!placeholder && tile.parentNode) {
@@ -2682,6 +2839,17 @@
       placeholder.id = `placeholder-${tile.id}`;
       placeholder.innerText = 'Floating Cam';
       tile.parentNode.insertBefore(placeholder, tile);
+    }
+
+    const vid = tile.querySelector('video');
+    const wasPlaying = (vid && !vid.paused);
+    const stream = vid ? vid.srcObject : null;
+
+    document.body.appendChild(tile);
+
+    if (vid && stream) {
+      vid.srcObject = stream;
+      if (wasPlaying) vid.play().catch(() => {});
     }
 
     tile.classList.add('is-floating-window');
@@ -2695,6 +2863,7 @@
 
     const titleBar = tile.querySelector('.window-title-bar');
     if (titleBar) titleBar.classList.remove('hidden');
+    showToast('Webcam tile popped out');
   }
 
   function dockParticipantWindow(tile) {
@@ -2714,11 +2883,24 @@
     const titleBar = tile.querySelector('.window-title-bar');
     if (titleBar) titleBar.classList.add('hidden');
 
+    const vid = tile.querySelector('video');
+    const wasPlaying = (vid && !vid.paused);
+    const stream = vid ? vid.srcObject : null;
+
     const placeholder = document.getElementById(`placeholder-${tile.id}`);
     if (placeholder && placeholder.parentNode) {
       placeholder.parentNode.insertBefore(tile, placeholder);
       placeholder.remove();
+    } else if (el.participantsRow) {
+      el.participantsRow.appendChild(tile);
     }
+
+    if (vid && stream) {
+      vid.srcObject = stream;
+      if (wasPlaying) vid.play().catch(() => {});
+    }
+
+    showToast('Webcam tile docked');
   }
 
   function setupParticipantWindowHandlers(tile) {
