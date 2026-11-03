@@ -6803,3 +6803,513 @@ body:not(.has-participants) .cinema-stage-wrapper {
 }
 
 
+
+
+/* ==========================================================================
+   SCREEN RESIZE & REPOSITION (CLICK-AND-HOLD / DRAG / ZOOM / FIT)
+   ========================================================================== */
+
+/* 1. Hold Indicator Ring */
+.video-hold-indicator {
+  position: absolute;
+  z-index: 50;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.18s ease;
+  user-select: none;
+}
+
+.video-hold-indicator.hidden {
+  display: none !important;
+}
+
+.hold-ring-wrapper {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hold-progress-svg {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.hold-ring-bg {
+  fill: rgba(18, 20, 26, 0.75);
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 4px;
+}
+
+.hold-ring-progress {
+  fill: none;
+  stroke: #00d2ff;
+  stroke-width: 4.5px;
+  stroke-linecap: round;
+  stroke-dasharray: 201.06;
+  stroke-dashoffset: 201.06;
+  filter: drop-shadow(0 0 6px rgba(0, 210, 255, 0.6));
+}
+
+.hold-icon-center {
+  position: relative;
+  z-index: 2;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
+}
+
+.hold-tooltip-badge {
+  margin-top: 8px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(14, 16, 22, 0.88);
+  border: 1px solid rgba(0, 210, 255, 0.4);
+  border-radius: 9999px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+}
+
+.video-hold-indicator.hold-success .hold-ring-progress {
+  stroke: #20bf6b !important;
+  filter: drop-shadow(0 0 10px rgba(32, 191, 107, 0.8)) !important;
+}
+
+.video-hold-indicator.hold-success .hold-icon-center {
+  transform: scale(1.22);
+  color: #20bf6b !important;
+}
+
+.video-hold-indicator.hold-success .hold-tooltip-badge {
+  border-color: rgba(32, 191, 107, 0.6);
+  color: #20bf6b;
+}
+
+/* 2. Transform Guide Overlay */
+.video-transform-guide {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 28;
+  border: 1.5px dashed rgba(0, 210, 255, 0.5);
+  border-radius: 12px;
+  animation: transformGuidePulse 3s ease-in-out infinite alternate;
+}
+
+.video-transform-guide.hidden {
+  display: none !important;
+}
+
+@keyframes transformGuidePulse {
+  0% { border-color: rgba(0, 210, 255, 0.35); }
+  100% { border-color: rgba(0, 210, 255, 0.75); }
+}
+
+.transform-corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-color: #00d2ff;
+  border-style: solid;
+  pointer-events: none;
+}
+
+.transform-corner.top-left {
+  top: 8px;
+  left: 8px;
+  border-width: 3px 0 0 3px;
+  border-top-left-radius: 4px;
+}
+
+.transform-corner.top-right {
+  top: 8px;
+  right: 8px;
+  border-width: 3px 3px 0 0;
+  border-top-right-radius: 4px;
+}
+
+.transform-corner.bottom-left {
+  bottom: 8px;
+  left: 8px;
+  border-width: 0 0 3px 3px;
+  border-bottom-left-radius: 4px;
+}
+
+.transform-corner.bottom-right {
+  bottom: 8px;
+  right: 8px;
+  border-width: 0 3px 3px 0;
+  border-bottom-right-radius: 4px;
+}
+
+.transform-guide-pill {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  background: rgba(14, 16, 22, 0.92);
+  border: 1px solid rgba(0, 210, 255, 0.45);
+  border-radius: 9999px;
+  color: #00d2ff;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* 3. Cinema Box Transform States */
+.cinema-box.is-transforming {
+  box-shadow: 0 0 0 2px rgba(0, 210, 255, 0.8), 0 10px 40px rgba(0, 0, 0, 0.7) !important;
+  cursor: grab;
+}
+
+.cinema-box.is-transforming.is-dragging,
+.cinema-box.is-transforming.is-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
+#moviePlayer,
+#screenSharePlayer,
+#youtubePlayerBox,
+#streamingPlayerBox {
+  will-change: transform;
+  transform-origin: center center;
+}
+
+.cinema-box:not(.is-dragging) #moviePlayer,
+.cinema-box:not(.is-dragging) #screenSharePlayer,
+.cinema-box:not(.is-dragging) #youtubePlayerBox,
+.cinema-box:not(.is-dragging) #streamingPlayerBox {
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* 4. Video Transform HUD Floating Glass Card */
+.video-transform-hud {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  z-index: 40;
+  width: 320px;
+  max-width: calc(100% - 32px);
+  background: rgba(18, 20, 26, 0.94);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75), 0 0 24px rgba(0, 210, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  color: #f2f3f5;
+  user-select: none;
+  animation: transformHudFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.video-transform-hud.hidden {
+  display: none !important;
+}
+
+@keyframes transformHudFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.transform-hud-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: move;
+}
+
+.transform-hud-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #00d2ff;
+}
+
+.transform-hud-close {
+  background: transparent;
+  border: none;
+  color: #949ba4;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.transform-hud-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.transform-hud-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.transform-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.transform-group-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #949ba4;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.transform-val-badge {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: monospace;
+  color: #00d2ff;
+  background: rgba(0, 210, 255, 0.12);
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 210, 255, 0.25);
+}
+
+.transform-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.transform-step-btn {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f2f3f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.transform-step-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.transform-step-btn:active {
+  transform: scale(0.92);
+}
+
+.transform-range {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  outline: none;
+  cursor: pointer;
+}
+
+.transform-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #00d2ff;
+  box-shadow: 0 0 8px rgba(0, 210, 255, 0.6);
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.transform-range::-webkit-slider-thumb:hover {
+  transform: scale(1.18);
+  background: #33dcff;
+}
+
+.transform-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #00d2ff;
+  box-shadow: 0 0 8px rgba(0, 210, 255, 0.6);
+  border: none;
+  cursor: pointer;
+}
+
+.transform-presets-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.transform-preset-btn {
+  padding: 5px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  color: #dbdee1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.transform-preset-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.transform-preset-btn.active {
+  background: rgba(0, 210, 255, 0.18);
+  border-color: #00d2ff;
+  color: #00d2ff;
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+}
+
+.transform-dpad-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 4px 0;
+}
+
+.transform-dpad-middle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.transform-dpad-btn {
+  width: 32px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f2f3f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.transform-dpad-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #00d2ff;
+  border-color: rgba(0, 210, 255, 0.4);
+}
+
+.transform-dpad-btn:active {
+  transform: scale(0.92);
+  background: rgba(0, 210, 255, 0.2);
+}
+
+.transform-hud-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.transform-action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+/* Mobile & Touch Responsive Adjustments for Transform HUD */
+@media (max-width: 768px) {
+  .video-transform-hud {
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+    padding: 12px 14px;
+    gap: 10px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .transform-guide-pill {
+    font-size: 10.5px;
+    padding: 4px 10px;
+    max-width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .video-transform-hud {
+    top: 8px;
+    bottom: 8px;
+    right: 8px;
+    left: auto;
+    width: 290px;
+    padding: 8px 12px;
+    gap: 6px;
+    overflow-y: auto;
+  }
+  .transform-dpad-container {
+    margin: 2px 0;
+  }
+}

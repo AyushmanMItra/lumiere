@@ -626,6 +626,130 @@
             </div>
           </div>
 
+          <!-- Screen Hold to Resize & Reposition Indicator Ring -->
+          <div id="videoHoldIndicator" class="video-hold-indicator hidden" aria-hidden="true">
+            <div class="hold-ring-wrapper">
+              <svg class="hold-progress-svg" width="76" height="76" viewBox="0 0 76 76">
+                <circle class="hold-ring-bg" cx="38" cy="38" r="32" />
+                <circle class="hold-ring-progress" id="holdRingProgress" cx="38" cy="38" r="32" />
+              </svg>
+              <div class="hold-icon-center">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+              </div>
+            </div>
+            <div class="hold-tooltip-badge">Hold to Adjust Screen</div>
+          </div>
+
+          <!-- Screen Transform Guide Overlay (Visible when adjusting screen) -->
+          <div id="videoTransformGuide" class="video-transform-guide hidden" aria-hidden="true">
+            <div class="transform-corner top-left"></div>
+            <div class="transform-corner top-right"></div>
+            <div class="transform-corner bottom-left"></div>
+            <div class="transform-corner bottom-right"></div>
+            <div class="transform-guide-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <polyline points="5 9 2 12 5 15"></polyline>
+                <polyline points="9 5 12 2 15 5"></polyline>
+                <polyline points="15 19 12 22 9 19"></polyline>
+                <polyline points="19 9 22 12 19 15"></polyline>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <line x1="12" y1="2" x2="12" y2="22"></line>
+              </svg>
+              <span>Transform Active &bull; Drag screen to move &bull; Sliders to resize</span>
+            </div>
+          </div>
+
+          <!-- Video Transform & Reposition HUD (Floating Glass Card) -->
+          <div id="videoTransformHUD" class="video-transform-hud hidden" role="dialog" aria-label="Resize and Reposition Screen">
+            <div class="transform-hud-header">
+              <div class="transform-hud-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+                <span>Resize &amp; Reposition</span>
+              </div>
+              <button type="button" id="closeTransformHudBtn" class="transform-hud-close" title="Close Toolbar">&times;</button>
+            </div>
+
+            <div class="transform-hud-body">
+              <!-- Scale / Zoom Control -->
+              <div class="transform-control-group">
+                <div class="transform-group-label">
+                  <span>Zoom / Scale</span>
+                  <span id="transformScaleBadge" class="transform-val-badge">100%</span>
+                </div>
+                <div class="transform-slider-row">
+                  <button type="button" id="scaleMinusBtn" class="transform-step-btn" title="Zoom Out (-5%)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  </button>
+                  <input type="range" id="videoScaleSlider" class="transform-range" min="50" max="250" step="5" value="100" title="Zoom Slider">
+                  <button type="button" id="scalePlusBtn" class="transform-step-btn" title="Zoom In (+5%)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Fit Mode Presets -->
+              <div class="transform-control-group">
+                <div class="transform-group-label">
+                  <span>Aspect &amp; Framing</span>
+                </div>
+                <div class="transform-presets-row" id="transformFitPresets">
+                  <button type="button" class="transform-preset-btn active" data-fit="contain" title="Fit Entire Screen">Fit (100%)</button>
+                  <button type="button" class="transform-preset-btn" data-fit="cover" title="Cover / Fill Frame">Cover (Crop)</button>
+                  <button type="button" class="transform-preset-btn" data-fit="fill" title="Stretch to Edges">Stretch</button>
+                  <button type="button" class="transform-preset-btn" data-fit="zoom125" title="125% Cinema Zoom">1.25x</button>
+                </div>
+              </div>
+
+              <!-- Reposition & D-Pad Section -->
+              <div class="transform-control-group">
+                <div class="transform-group-label">
+                  <span>Position Offset</span>
+                  <span id="transformOffsetBadge" class="transform-val-badge">X: 0px &bull; Y: 0px</span>
+                </div>
+                <div class="transform-dpad-container">
+                  <button type="button" id="nudgeUpBtn" class="transform-dpad-btn dpad-up" title="Nudge Up">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                  </button>
+                  <div class="transform-dpad-middle">
+                    <button type="button" id="nudgeLeftBtn" class="transform-dpad-btn dpad-left" title="Nudge Left">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <button type="button" id="centerTransformBtn" class="transform-dpad-btn dpad-center" title="Center Screen (0, 0)">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line></svg>
+                    </button>
+                    <button type="button" id="nudgeRightBtn" class="transform-dpad-btn dpad-right" title="Nudge Right">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                  </div>
+                  <button type="button" id="nudgeDownBtn" class="transform-dpad-btn dpad-down" title="Nudge Down">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="transform-hud-footer">
+              <button type="button" id="resetTransformBtn" class="btn btn-secondary transform-action-btn" title="Reset to Defaults">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
+                <span>Reset</span>
+              </button>
+              <button type="button" id="doneTransformBtn" class="btn btn-primary transform-action-btn" title="Save &amp; Finish">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Done</span>
+              </button>
+            </div>
+          </div>
+
           <!-- Active Room Poll Floating Widget -->
           <div id="activePollWidget" class="active-poll-widget hidden">
             <div class="poll-widget-header">
@@ -788,7 +912,15 @@
 
                 <!-- Playback Speed Selector Pill -->
                 <div class="hud-pill-group host-only-control" id="speedPickerGroup" title="Playback Speed">
-                  <span class="hud-pill-text-icon">⚡</span>
+                  <svg class="hud-pill-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 2v2"></path>
+                    <path d="M4.93 4.93l1.41 1.41"></path>
+                    <path d="M20 12h2"></path>
+                    <path d="M2 12h2"></path>
+                    <path d="M17.66 6.34l1.41-1.41"></path>
+                    <path d="M12 6a6 6 0 1 0 6 6"></path>
+                    <path d="m14 10-3 3"></path>
+                  </svg>
                   <select id="speedSelect" class="hud-select">
                     <option value="0.5">0.5x</option>
                     <option value="0.75">0.75x</option>
@@ -1145,6 +1277,18 @@
                   <div class="more-menu-text">
                     <span class="more-menu-title">Streaming Party</span>
                     <span class="more-menu-desc">Netflix, Prime Video, JioHotstar, Zee5</span>
+                  </div>
+                </button>
+                <button type="button" class="more-menu-item" id="menuTransformBtn" title="Resize &amp; Reposition Screen">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <polyline points="9 21 3 21 3 15"></polyline>
+                    <line x1="21" y1="3" x2="14" y2="10"></line>
+                    <line x1="3" y1="21" x2="10" y2="14"></line>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Resize &amp; Reposition</span>
+                    <span class="more-menu-desc">Hold screen to drag, zoom, or fit</span>
                   </div>
                 </button>
               </div>

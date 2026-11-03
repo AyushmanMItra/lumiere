@@ -202,6 +202,25 @@
     menuYouTubeBtn: document.getElementById('menuYouTubeBtn'),
     menuUrlBtn: document.getElementById('menuUrlBtn'),
     menuStreamingBtn: document.getElementById('menuStreamingBtn'),
+    menuTransformBtn: document.getElementById('menuTransformBtn'),
+    videoHoldIndicator: document.getElementById('videoHoldIndicator'),
+    holdRingProgress: document.getElementById('holdRingProgress'),
+    videoTransformGuide: document.getElementById('videoTransformGuide'),
+    videoTransformHUD: document.getElementById('videoTransformHUD'),
+    closeTransformHudBtn: document.getElementById('closeTransformHudBtn'),
+    videoScaleSlider: document.getElementById('videoScaleSlider'),
+    transformScaleBadge: document.getElementById('transformScaleBadge'),
+    scaleMinusBtn: document.getElementById('scaleMinusBtn'),
+    scalePlusBtn: document.getElementById('scalePlusBtn'),
+    transformFitPresets: document.getElementById('transformFitPresets'),
+    transformOffsetBadge: document.getElementById('transformOffsetBadge'),
+    nudgeUpBtn: document.getElementById('nudgeUpBtn'),
+    nudgeDownBtn: document.getElementById('nudgeDownBtn'),
+    nudgeLeftBtn: document.getElementById('nudgeLeftBtn'),
+    nudgeRightBtn: document.getElementById('nudgeRightBtn'),
+    centerTransformBtn: document.getElementById('centerTransformBtn'),
+    resetTransformBtn: document.getElementById('resetTransformBtn'),
+    doneTransformBtn: document.getElementById('doneTransformBtn'),
 
     screenSharePlayer: document.getElementById('screenSharePlayer'),
     youtubePlayerBox: document.getElementById('youtubePlayerBox'),
@@ -2206,13 +2225,17 @@
 
     el.cinemaBox.addEventListener('touchend', (e) => {
       // If user tapped a button, select, or scrubber inside the cinema box, let it interact normally
-      if (e.target.closest('button, select, input, a, .hud-timeline-container, .device-menu, .active-poll-widget')) {
+      if (e.target.closest('button, select, input, a, .hud-timeline-container, .device-menu, .active-poll-widget, .video-transform-hud')) {
         return;
       }
 
       const currentTime = Date.now();
       const tapLength = currentTime - lastTapTime;
       const touch = e.changedTouches[0];
+      if (typeof screenTransformState !== 'undefined' && (screenTransformState.isTransforming || screenTransformState.suppressTap)) {
+        screenTransformState.suppressTap = false;
+        return;
+      }
       if (!touch) return;
       const rect = el.cinemaBox.getBoundingClientRect();
       const tapX = touch.clientX - rect.left;
@@ -2285,6 +2308,478 @@
         el.mobileGestureOverlay?.classList.add('hidden');
       }, 450);
     }
+  }
+
+  // ==========================================================================
+  // SCREEN RESIZE & REPOSITION (CLICK-AND-HOLD / DIRECT DRAG / ZOOM / FIT)
+  // ==========================================================================
+
+  const screenTransformState = {
+    scale: 1.0,
+    x: 0,
+    y: 0,
+    fit: 'contain',
+    isTransforming: false,
+    suppressTap: false
+  };
+
+  function initVideoTransformFeature() {
+    loadSavedScreenTransform();
+
+    const box = el.cinemaBox;
+    if (!box) return;
+
+    let holdTimer = null;
+    let holdStartX = 0;
+    let holdStartY = 0;
+    const HOLD_MS = 450;
+
+    // Direct Drag State while in Transform Mode
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let originX = 0;
+    let originY = 0;
+
+    // Pinch-to-zoom on Mobile
+    let initialPinchDist = 0;
+    let initialPinchScale = 1.0;
+
+    const onPointerDown = (e) => {
+      // If clicked inside HUD or interactive overlay controls, let it interact normally
+      if (e.target.closest('button, select, input, a, .hud-timeline-container, .device-menu, .active-poll-widget, .video-transform-hud')) {
+        return;
+      }
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      // If already in transform mode, start direct dragging immediately!
+      if (screenTransformState.isTransforming) {
+        if (e.touches && e.touches.length === 2) {
+          initialPinchDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          initialPinchScale = screenTransformState.scale;
+          return;
+        }
+
+        isDragging = true;
+        dragStartX = clientX;
+        dragStartY = clientY;
+        originX = screenTransformState.x;
+        originY = screenTransformState.y;
+        box.classList.add('is-dragging');
+        return;
+      }
+
+      // Not in transform mode yet: Start Press-and-Hold Detection
+      holdStartX = clientX;
+      holdStartY = clientY;
+      clearTimeout(holdTimer);
+
+      showHoldIndicator(clientX, clientY);
+
+      holdTimer = setTimeout(() => {
+        holdTimer = null;
+        screenTransformState.suppressTap = true;
+        if (navigator.vibrate) {
+          try { navigator.vibrate(40); } catch (_) {}
+        }
+        pulseHoldIndicatorSuccess();
+        setTimeout(() => {
+          hideHoldIndicator();
+          openTransformHUD();
+        }, 220);
+      }, HOLD_MS);
+    };
+
+    const onPointerMove = (e) => {
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      // Cancel hold if moved significantly before timer completes
+      if (holdTimer) {
+        const dist = Math.hypot(clientX - holdStartX, clientY - holdStartY);
+        if (dist > 12) {
+          clearTimeout(holdTimer);
+          holdTimer = null;
+          hideHoldIndicator();
+        }
+      }
+
+      // If in transform mode and dragging screen
+      if (screenTransformState.isTransforming && isDragging) {
+        if (e.touches && e.touches.length > 1) return;
+        if (e.cancelable && e.type.startsWith('touch')) e.preventDefault();
+        const dx = clientX - dragStartX;
+        const dy = clientY - dragStartY;
+        screenTransformState.x = Math.round(originX + dx);
+        screenTransformState.y = Math.round(originY + dy);
+        applyScreenTransform();
+        updateTransformHUDReadout();
+      }
+
+      // If in transform mode and pinching
+      if (screenTransformState.isTransforming && e.touches && e.touches.length === 2 && initialPinchDist > 0) {
+        e.preventDefault();
+        const currentDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        const ratio = currentDist / initialPinchDist;
+        const nextScale = Math.min(2.5, Math.max(0.5, Math.round(initialPinchScale * ratio * 100) / 100));
+        screenTransformState.scale = nextScale;
+        applyScreenTransform();
+        updateTransformHUDReadout();
+      }
+    };
+
+    const onPointerUp = () => {
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+        hideHoldIndicator();
+      }
+
+      if (isDragging) {
+        isDragging = false;
+        box.classList.remove('is-dragging');
+        saveScreenTransform();
+      }
+
+      if (initialPinchDist > 0) {
+        initialPinchDist = 0;
+        saveScreenTransform();
+      }
+    };
+
+    box.addEventListener('mousedown', onPointerDown);
+    box.addEventListener('touchstart', onPointerDown, { passive: true });
+
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('touchmove', onPointerMove, { passive: false });
+
+    window.addEventListener('mouseup', onPointerUp);
+    window.addEventListener('touchend', onPointerUp, { passive: false });
+    window.addEventListener('touchcancel', onPointerUp, { passive: false });
+
+    // Desktop Mouse Wheel Zoom while in transform mode
+    box.addEventListener('wheel', (e) => {
+      if (!screenTransformState.isTransforming) return;
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.05 : -0.05;
+      const nextScale = Math.min(2.5, Math.max(0.5, Math.round((screenTransformState.scale + delta) * 100) / 100));
+      screenTransformState.scale = nextScale;
+      applyScreenTransform();
+      updateTransformHUDReadout();
+      saveScreenTransform();
+    }, { passive: false });
+
+    // Secondary trigger from More Options menu
+    if (el.menuTransformBtn) {
+      el.menuTransformBtn.onclick = () => {
+        closeAllDeviceMenus?.();
+        openTransformHUD();
+      };
+    }
+
+    setupTransformHudControls();
+  }
+
+  function setupTransformHudControls() {
+    if (el.closeTransformHudBtn) {
+      el.closeTransformHudBtn.onclick = closeTransformHUD;
+    }
+    if (el.doneTransformBtn) {
+      el.doneTransformBtn.onclick = () => {
+        saveScreenTransform();
+        closeTransformHUD();
+      };
+    }
+    if (el.resetTransformBtn) {
+      el.resetTransformBtn.onclick = resetScreenTransform;
+    }
+
+    // Slider
+    if (el.videoScaleSlider) {
+      el.videoScaleSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        screenTransformState.scale = Math.round((val / 100) * 100) / 100;
+        applyScreenTransform();
+        updateTransformHUDReadout();
+      });
+      el.videoScaleSlider.addEventListener('change', () => {
+        saveScreenTransform();
+      });
+    }
+
+    // Step +/- buttons
+    if (el.scaleMinusBtn) {
+      el.scaleMinusBtn.onclick = () => {
+        const next = Math.max(0.5, Math.round((screenTransformState.scale - 0.05) * 100) / 100);
+        screenTransformState.scale = next;
+        applyScreenTransform();
+        updateTransformHUDReadout();
+        saveScreenTransform();
+      };
+    }
+    if (el.scalePlusBtn) {
+      el.scalePlusBtn.onclick = () => {
+        const next = Math.min(2.5, Math.round((screenTransformState.scale + 0.05) * 100) / 100);
+        screenTransformState.scale = next;
+        applyScreenTransform();
+        updateTransformHUDReadout();
+        saveScreenTransform();
+      };
+    }
+
+    // Fit Presets
+    const presetBtns = el.transformFitPresets ? el.transformFitPresets.querySelectorAll('.transform-preset-btn') : [];
+    presetBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const fit = btn.getAttribute('data-fit');
+        if (fit === 'zoom125') {
+          screenTransformState.scale = 1.25;
+          screenTransformState.fit = 'contain';
+        } else if (fit === 'cover') {
+          screenTransformState.fit = 'cover';
+          screenTransformState.scale = Math.max(1.0, screenTransformState.scale);
+        } else if (fit === 'fill') {
+          screenTransformState.fit = 'fill';
+        } else {
+          screenTransformState.fit = 'contain';
+        }
+        applyScreenTransform();
+        updateTransformHUDReadout();
+        saveScreenTransform();
+      });
+    });
+
+    // D-Pad Nudge Buttons
+    const NUDGE_STEP = 15;
+    if (el.nudgeUpBtn) {
+      el.nudgeUpBtn.onclick = () => {
+        screenTransformState.y -= NUDGE_STEP;
+        applyScreenTransform();
+        updateTransformHUDReadout();
+        saveScreenTransform();
+      };
+    }
+    if (el.nudgeDownBtn) {
+      el.nudgeDownBtn.onclick = () => {
+        screenTransformState.y += NUDGE_STEP;
+        applyScreenTransform();
+        updateTransformHUDReadout();
+        saveScreenTransform();
+      };
+    }
+    if (el.nudgeLeftBtn) {
+      el.nudgeLeftBtn.onclick = () => {
+        screenTransformState.x -= NUDGE_STEP;
+        applyScreenTransform();
+        updateTransformHUDReadout();
+        saveScreenTransform();
+      };
+    }
+    if (el.nudgeRightBtn) {
+      el.nudgeRightBtn.onclick = () => {
+        screenTransformState.x += NUDGE_STEP;
+        applyScreenTransform();
+        updateTransformHUDReadout();
+        saveScreenTransform();
+      };
+    }
+    if (el.centerTransformBtn) {
+      el.centerTransformBtn.onclick = () => {
+        screenTransformState.x = 0;
+        screenTransformState.y = 0;
+        applyScreenTransform();
+        updateTransformHUDReadout();
+        saveScreenTransform();
+      };
+    }
+
+    initTransformHudDraggable();
+  }
+
+  function initTransformHudDraggable() {
+    const hud = el.videoTransformHUD;
+    if (!hud) return;
+    const header = hud.querySelector('.transform-hud-header');
+    if (!header) return;
+
+    let isDraggingHud = false;
+    let startX = 0;
+    let startY = 0;
+    let initialLeft = 0;
+    let initialTop = 0;
+
+    header.addEventListener('mousedown', (e) => {
+      if (e.target.closest('button')) return;
+      isDraggingHud = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = hud.getBoundingClientRect();
+      const parentRect = hud.offsetParent ? hud.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
+      initialLeft = rect.left - parentRect.left;
+      initialTop = rect.top - parentRect.top;
+      hud.style.bottom = 'auto';
+      hud.style.right = 'auto';
+      hud.style.left = `${initialLeft}px`;
+      hud.style.top = `${initialTop}px`;
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDraggingHud) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      hud.style.left = `${Math.max(0, initialLeft + dx)}px`;
+      hud.style.top = `${Math.max(0, initialTop + dy)}px`;
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDraggingHud = false;
+    });
+  }
+
+  function showHoldIndicator(clientX, clientY) {
+    const indicator = el.videoHoldIndicator;
+    const ring = el.holdRingProgress;
+    const box = el.cinemaBox;
+    if (!indicator || !ring || !box) return;
+
+    const rect = box.getBoundingClientRect();
+    const relX = Math.max(50, Math.min(rect.width - 50, clientX - rect.left));
+    const relY = Math.max(50, Math.min(rect.height - 50, clientY - rect.top));
+
+    indicator.style.left = `${relX}px`;
+    indicator.style.top = `${relY}px`;
+    indicator.classList.remove('hidden');
+    indicator.classList.remove('hold-success');
+
+    ring.style.transition = 'none';
+    ring.style.strokeDashoffset = '201.06';
+    void ring.offsetWidth;
+    ring.style.transition = 'stroke-dashoffset 450ms linear';
+    ring.style.strokeDashoffset = '0';
+  }
+
+  function hideHoldIndicator() {
+    const indicator = el.videoHoldIndicator;
+    const ring = el.holdRingProgress;
+    if (!indicator) return;
+    indicator.classList.add('hidden');
+    indicator.classList.remove('hold-success');
+    if (ring) {
+      ring.style.transition = 'none';
+      ring.style.strokeDashoffset = '201.06';
+    }
+  }
+
+  function pulseHoldIndicatorSuccess() {
+    const indicator = el.videoHoldIndicator;
+    if (!indicator) return;
+    indicator.classList.add('hold-success');
+  }
+
+  function openTransformHUD() {
+    if (!el.videoTransformHUD || !el.cinemaBox) return;
+    screenTransformState.isTransforming = true;
+    el.videoTransformHUD.classList.remove('hidden');
+    if (el.videoTransformGuide) el.videoTransformGuide.classList.remove('hidden');
+    el.cinemaBox.classList.add('is-transforming');
+    updateTransformHUDReadout();
+  }
+
+  function closeTransformHUD() {
+    if (!el.videoTransformHUD || !el.cinemaBox) return;
+    screenTransformState.isTransforming = false;
+    el.videoTransformHUD.classList.add('hidden');
+    if (el.videoTransformGuide) el.videoTransformGuide.classList.add('hidden');
+    el.cinemaBox.classList.remove('is-transforming');
+  }
+
+  function updateTransformHUDReadout() {
+    const pct = Math.round(screenTransformState.scale * 100);
+    if (el.videoScaleSlider) el.videoScaleSlider.value = pct;
+    if (el.transformScaleBadge) el.transformScaleBadge.innerText = `${pct}%`;
+    if (el.transformOffsetBadge) {
+      el.transformOffsetBadge.innerText = `X: ${screenTransformState.x}px • Y: ${screenTransformState.y}px`;
+    }
+    if (el.transformFitPresets) {
+      const btns = el.transformFitPresets.querySelectorAll('.transform-preset-btn');
+      btns.forEach(b => {
+        const fit = b.getAttribute('data-fit');
+        if (fit === 'zoom125') {
+          b.classList.toggle('active', screenTransformState.scale === 1.25);
+        } else {
+          b.classList.toggle('active', screenTransformState.fit === fit && screenTransformState.scale === 1.0);
+        }
+      });
+    }
+  }
+
+  function applyScreenTransform() {
+    const targets = [
+      el.moviePlayer,
+      el.screenSharePlayer,
+      el.youtubePlayerBox,
+      el.streamingPlayerBox
+    ].filter(Boolean);
+
+    const { scale, x, y, fit } = screenTransformState;
+    targets.forEach(target => {
+      target.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
+      target.style.transformOrigin = 'center center';
+      if (fit === 'fill') {
+        target.style.objectFit = 'fill';
+      } else if (fit === 'cover') {
+        target.style.objectFit = 'cover';
+      } else {
+        target.style.objectFit = 'contain';
+      }
+    });
+  }
+
+  function resetScreenTransform() {
+    screenTransformState.scale = 1.0;
+    screenTransformState.x = 0;
+    screenTransformState.y = 0;
+    screenTransformState.fit = 'contain';
+    applyScreenTransform();
+    updateTransformHUDReadout();
+    saveScreenTransform();
+  }
+
+  function saveScreenTransform() {
+    try {
+      localStorage.setItem('lumiere_screen_transform', JSON.stringify({
+        scale: screenTransformState.scale,
+        x: screenTransformState.x,
+        y: screenTransformState.y,
+        fit: screenTransformState.fit
+      }));
+    } catch (_) {}
+  }
+
+  function loadSavedScreenTransform() {
+    try {
+      const raw = localStorage.getItem('lumiere_screen_transform');
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (typeof data.scale === 'number') {
+          screenTransformState.scale = Math.min(2.5, Math.max(0.5, data.scale));
+        }
+        if (typeof data.x === 'number') screenTransformState.x = data.x;
+        if (typeof data.y === 'number') screenTransformState.y = data.y;
+        if (['contain', 'cover', 'fill'].includes(data.fit)) screenTransformState.fit = data.fit;
+        applyScreenTransform();
+        updateTransformHUDReadout();
+      }
+    } catch (_) {}
   }
 
   // ==========================================================================
@@ -3599,6 +4094,7 @@
     });
 
     player.addEventListener('loadedmetadata', () => {
+      applyScreenTransform();
       const dur = getEffectiveDuration();
       if (dur > 0) {
         el.durationDisplay.innerText = formatTime(dur);
@@ -5250,6 +5746,10 @@
     el.moviePlayer.onclick = (e) => {
       // On mobile / touch devices, tapping the screen toggles HUD controls; desktop clicks toggle play/pause
       if (window.matchMedia('(pointer: coarse)').matches) return;
+      if (typeof screenTransformState !== 'undefined' && (screenTransformState.isTransforming || screenTransformState.suppressTap)) {
+        screenTransformState.suppressTap = false;
+        return;
+      }
       handlePlayPauseToggle();
     };
     // Do not open movie library when tapping the stage background/placeholder
@@ -5301,6 +5801,7 @@
     initAmbientGlow();
     initMobileGestures();
     initSubtitleDragAndDrop();
+    initVideoTransformFeature();
 
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', () => {
