@@ -5051,19 +5051,37 @@ body:not(.has-participants) .cinema-stage-wrapper {
 .brand-logo-mark {
   width: 38px;
   height: 38px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(235, 59, 90, 0.22), rgba(229, 9, 20, 0.12));
-  border: 1px solid rgba(235, 59, 90, 0.45);
-  color: #eb3b5a;
+  border-radius: 11px;
+  background: #111218;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 16px rgba(235, 59, 90, 0.22);
+  box-shadow: 0 0 16px rgba(255, 8, 68, 0.25);
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 .brand-logo-mark:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 24px rgba(235, 59, 90, 0.4);
+  box-shadow: 0 0 24px rgba(255, 8, 68, 0.45);
+}
+
+.brand-logo-mark-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.room-brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+.room-brand-mark:hover {
+  transform: scale(1.06);
 }
 
 .brand-name {

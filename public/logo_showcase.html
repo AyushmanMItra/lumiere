@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lumière Brand Logo Concepts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --card-bg: #13151c;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text: #f0f2f5;
+      --text-muted: #8a90a0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      padding: 40px 24px 60px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .header {
+      text-align: center;
+      max-width: 680px;
+      margin-bottom: 40px;
+    }
+    .header h1 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #ffffff 40%, #00d2ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header p {
+      color: var(--text-muted);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      max-width: 1200px;
+      width: 100%;
+    }
+    .logo-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .logo-card:hover {
+      border-color: rgba(0, 210, 255, 0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+    }
+    .card-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .preview-box {
+      background: #08090d;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      height: 170px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .preview-box svg {
+      width: 96px;
+      height: 96px;
+    }
+    .scale-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .scale-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .scale-item svg {
+      flex-shrink: 0;
+    }
+    .nav-mockup {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #090a0f;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+    .nav-mockup .brand-label {
+      color: #fff;
+    }
+    .meta h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+    .meta p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .palette-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .color-swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Lumière Identity System</h1>
+    <p>Choose your preferred logo design. Whichever option you pick will be deployed uniformly across the landing navbar, theater top bar, about page, app favicon, PWA manifest, and extension icons.</p>
+  </div>
+
+  <div class="grid">
+    <!-- Concept 1 -->
+    <div class="logo-card">
+      <div class="card-badge">Option 1</div>
+      <div class="preview-box">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="prismGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#00f2fe"/>
+              <stop offset="50%" stop-color="#4facfe"/>
+              <stop offset="100%" stop-color="#7f00ff"/>
+            </linearGradient>
+            <filter id="prismGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#00f2fe" flood-opacity="0.5"/>
+            </filter>
+          </defs>
+          <rect width="100" height="100" rx="22" fill="#0d0e15"/>
+          <rect width="98" height="98" x="1" y="1" rx="21" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+          <g filter="url(#prismGlow)">
+            <path d="M50 18L82 34V66L50 82L18 66V34L50 18Z" stroke="url(#prismGrad)" stroke-width="4.5" stroke-linejoin="round" fill="rgba(0,242,254,0.06)"/>
+            <line x1="18" y1="34" x2="50" y2="50" stroke="url(#prismGrad)" stroke-width="2.5" stroke-dasharray="2 3" opacity="0.6"/>
+            <line x1="18" y1="66" x2="50" y2="50" stroke="url(#prismGrad)" stroke-width="2.5" stroke-dasharray="2 3" opacity="0.6"/>
+            <polygon points="44,38 66,50 44,62" fill="url(#prismGrad)"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="scale-row">
+        <div class="scale-item">
+          <span>48px</span>
+          <svg width="40" height="40" viewBox="0 0 100 100"><use href="#prism-icon"/></svg>
+        </div>
+        <div class="scale-item">
+          <span>24px</span>
+          <svg width="24" height="24" viewBox="0 0 100 100"><use href="#prism-icon"/></svg>
+        </div>
+        <div class="scale-item">
+          <span>16px</span>
+          <svg width="16" height="16" viewBox="0 0 100 100"><use href="#prism-icon"/></svg>
+        </div>
+      </div>
+
+      <div class="nav-mockup">
+        <svg width="22" height="22" viewBox="0 0 100 100" fill="none">
+          <path d="M50 18L82 34V66L50 82L18 66V34L50 18Z" stroke="#00d2ff" stroke-width="7" stroke-linejoin="round"/>
+          <polygon points="44,38 66,50 44,62" fill="#00d2ff"/>
+        </svg>
+        <span class="brand-label">Lumière</span>
+      </div>
+
+      <div class="meta">
+        <h3>1. Cinema Prism (Recommended)</h3>
+        <p>A precision hexagonal cinema prism reflecting an anamorphic light beam into a play glyph. High-tech, futuristic, and embodies "Lumière" (Light).</p>
+        <div class="palette-row">
+          <div class="color-swatch" style="background:#00f2fe" title="Electric Cyan"></div>
+          <div class="color-swatch" style="background:#4facfe" title="Cyber Blue"></div>
+          <div class="color-swatch" style="background:#7f00ff" title="Violet Beam"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Concept 2 -->
+    <div class="logo-card">
+      <div class="card-badge">Option 2</div>
+      <div class="preview-box">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="neonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ff0844"/>
+              <stop offset="60%" stop-color="#ff4b2b"/>
+              <stop offset="100%" stop-color="#f72585"/>
+            </linearGradient>
+            <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#ff0844" flood-opacity="0.45"/>
+            </filter>
+          </defs>
+          <rect width="100" height="100" rx="24" fill="#111218"/>
+          <rect width="98" height="98" x="1" y="1" rx="23" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+          <g filter="url(#neonGlow)">
+            <rect x="20" y="20" width="60" height="60" rx="14" stroke="url(#neonGrad)" stroke-width="4" fill="rgba(255,8,68,0.07)"/>
+            <rect x="25" y="28" width="6" height="8" rx="2" fill="url(#neonGrad)"/>
+            <rect x="25" y="46" width="6" height="8" rx="2" fill="url(#neonGrad)"/>
+            <rect x="25" y="64" width="6" height="8" rx="2" fill="url(#neonGrad)"/>
+            <rect x="69" y="28" width="6" height="8" rx="2" fill="url(#neonGrad)"/>
+            <rect x="69" y="46" width="6" height="8" rx="2" fill="url(#neonGrad)"/>
+            <rect x="69" y="64" width="6" height="8" rx="2" fill="url(#neonGrad)"/>
+            <polygon points="46,38 62,50 46,62" fill="#ffffff"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="scale-row">
+        <div class="scale-item">
+          <span>48px</span>
+          <svg width="40" height="40" viewBox="0 0 100 100"><use href="#neon-icon"/></svg>
+        </div>
+        <div class="scale-item">
+          <span>24px</span>
+          <svg width="24" height="24" viewBox="0 0 100 100"><use href="#neon-icon"/></svg>
+        </div>
+        <div class="scale-item">
+          <span>16px</span>
+          <svg width="16" height="16" viewBox="0 0 100 100"><use href="#neon-icon"/></svg>
+        </div>
+      </div>
+
+      <div class="nav-mockup">
+        <svg width="22" height="22" viewBox="0 0 100 100" fill="none">
+          <rect x="20" y="20" width="60" height="60" rx="14" stroke="#ff416c" stroke-width="6"/>
+          <polygon points="46,38 62,50 46,62" fill="#ff416c"/>
+        </svg>
+        <span class="brand-label">Lumière</span>
+      </div>
+
+      <div class="meta">
+        <h3>2. Neon Film Pulse</h3>
+        <p>A sleek dark squircle with dual cinema film sprocket notches and an illuminated center play key. Unifies Image 1 (film strip) and Image 2 (neon app squircle).</p>
+        <div class="palette-row">
+          <div class="color-swatch" style="background:#ff0844" title="Neon Crimson"></div>
+          <div class="color-swatch" style="background:#ff4b2b" title="Coral Glow"></div>
+          <div class="color-swatch" style="background:#f72585" title="Fuchsia"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Concept 3 -->
+    <div class="logo-card">
+      <div class="card-badge">Option 3</div>
+      <div class="preview-box">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="portalGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#00f5a0"/>
+              <stop offset="100%" stop-color="#00d2ff"/>
+            </linearGradient>
+            <linearGradient id="portalGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#00d2ff"/>
+              <stop offset="100%" stop-color="#7928ca"/>
+            </linearGradient>
+            <filter id="portalGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#00d2ff" flood-opacity="0.4"/>
+            </filter>
+          </defs>
+          <rect width="100" height="100" rx="24" fill="#0d0f17"/>
+          <rect width="98" height="98" x="1" y="1" rx="23" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+          <g filter="url(#portalGlow)">
+            <path d="M30 22C30 52 32 74 62 74C68 74 72 72 76 70" stroke="url(#portalGrad1)" stroke-width="6.5" stroke-linecap="round"/>
+            <path d="M72 26C72 38 68 48 58 54" stroke="url(#portalGrad2)" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+            <polygon points="46,38 64,50 46,62" fill="url(#portalGrad1)"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="scale-row">
+        <div class="scale-item">
+          <span>48px</span>
+          <svg width="40" height="40" viewBox="0 0 100 100"><use href="#portal-icon"/></svg>
+        </div>
+        <div class="scale-item">
+          <span>24px</span>
+          <svg width="24" height="24" viewBox="0 0 100 100"><use href="#portal-icon"/></svg>
+        </div>
+        <div class="scale-item">
+          <span>16px</span>
+          <svg width="16" height="16" viewBox="0 0 100 100"><use href="#portal-icon"/></svg>
+        </div>
+      </div>
+
+      <div class="nav-mockup">
+        <svg width="22" height="22" viewBox="0 0 100 100" fill="none">
+          <path d="M30 22C30 52 32 74 62 74C68 74 72 72 76 70" stroke="#00f5a0" stroke-width="8" stroke-linecap="round"/>
+          <polygon points="46,38 64,50 46,62" fill="#00d2ff"/>
+        </svg>
+        <span class="brand-label">Lumière</span>
+      </div>
+
+      <div class="meta">
+        <h3>3. Twin Beams (Togetherness)</h3>
+        <p>Two converging light curves forming a graceful 'L' lettermark around a shared play glyph. Emphasizes togetherness, connection, and real-time co-watching.</p>
+        <div class="palette-row">
+          <div class="color-swatch" style="background:#00f5a0" title="Emerald Mint"></div>
+          <div class="color-swatch" style="background:#00d2ff" title="Vivid Cyan"></div>
+          <div class="color-swatch" style="background:#7928ca" title="Deep Indigo"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Concept 4 -->
+    <div class="logo-card">
+      <div class="card-badge">Option 4</div>
+      <div class="preview-box">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="apertureGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ffb300"/>
+              <stop offset="50%" stop-color="#ff4081"/>
+              <stop offset="100%" stop-color="#7c4dff"/>
+            </linearGradient>
+            <filter id="apertureGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#ff4081" flood-opacity="0.4"/>
+            </filter>
+          </defs>
+          <rect width="100" height="100" rx="24" fill="#120e18"/>
+          <rect width="98" height="98" x="1" y="1" rx="23" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+          <g filter="url(#apertureGlow)">
+            <circle cx="50" cy="50" r="32" stroke="url(#apertureGrad)" stroke-width="2.5" stroke-dasharray="4 3" opacity="0.4"/>
+            <path d="M50 18L64 42L40 46Z" fill="url(#apertureGrad)" opacity="0.85"/>
+            <path d="M82 50L58 64L54 40Z" fill="url(#apertureGrad)" opacity="0.85"/>
+            <path d="M50 82L36 58L60 54Z" fill="url(#apertureGrad)" opacity="0.85"/>
+            <path d="M18 50L42 36L46 60Z" fill="url(#apertureGrad)" opacity="0.85"/>
+            <polygon points="46,42 58,50 46,58" fill="#ffffff"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="scale-row">
+        <div class="scale-item">
+          <span>48px</span>
+          <svg width="40" height="40" viewBox="0 0 100 100"><use href="#aperture-icon"/></svg>
+        </div>
+        <div class="scale-item">
+          <span>24px</span>
+          <svg width="24" height="24" viewBox="0 0 100 100"><use href="#aperture-icon"/></svg>
+        </div>
+        <div class="scale-item">
+          <span>16px</span>
+          <svg width="16" height="16" viewBox="0 0 100 100"><use href="#aperture-icon"/></svg>
+        </div>
+      </div>
+
+      <div class="nav-mockup">
+        <svg width="22" height="22" viewBox="0 0 100 100" fill="none">
+          <circle cx="50" cy="50" r="30" stroke="#ffb300" stroke-width="5"/>
+          <polygon points="46,42 58,50 46,58" fill="#ff4081"/>
+        </svg>
+        <span class="brand-label">Lumière</span>
+      </div>
+
+      <div class="meta">
+        <h3>4. Aperture Shutter</h3>
+        <p>A cinematic camera lens shutter with rotating aperture blades converging on an illuminated center. Evokes high-end studio projection and cinematic elegance.</p>
+        <div class="palette-row">
+          <div class="color-swatch" style="background:#ffb300" title="Studio Gold"></div>
+          <div class="color-swatch" style="background:#ff4081" title="Neon Rose"></div>
+          <div class="color-swatch" style="background:#7c4dff" title="Velvet Violet"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
