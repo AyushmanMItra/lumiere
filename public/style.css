@@ -142,7 +142,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 3000;
   backdrop-filter: blur(8px);
   padding: 16px;
   overflow-y: auto;
@@ -1261,6 +1261,11 @@ body:not(.has-participants) .cinema-stage-wrapper {
   transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
+.dock-wrapper.menu-active,
+.dock-wrapper:has(.device-menu:not(.hidden)) {
+  z-index: 2600 !important;
+}
+
 .dock-container {
   display: flex;
   align-items: center;
@@ -1504,6 +1509,11 @@ body:not(.has-participants) .cinema-stage-wrapper {
   flex-shrink: 0;
   color: var(--text-muted, #949ba4);
   transition: color 0.16s ease, transform 0.16s ease;
+  pointer-events: none;
+}
+
+.more-menu-item svg * {
+  pointer-events: none;
 }
 
 .more-menu-item:hover svg {
@@ -1520,6 +1530,11 @@ body:not(.has-participants) .cinema-stage-wrapper {
   gap: 2px;
   min-width: 0;
   flex: 1;
+  pointer-events: none;
+}
+
+.more-menu-text * {
+  pointer-events: none;
 }
 
 .more-menu-title {
@@ -3017,6 +3032,38 @@ body:not(.has-participants) .cinema-stage-wrapper {
   overflow-x: hidden;
   padding-right: 6px;
   scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--blurple) rgba(255, 255, 255, 0.1);
+}
+
+/* Prominent Custom Scrollbar for Movie Modal & Large Modals to browse downward */
+.modal-large::-webkit-scrollbar,
+.movie-items-list::-webkit-scrollbar,
+#movieModal .modal-card::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+  display: block !important;
+}
+
+.modal-large::-webkit-scrollbar-track,
+.movie-items-list::-webkit-scrollbar-track,
+#movieModal .modal-card::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 4px !important;
+}
+
+.modal-large::-webkit-scrollbar-thumb,
+.movie-items-list::-webkit-scrollbar-thumb,
+#movieModal .modal-card::-webkit-scrollbar-thumb {
+  background: var(--blurple) !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.modal-large::-webkit-scrollbar-thumb:hover,
+.movie-items-list::-webkit-scrollbar-thumb:hover,
+#movieModal .modal-card::-webkit-scrollbar-thumb:hover {
+  background: var(--blurple-hover) !important;
 }
 
 .movie-card-row {
@@ -3180,6 +3227,12 @@ body:not(.has-participants) .cinema-stage-wrapper {
   }
 
   /* Transform Dropdown Popups into Native Slide-Up Bottom Sheets */
+  .floating-pill-dock {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(14, 16, 24, 0.96) !important;
+  }
+
   .device-menu {
     position: fixed !important;
     bottom: 0 !important;
@@ -4832,6 +4885,73 @@ body:not(.has-participants) .cinema-stage-wrapper {
   }
   body.chat-is-open .hud-left .hud-time {
     font-size: 9.5px !important;
+  }
+
+  /* Horizontal / Landscape Mode for Load / Share Movie Modal (Browse Downward with Scrollbar) */
+  #movieModal.modal-overlay,
+  .modal-overlay {
+    align-items: flex-start !important;
+    justify-content: center !important;
+    padding: 8px 12px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    z-index: 3000 !important;
+  }
+
+  #movieModal .modal-card,
+  .modal-large {
+    max-width: min(640px, calc(100vw - 24px)) !important;
+    width: 100% !important;
+    max-height: calc(100dvh - 16px) !important;
+    margin: 4px auto !important;
+    padding: 12px 18px !important;
+    gap: 8px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--blurple) rgba(255, 255, 255, 0.12) !important;
+  }
+
+  #movieModal .modal-header-row {
+    padding-bottom: 0 !important;
+  }
+  #movieModal .modal-header-row h3 {
+    font-size: 16px !important;
+  }
+
+  #movieModal .upload-drop-area {
+    padding: 8px 14px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    border-width: 1.5px !important;
+  }
+  #movieModal .upload-drop-area svg {
+    width: 22px !important;
+    height: 22px !important;
+    flex-shrink: 0 !important;
+  }
+  #movieModal .upload-drop-area p {
+    font-size: 12px !important;
+    margin: 0 !important;
+  }
+  #movieModal .upload-drop-area span {
+    font-size: 11px !important;
+  }
+
+  #movieModal .movie-items-list {
+    max-height: min(220px, 48dvh) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--blurple) rgba(255, 255, 255, 0.12) !important;
+    padding-right: 6px !important;
+    gap: 6px !important;
+  }
+
+  #movieModal .movie-card-row {
+    padding: 7px 12px !important;
   }
 }
 

@@ -4591,6 +4591,9 @@
       if (el.mobileSheetBackdrop) {
         el.mobileSheetBackdrop.classList.toggle('hidden', !isAnyMenuVisible);
       }
+      if (el.dockWrapper) {
+        el.dockWrapper.classList.toggle('menu-active', isAnyMenuVisible);
+      }
     };
 
     closeAllDeviceMenus = (animate = true) => {
@@ -4610,6 +4613,9 @@
         if (el.mobileSheetBackdrop) {
           el.mobileSheetBackdrop.classList.add('hidden');
           el.mobileSheetBackdrop.classList.remove('backdrop-closing');
+        }
+        if (el.dockWrapper) {
+          el.dockWrapper.classList.remove('menu-active');
         }
         return;
       }
@@ -4631,6 +4637,9 @@
         if (el.mobileSheetBackdrop) {
           el.mobileSheetBackdrop.classList.add('hidden');
           el.mobileSheetBackdrop.classList.remove('backdrop-closing');
+        }
+        if (el.dockWrapper) {
+          el.dockWrapper.classList.remove('menu-active');
         }
         menuClosingTimer = null;
       }, 220);
