@@ -6886,7 +6886,7 @@ body:not(.has-participants) .cinema-stage-wrapper {
    (Supports both Entire Movie Screen and Participant Webcam Videos)
    ========================================================================== */
 
-/* 1. Hold Indicator Ring (Visual 450ms feedback before pop-out) */
+/* 1. Hold Indicator Ring (Visual progress feedback before pop-out) */
 .video-hold-indicator {
   position: absolute;
   z-index: 2500;

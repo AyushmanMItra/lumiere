@@ -2310,6 +2310,9 @@
     suppressClick: false
   };
 
+  const WINDOW_HOLD_DURATION_MS = 1000;
+  const HOLD_INDICATOR_DELAY_MS = 200;
+
   function bringWindowToFront(win) {
     if (!win) return;
     windowManager.highestZIndex += 2;
@@ -2377,8 +2380,10 @@
       h.addEventListener('touchstart', (e) => handleResizeStart(e, stage, dir), { passive: false });
     });
 
-    // Hold on cinemaBox (450ms) to pop out into floating window
+    // Hold on cinemaBox (1000ms) to pop out into floating window.
+    // Visual progress ring is delayed by 200ms so quick taps to reveal controls never trigger or flicker.
     let movieHoldTimer = null;
+    let movieIndicatorTimer = null;
     let movieHoldStartX = 0;
     let movieHoldStartY = 0;
 
@@ -2392,7 +2397,13 @@
       movieHoldStartY = clientY;
 
       clearTimeout(movieHoldTimer);
-      showHoldIndicator(clientX, clientY, stage.classList.contains('is-floating-window') ? 'Hold to Dock Screen' : 'Hold for Floating Screen');
+      clearTimeout(movieIndicatorTimer);
+
+      movieIndicatorTimer = setTimeout(() => {
+        movieIndicatorTimer = null;
+        const label = stage.classList.contains('is-floating-window') ? 'Hold to Dock Screen' : 'Hold for Floating Screen';
+        showHoldIndicator(clientX, clientY, label, WINDOW_HOLD_DURATION_MS - HOLD_INDICATOR_DELAY_MS);
+      }, HOLD_INDICATOR_DELAY_MS);
 
       movieHoldTimer = setTimeout(() => {
         movieHoldTimer = null;
@@ -2409,26 +2420,32 @@
             popOutMovieWindow();
           }
         }, 220);
-      }, 450);
+      }, WINDOW_HOLD_DURATION_MS);
     };
 
     const onBoxMove = (e) => {
-      if (!movieHoldTimer) return;
+      if (!movieHoldTimer && !movieIndicatorTimer) return;
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       if (Math.hypot(clientX - movieHoldStartX, clientY - movieHoldStartY) > 12) {
         clearTimeout(movieHoldTimer);
+        clearTimeout(movieIndicatorTimer);
         movieHoldTimer = null;
+        movieIndicatorTimer = null;
         hideHoldIndicator();
       }
     };
 
     const onBoxUp = () => {
+      if (movieIndicatorTimer) {
+        clearTimeout(movieIndicatorTimer);
+        movieIndicatorTimer = null;
+      }
       if (movieHoldTimer) {
         clearTimeout(movieHoldTimer);
         movieHoldTimer = null;
-        hideHoldIndicator();
       }
+      hideHoldIndicator();
     };
 
     box.addEventListener('mousedown', onBoxDown);
@@ -2437,6 +2454,7 @@
     window.addEventListener('touchmove', onBoxMove, { passive: false });
     window.addEventListener('mouseup', onBoxUp);
     window.addEventListener('touchend', onBoxUp, { passive: false });
+    window.addEventListener('touchcancel', onBoxUp, { passive: false });
 
     if (el.menuTransformBtn) {
       el.menuTransformBtn.onclick = () => {
@@ -2926,6 +2944,7 @@
     });
 
     let tileHoldTimer = null;
+    let tileIndicatorTimer = null;
     let tileHoldStartX = 0;
     let tileHoldStartY = 0;
 
@@ -2937,7 +2956,13 @@
       tileHoldStartY = clientY;
 
       clearTimeout(tileHoldTimer);
-      showHoldIndicator(clientX, clientY, tile.classList.contains('is-floating-window') ? 'Hold to Dock Cam' : 'Hold for Floating Cam');
+      clearTimeout(tileIndicatorTimer);
+
+      tileIndicatorTimer = setTimeout(() => {
+        tileIndicatorTimer = null;
+        const label = tile.classList.contains('is-floating-window') ? 'Hold to Dock Cam' : 'Hold for Floating Cam';
+        showHoldIndicator(clientX, clientY, label, WINDOW_HOLD_DURATION_MS - HOLD_INDICATOR_DELAY_MS);
+      }, HOLD_INDICATOR_DELAY_MS);
 
       tileHoldTimer = setTimeout(() => {
         tileHoldTimer = null;
@@ -2954,26 +2979,32 @@
             popOutParticipantWindow(tile);
           }
         }, 220);
-      }, 450);
+      }, WINDOW_HOLD_DURATION_MS);
     };
 
     const onMove = (e) => {
-      if (!tileHoldTimer) return;
+      if (!tileHoldTimer && !tileIndicatorTimer) return;
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       if (Math.hypot(clientX - tileHoldStartX, clientY - tileHoldStartY) > 12) {
         clearTimeout(tileHoldTimer);
+        clearTimeout(tileIndicatorTimer);
         tileHoldTimer = null;
+        tileIndicatorTimer = null;
         hideHoldIndicator();
       }
     };
 
     const onUp = () => {
+      if (tileIndicatorTimer) {
+        clearTimeout(tileIndicatorTimer);
+        tileIndicatorTimer = null;
+      }
       if (tileHoldTimer) {
         clearTimeout(tileHoldTimer);
         tileHoldTimer = null;
-        hideHoldIndicator();
       }
+      hideHoldIndicator();
     };
 
     tile.addEventListener('mousedown', onDown);
@@ -2982,9 +3013,10 @@
     window.addEventListener('touchmove', onMove, { passive: false });
     window.addEventListener('mouseup', onUp);
     window.addEventListener('touchend', onUp, { passive: false });
+    tile.addEventListener('touchcancel', onUp, { passive: false });
   }
 
-  function showHoldIndicator(clientX, clientY, label = 'Hold to Pop Out Window') {
+  function showHoldIndicator(clientX, clientY, label = 'Hold to Pop Out Window', remainingDurationMs = 800) {
     const indicator = el.videoHoldIndicator;
     const ring = el.holdRingProgress;
     if (!indicator || !ring) return;
@@ -3000,7 +3032,7 @@
     ring.style.transition = 'none';
     ring.style.strokeDashoffset = '201.06';
     void ring.offsetWidth;
-    ring.style.transition = 'stroke-dashoffset 450ms linear';
+    ring.style.transition = `stroke-dashoffset ${remainingDurationMs}ms linear`;
     ring.style.strokeDashoffset = '0';
   }
 

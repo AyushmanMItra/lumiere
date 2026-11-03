@@ -113,7 +113,9 @@ test('app.js attaches title bar and 8 resize handles to each participant tile', 
   assert(app.includes('setupParticipantWindowHandlers(tile);'), 'setupParticipantWindowHandlers must be called');
 });
 
-test('app.js implements 450ms click-and-hold trigger and click suppression', () => {
+test('app.js implements 1000ms click-and-hold trigger with 200ms grace threshold and click suppression', () => {
+  assert(app.includes('WINDOW_HOLD_DURATION_MS = 1000'), 'WINDOW_HOLD_DURATION_MS must be 1000ms');
+  assert(app.includes('HOLD_INDICATOR_DELAY_MS = 200'), 'HOLD_INDICATOR_DELAY_MS must be 200ms');
   assert(app.includes('windowManager.suppressClick = true;'), 'Click suppression must be implemented');
   assert(app.includes('windowManager.suppressClick'), 'suppressClick must guard moviePlayer clicks');
 });
