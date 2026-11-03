@@ -1,0 +1,46 @@
+{
+  "$schema": "https://21st.dev/schema/design.json",
+  "name": "lumiere",
+  "product": "private cinema watch party",
+  "style": "dark-mode-oled",
+  "tokens": {
+    "colors": {
+      "bg-canvas": "#07080a",
+      "bg-app": "#0b0c10",
+      "bg-card": "#12141c",
+      "bg-surface": "#191b26",
+      "bg-input": "#202330",
+      "primary": "#6366f1",
+      "primary-hover": "#4f46e5",
+      "accent": "#ec4899",
+      "coral": "#e50914",
+      "green": "#22c55e",
+      "text-primary": "#f8fafc",
+      "text-muted": "#94a3b8",
+      "border-subtle": "rgba(255, 255, 255, 0.08)",
+      "border-focus": "rgba(99, 102, 241, 0.5)"
+    },
+    "typography": {
+      "font-sans": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      "font-mono": "'JetBrains Mono', 'Fira Code', monospace"
+    },
+    "radii": {
+      "sm": "6px",
+      "md": "10px",
+      "lg": "16px",
+      "full": "9999px"
+    },
+    "shadows": {
+      "card": "0 24px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(99, 102, 241, 0.08)",
+      "glow-primary": "0 0 20px rgba(99, 102, 241, 0.35)",
+      "glow-green": "0 0 15px rgba(34, 197, 94, 0.5)"
+    }
+  },
+  "decisions": [
+    {
+      "date": "2026-11-03",
+      "area": "design-system",
+      "summary": "Adopted OLED Dark Cinema palette with Inter typography, glassmorphism card surfaces, and spring-eased micro-interactions from ui-ux-pro-max and 21st UI supply."
+    }
+  ]
+}
