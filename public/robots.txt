@@ -1,0 +1,31 @@
+# Lumière Cinema — Decentralized Private Cinema & Watch Party
+# https://lumiere.live
+
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /extension
+Allow: /download
+Allow: /apk
+Allow: /icon.svg
+Allow: /icon.png
+Allow: /icon-32.png
+Allow: /icon-192.png
+Allow: /icon-512.png
+Allow: /og-image.png
+Allow: /manifest.json
+Allow: /llms.txt
+Allow: /sitemap.xml
+
+# Keep private watch party rooms and media endpoints unindexed
+Disallow: /room/
+Disallow: /r/
+Disallow: /api/
+Disallow: /stream/
+Disallow: /hls/
+Disallow: /subtitle/
+Disallow: /movies/
+
+# Host and Sitemap
+Host: https://lumiere.live
+Sitemap: https://lumiere.live/sitemap.xml

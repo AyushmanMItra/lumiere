@@ -1,0 +1,38 @@
+# Lumière Cinema
+
+> Decentralized, frame-accurate private cinema and synchronized watch party platform with WebRTC voice/video and multi-track audio transcoding.
+
+Lumière is an open-source, self-hostable private theater platform designed to replicate the experience of sitting together in a private screening room. It features sub-second frame-accurate playback synchronization, integrated multi-track MKV on-the-fly audio transcoding via FFmpeg, WebRTC mesh voice and video cams, and universal browser extension support for OTT platforms (Netflix, Prime Video, JioHotstar, Zee5).
+
+## Core Capabilities
+- **Frame-Accurate Playback Synchronization**: Sub-frame rate steering (0.95x - 1.06x) via Socket.IO heartbeats without pitch distortion.
+- **Multi-Track Audio & Subtitle Engine**: Server-side FFmpeg pipeline extracts, transcodes, and switches DTS, TrueHD, E-AC3 audio tracks and VTT/SRT subtitles on-the-fly.
+- **WebRTC Mesh Voice & Video**: Low-latency peer-to-peer audio and webcam video grid running on dedicated peer connections independent of media streaming.
+- **Floating Windows**: Windows-style draggable and 8-way resizable window manager for the theater screen and participant webcam tiles.
+- **Clean URL Slugs & Room Routing**: Direct room joining via `/room/:roomId` or short slug `/r/:roomId`.
+- **OTT Streaming Platform Bridge**: Native browser extension bridging synchronous playback across Netflix, Amazon Prime Video, Hotstar, and Zee5.
+
+## Architecture & Technology Stack
+- **Backend**: Node.js, Express, Socket.IO, Fluent-FFmpeg, Self-signed SSL, HTTP Gzip/Brotli Compression.
+- **Frontend**: Vanilla JavaScript (ES2022), Hardware-accelerated CSS3 OLED Cinema HUD, WebRTC (RTCPeerConnection), Web Audio API, Full PWA manifest.
+- **Mobile**: Android WebView client with custom asset packaging (`lumiere.apk`).
+
+## Canonical Links
+- Main Application: https://lumiere.live/
+- About the Maker & Technology: https://lumiere.live/about
+- Open Source Repository: https://github.com/AyushmanMItra/lumiere
+- Android APK: https://lumiere.live/download
+- Browser Extension: https://lumiere.live/extension
+
+## Public REST API Endpoints
+- `GET /api/info`: Server network topology, local IP, Tailscale IP, and ports.
+- `GET /api/movies`: Enumerates available local cinema library files (.mkv, .mp4, .webm).
+- `POST /api/upload`: Direct drag-and-drop movie upload to server.
+- `POST /api/feedback`: Community feedback submission.
+- `GET /api/extension/info`: Browser extension manifest and supported platform list.
+- `GET /api/extension/download`: Dynamic ZIP bundle of the browser sync extension.
+
+## Author & Licensing
+- Creator: Ayushman Mitra
+- License: MIT License
+- Copyright: (c) 2026 Ayushman Mitra

@@ -9,6 +9,7 @@ const cors = require('cors');
 const multer = require('multer');
 const selfsigned = require('selfsigned');
 const zlib = require('zlib');
+const compression = require('compression');
 
 // Configure ffmpeg & ffprobe
 const ffmpeg = require('fluent-ffmpeg');
@@ -133,8 +134,56 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+app.use(compression({
+  threshold: 1024,
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) return false;
+    if (req.path.startsWith('/stream') || req.path.startsWith('/hls')) return false;
+    return compression.filter(req, res);
+  }
+}));
+
 app.use(cors());
 app.use(express.json());
+
+// ------------------------------------------------------------------
+// SEO & Canonical Metadata Endpoints
+// ------------------------------------------------------------------
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain; charset=utf-8');
+  res.sendFile(path.join(__dirname, 'public', 'robots.txt'));
+});
+
+app.get('/sitemap.xml', (req, res) => {
+  res.type('application/xml; charset=utf-8');
+  res.sendFile(path.join(__dirname, 'public', 'sitemap.xml'));
+});
+
+app.get('/llms.txt', (req, res) => {
+  res.type('text/plain; charset=utf-8');
+  res.sendFile(path.join(__dirname, 'public', 'llms.txt'));
+});
+
+app.get('/favicon.ico', (req, res) => {
+  res.type('image/x-icon');
+  res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
+});
+
+// ------------------------------------------------------------------
+// Clean URL Slugs & Redirects
+// ------------------------------------------------------------------
+app.get('/about', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'about.html'));
+});
+
+app.get(['/room/:roomId', '/r/:roomId'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get(['/download', '/apk'], (req, res) => {
+  res.redirect(302, '/lumiere.apk');
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Helper: Get local network IPv4 address (e.g. 192.168.x.x)
@@ -1299,6 +1348,20 @@ io.on('connection', (socket) => {
 
     io.in(currentRoomId).emit('member-left', { id: socket.id });
   });
+});
+
+// ------------------------------------------------------------------
+// Custom 404 Page & Error Handler
+// ------------------------------------------------------------------
+app.use((req, res) => {
+  res.status(404);
+  if (req.accepts('html')) {
+    res.sendFile(path.join(__dirname, 'public', '404.html'));
+  } else if (req.accepts('json')) {
+    res.json({ error: 'Not Found', status: 404, path: req.originalUrl });
+  } else {
+    res.type('txt').send('404 Not Found');
+  }
 });
 
 // Start Servers with auto-fallback if port is busy

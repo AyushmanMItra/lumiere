@@ -4,6 +4,18 @@
 
 (() => {
   // Application State
+  function updateDocumentTitle(prefix = '') {
+    if (state.inRoom) {
+      if (prefix) {
+        document.title = `${prefix} — Lumière (${state.roomId})`;
+      } else {
+        document.title = `Lumière — Room ${state.roomId}`;
+      }
+    } else {
+      document.title = 'Lumière — Frame-Accurate Private Cinema & Watch Party';
+    }
+  }
+
   const state = {
     socket: null,
     roomId: null,
@@ -373,10 +385,12 @@
     } catch (e) {}
     el.usernameInput.value = savedUser || '';
 
+    const pathMatch = window.location.pathname.match(/^\/(?:room|r)\/([a-zA-Z0-9_-]+)/);
+    const pathRoom = pathMatch ? pathMatch[1] : null;
     const hashRoom = window.location.hash.replace('#', '').trim();
     const urlParams = new URLSearchParams(window.location.search);
     const queryRoom = urlParams.get('room');
-    el.roomInput.value = hashRoom || queryRoom || generateRandomRoomCode();
+    el.roomInput.value = pathRoom || hashRoom || queryRoom || generateRandomRoomCode();
 
     try {
       const res = await fetch('/api/info');
@@ -463,7 +477,12 @@
     state.username = username;
     state.roomId = roomId;
     state.inRoom = true;
-    window.location.hash = roomId;
+    try {
+      history.replaceState(null, '', `/room/${roomId}`);
+    } catch (_) {
+      window.location.hash = roomId;
+    }
+    updateDocumentTitle();
 
     try {
       localStorage.setItem('lumiere_username', username);
@@ -2322,6 +2341,14 @@
   function initWindowManagement() {
     initMovieWindowHandlers();
     loadSavedMovieWindowLayout();
+
+    window.addEventListener('popstate', () => {
+      if (window.location.pathname === '/about') {
+        if (el.aboutPage) el.aboutPage.classList.remove('hidden');
+      } else if (!state.inRoom && el.aboutPage) {
+        el.aboutPage.classList.add('hidden');
+      }
+    });
 
     window.addEventListener('resize', () => {
       const stage = el.cinemaStageWrapper;
@@ -5341,7 +5368,7 @@
 
     // Top Invite & Dock Invite
     const copyLink = () => {
-      const url = `${window.location.origin}/#${state.roomId}`;
+      const url = `${window.location.origin}/room/${state.roomId}`;
       navigator.clipboard?.writeText(url).then(() => {
         showToast('Invite link copied!');
       }).catch(() => prompt('Room Link:', url));
