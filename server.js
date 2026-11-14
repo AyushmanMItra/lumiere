@@ -176,7 +176,15 @@ app.get('/about', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'about.html'));
 });
 
-app.get(['/room/:roomId', '/r/:roomId'], (req, res) => {
+app.get(['/room/:roomId', '/r/:roomId'], (req, res, next) => {
+  const roomId = req.params.roomId;
+  if (roomId && roomId.includes('.')) {
+    const assetPath = path.join(__dirname, 'public', roomId);
+    if (fs.existsSync(assetPath)) {
+      return res.sendFile(assetPath);
+    }
+    return next();
+  }
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

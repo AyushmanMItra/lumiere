@@ -2345,6 +2345,8 @@
     window.addEventListener('popstate', () => {
       if (window.location.pathname === '/about') {
         if (el.aboutPage) el.aboutPage.classList.remove('hidden');
+      } else if (window.location.pathname === '/' && state.inRoom) {
+        window.location.reload();
       } else if (!state.inRoom && el.aboutPage) {
         el.aboutPage.classList.add('hidden');
       }
@@ -5738,7 +5740,21 @@
 
     // Disconnect
     el.disconnectBtn.onclick = () => {
-      if (confirm('Leave room?')) window.location.reload();
+      if (confirm('Leave room?')) {
+        try {
+          if (state.socket) {
+            state.socket.emit('leave-room');
+            state.socket.disconnect();
+          }
+          if (state.localStream) {
+            state.localStream.getTracks().forEach(t => t.stop());
+          }
+          if (state.screenStream) {
+            state.screenStream.getTracks().forEach(t => t.stop());
+          }
+        } catch (_) {}
+        window.location.href = '/';
+      }
     };
 
     // Layout Toggle (Theater Stage vs Grid Gallery View)

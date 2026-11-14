@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+  <base href="/">
   
   <title>Lumière — Frame-Accurate Private Cinema & Watch Party</title>
   <meta name="description" content="Host private watch parties with frame-accurate MKV video sync, WebRTC voice and video chat, multi-track audio, and subtitles in your browser. No ads, fully private.">
@@ -111,7 +112,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=3.1">
+  <link rel="stylesheet" href="/style.css?v=3.1">
 </head>
 <body class="discord-dark">
 
@@ -355,7 +356,7 @@
       <section class="about-hero-row">
         <div class="maker-avatar-wrap">
           <div class="maker-avatar-ring">
-            <img src="ayushman.jpg" alt="Ayushman Mitra - Creator and Lead Architect of Lumière" class="maker-avatar-img" onerror="this.src='ayushman.png'">
+            <img src="/ayushman.jpg" alt="Ayushman Mitra - Creator and Lead Architect of Lumière" class="maker-avatar-img" onerror="this.src='/ayushman.png'">
           </div>
           <span class="maker-pill-badge">THE MAKER</span>
         </div>
@@ -1506,7 +1507,7 @@
 
       <div class="qr-showcase-box">
         <div class="qr-scanner-frame" id="qrContainer">
-          <img id="supportQrImage" src="https://raw.githubusercontent.com/AyushmanMItra/lumiere/main/public/support-qr.png" alt="UPI QR Code for Project Support" class="support-qr-img" onerror="this.src='support-qr.png'">
+          <img id="supportQrImage" src="https://raw.githubusercontent.com/AyushmanMItra/lumiere/main/public/support-qr.png" alt="UPI QR Code for Project Support" class="support-qr-img" onerror="this.src='/support-qr.png'">
           <div class="qr-scan-line"></div>
         </div>
 
@@ -2003,6 +2004,6 @@
 
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="app.js?v=2.9"></script>
+  <script src="/app.js?v=2.9"></script>
 </body>
 </html>
