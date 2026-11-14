@@ -1,39 +1,39 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#14151d"/>
-      <stop offset="100%" stop-color="#08090d"/>
+      <stop offset="0%" stop-color="#323D25"/>
+      <stop offset="100%" stop-color="#28301C"/>
     </linearGradient>
-    <linearGradient id="neonPulseMaster" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ff0844"/>
-      <stop offset="55%" stop-color="#ff4b2b"/>
-      <stop offset="100%" stop-color="#f72585"/>
+    <linearGradient id="brassPulse" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9A7E3B"/>
+      <stop offset="55%" stop-color="#B89B4E"/>
+      <stop offset="100%" stop-color="#D2CF9A"/>
     </linearGradient>
-    <filter id="neonPulseGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="12" stdDeviation="24" flood-color="#ff0844" flood-opacity="0.45"/>
+    <filter id="brassGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="24" flood-color="#9A7E3B" flood-opacity="0.45"/>
     </filter>
   </defs>
 
-  <!-- Background with smooth squircle corners for maskable PWA and app icon -->
+  <!-- Background with smooth squircle corners -->
   <rect width="512" height="512" rx="120" fill="url(#bgGrad)"/>
-  <rect width="504" height="504" x="4" y="4" rx="116" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="4"/>
+  <rect width="504" height="504" x="4" y="4" rx="116" fill="none" stroke="rgba(210, 207, 154, 0.18)" stroke-width="4"/>
 
-  <!-- Neon Film Pulse Master Glyph -->
-  <g filter="url(#neonPulseGlow)">
+  <!-- Brass Film Master Glyph -->
+  <g filter="url(#brassGlow)">
     <!-- Film Border Squircle -->
-    <rect x="100" y="100" width="312" height="312" rx="72" stroke="url(#neonPulseMaster)" stroke-width="24" fill="rgba(255,8,68,0.08)"/>
+    <rect x="100" y="100" width="312" height="312" rx="72" stroke="url(#brassPulse)" stroke-width="24" fill="rgba(154, 126, 59, 0.14)"/>
 
     <!-- Left Sprocket Perforations -->
-    <rect x="126" y="142" width="30" height="42" rx="10" fill="url(#neonPulseMaster)"/>
-    <rect x="126" y="235" width="30" height="42" rx="10" fill="url(#neonPulseMaster)"/>
-    <rect x="126" y="328" width="30" height="42" rx="10" fill="url(#neonPulseMaster)"/>
+    <rect x="126" y="142" width="30" height="42" rx="10" fill="url(#brassPulse)"/>
+    <rect x="126" y="235" width="30" height="42" rx="10" fill="url(#brassPulse)"/>
+    <rect x="126" y="328" width="30" height="42" rx="10" fill="url(#brassPulse)"/>
 
     <!-- Right Sprocket Perforations -->
-    <rect x="356" y="142" width="30" height="42" rx="10" fill="url(#neonPulseMaster)"/>
-    <rect x="356" y="235" width="30" height="42" rx="10" fill="url(#neonPulseMaster)"/>
-    <rect x="356" y="328" width="30" height="42" rx="10" fill="url(#neonPulseMaster)"/>
+    <rect x="356" y="142" width="30" height="42" rx="10" fill="url(#brassPulse)"/>
+    <rect x="356" y="235" width="30" height="42" rx="10" fill="url(#brassPulse)"/>
+    <rect x="356" y="328" width="30" height="42" rx="10" fill="url(#brassPulse)"/>
 
     <!-- Central Illuminated Play Triangle -->
-    <polygon points="236,192 328,256 236,320" fill="#ffffff"/>
+    <polygon points="236,192 328,256 236,320" fill="#D2CF9A"/>
   </g>
 </svg>

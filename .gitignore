@@ -35,3 +35,7 @@ tests/results.json
 .gradle/
 android/app/build/
 android/build_tmp/
+
+# Scratch & temporary workspace generation scripts
+scratch/
+

@@ -1,0 +1,2008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+  
+  <title>Lumière — Frame-Accurate Private Cinema & Watch Party</title>
+  <meta name="description" content="Host private watch parties with frame-accurate MKV video sync, WebRTC voice and video chat, multi-track audio, and subtitles in your browser. No ads, fully private.">
+  <link rel="canonical" href="https://lumiere.live/">
+  <meta name="robots" content="index, follow">
+
+  <!-- Favicon & PWA Icons -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+  <link rel="apple-touch-icon" href="/icon.png">
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- PWA Standalone & Fullscreen Meta Tags (Removes mobile address bar) -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lumière">
+  <meta name="application-name" content="Lumière">
+  <meta name="theme-color" content="#0b0c10">
+  <meta name="msapplication-navbutton-color" content="#0b0c10">
+  <meta name="msapplication-TileColor" content="#0b0c10">
+  <meta name="msapplication-starturl" content="/">
+
+  <!-- Open Graph / Facebook / Discord Social Cards -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Lumière">
+  <meta property="og:title" content="Lumière — Frame-Accurate Private Cinema & Watch Party">
+  <meta property="og:description" content="Host private watch parties with frame-accurate MKV video sync, WebRTC voice and video chat, multi-track audio, and subtitles in your browser.">
+  <meta property="og:image" content="https://lumiere.live/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:url" content="https://lumiere.live/">
+
+  <!-- Twitter / X Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Lumière — Frame-Accurate Private Cinema & Watch Party">
+  <meta name="twitter:description" content="Host private watch parties with frame-accurate MKV video sync, WebRTC voice and video chat, multi-track audio, and subtitles in your browser.">
+  <meta name="twitter:image" content="https://lumiere.live/og-image.png">
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "@id": "https://lumiere.live/#webapp",
+        "name": "Lumière Cinema",
+        "url": "https://lumiere.live",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Web, Windows, macOS, Linux, Android",
+        "description": "Decentralized, frame-accurate private cinema with multi-track MKV sync and WebRTC voice & video.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "Frame-Accurate Video Sync",
+          "Multi-Track MKV Audio Transcoding",
+          "WebRTC Mesh Voice and Video Grid",
+          "Floating Resizable and Repositionable Screens",
+          "Universal OTT Extension Sync (Netflix, Prime Video, Hotstar, Zee5)"
+        ]
+      },
+      {
+        "@type": "LocalBusiness",
+        "@id": "https://lumiere.live/#organization",
+        "name": "Lumière Cinema Studio",
+        "url": "https://lumiere.live",
+        "logo": "https://lumiere.live/icon.png",
+        "image": "https://lumiere.live/og-image.png",
+        "founder": {
+          "@type": "Person",
+          "name": "Ayushman Mitra",
+          "jobTitle": "Lead Developer & System Architect",
+          "sameAs": [
+            "https://github.com/AyushmanMItra"
+          ]
+        },
+        "description": "Decentralized private cinema and real-time synchronized media playback engineering studio.",
+        "sameAs": [
+          "https://github.com/AyushmanMItra/lumiere"
+        ]
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://lumiere.live/"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <!-- Google Fonts: Inter display & JetBrains Mono for OLED Cinema HUD -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=3.1">
+</head>
+<body class="discord-dark">
+
+  <!-- ============================================================ -->
+  <!-- 1. LANDING & JOIN SCREEN (Inspired by Image 2)               -->
+  <!-- ============================================================ -->
+  <div id="joinModal" class="landing-page-wrapper">
+
+    <!-- Top Landing Navigation -->
+    <header class="landing-nav">
+      <div class="landing-nav-brand">
+        <div class="brand-logo-mark">
+          <svg width="26" height="26" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="neonPulseGradNav" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff0844"/>
+                <stop offset="60%" stop-color="#ff4b2b"/>
+                <stop offset="100%" stop-color="#f72585"/>
+              </linearGradient>
+            </defs>
+            <rect width="100" height="100" rx="24" fill="#111218"/>
+            <rect width="98" height="98" x="1" y="1" rx="23" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+            <rect x="20" y="20" width="60" height="60" rx="14" stroke="url(#neonPulseGradNav)" stroke-width="5" fill="rgba(255,8,68,0.12)"/>
+            <rect x="25" y="29" width="6" height="8" rx="2" fill="url(#neonPulseGradNav)"/>
+            <rect x="25" y="46" width="6" height="8" rx="2" fill="url(#neonPulseGradNav)"/>
+            <rect x="25" y="63" width="6" height="8" rx="2" fill="url(#neonPulseGradNav)"/>
+            <rect x="69" y="29" width="6" height="8" rx="2" fill="url(#neonPulseGradNav)"/>
+            <rect x="69" y="46" width="6" height="8" rx="2" fill="url(#neonPulseGradNav)"/>
+            <rect x="69" y="63" width="6" height="8" rx="2" fill="url(#neonPulseGradNav)"/>
+            <polygon points="46,38 64,50 46,62" fill="#ffffff"/>
+          </svg>
+        </div>
+        <span class="brand-name">Lumière</span>
+      </div>
+
+      <div class="landing-nav-actions">
+        <a href="/about" id="navAboutBtn" class="nav-link-btn" title="The Story Behind Lumière" style="text-decoration: none;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>About the Maker</span>
+        </a>
+
+        <button id="navFeedbackBtn" class="nav-link-btn" title="Give Feedback">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>Give Feedback</span>
+        </button>
+
+        <button id="navSupportBtn" class="nav-link-btn support-highlight" title="Support the Project">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+          <span>Support Me</span>
+        </button>
+
+        <a href="/lumiere.apk" download="lumiere.apk" id="navApkBtn" class="nav-link-btn" title="Download Lumière Android App (APK)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="5" y="2" width="14" height="20" rx="3" ry="3"></rect>
+            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+          </svg>
+          <span>Android App</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <main class="landing-hero-container">
+      <!-- Left Column: Headline & Value Prop -->
+      <div class="landing-hero-content">
+        <div class="screening-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#fee75c">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          <span>PRIVATE SCREENING ROOM</span>
+        </div>
+
+        <h1 class="landing-hero-headline">
+          Watch together.<br>
+          Synchronized to <span class="coral-gradient-text">the frame.</span>
+        </h1>
+
+        <p class="landing-hero-description">
+          Spin up a private cinema in seconds. Stream your local movie rips directly from your machine with frame-perfect sync, voice, video, and chat baked in.
+        </p>
+
+        <div class="hero-highlights-row">
+          <div class="highlight-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5865F2" stroke-width="2.2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            <span>Frame-perfect sync</span>
+          </div>
+
+          <div class="highlight-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#57F287" stroke-width="2.2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span>Voice + video chat</span>
+          </div>
+
+          <div class="highlight-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EB459E" stroke-width="2.2">
+              <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"></path>
+              <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"></path>
+              <circle cx="12" cy="12" r="2"></circle>
+              <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"></path>
+              <path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"></path>
+            </svg>
+            <span>Direct LAN & Tailscale ready</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Join / Create Card -->
+      <div class="landing-hero-card-col">
+        <div class="enter-theater-card">
+          <div class="card-title-row">
+            <div class="card-play-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="6 3 20 12 6 21 6 3"></polygon>
+              </svg>
+            </div>
+            <div>
+              <h3>Enter the theater</h3>
+              <p>CREATE OR JOIN A ROOM</p>
+            </div>
+          </div>
+
+          <div class="card-form-body">
+            <div class="card-input-group">
+              <label for="usernameInput">USERNAME</label>
+              <input type="text" id="usernameInput" placeholder="Enter your name (e.g. Alex)" maxlength="20" autocomplete="nickname">
+            </div>
+
+            <button id="createRoomBtn" class="btn btn-coral btn-block btn-lg create-room-btn">
+              <span>Create a new room</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+
+            <div class="card-divider-line">
+              <span>OR</span>
+            </div>
+
+            <div class="card-join-row">
+              <div class="join-input-wrap">
+                <input type="text" id="roomInput" placeholder="ROOM CODE — E.G. 12345" maxlength="30">
+                <button id="randomRoomBtn" class="dice-btn" title="Random Room Code">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="2" width="20" height="20" rx="4"></rect>
+                    <circle cx="8" cy="8" r="1.5" fill="currentColor"></circle>
+                    <circle cx="16" cy="16" r="1.5" fill="currentColor"></circle>
+                    <circle cx="16" cy="8" r="1.5" fill="currentColor"></circle>
+                    <circle cx="8" cy="16" r="1.5" fill="currentColor"></circle>
+                  </svg>
+                </button>
+              </div>
+              <button id="joinRoomBtn" class="btn btn-secondary join-btn-submit">Join</button>
+            </div>
+
+            <p class="card-micro-hint">
+              First person in a room is the host and controls the video for everyone.
+            </p>
+
+            <div class="network-badge" id="networkBadge">
+              <span>Connecting to engine...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Footer Bar -->
+    <footer class="landing-footer-bar">
+      <div class="footer-left">
+        <span>LUMIÈRE • PRIVATE SCREENING PLATFORM</span>
+      </div>
+      <div class="footer-center">
+        <span>Crafted by <strong>Ayushman Mitra</strong> • India</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 1.5 ABOUT THE MAKER & STORY PAGE (Matching Images 3, 4, 5)   -->
+  <!-- ============================================================ -->
+  <div id="aboutPage" class="about-page-view hidden">
+    <!-- Top Header -->
+    <header class="about-top-nav">
+      <div class="about-nav-left">
+        <button id="aboutBackBtn" class="btn btn-ghost btn-sm about-back-button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>Back to Theater</span>
+        </button>
+        <div class="about-nav-brand">
+          <div class="brand-logo-mark brand-logo-mark-sm">
+            <svg width="20" height="20" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="neonPulseGradAbout" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ff0844"/>
+                  <stop offset="60%" stop-color="#ff4b2b"/>
+                  <stop offset="100%" stop-color="#f72585"/>
+                </linearGradient>
+              </defs>
+              <rect width="100" height="100" rx="24" fill="#111218"/>
+              <rect x="20" y="20" width="60" height="60" rx="14" stroke="url(#neonPulseGradAbout)" stroke-width="6" fill="rgba(255,8,68,0.12)"/>
+              <rect x="25" y="29" width="6" height="8" rx="2" fill="url(#neonPulseGradAbout)"/>
+              <rect x="25" y="46" width="6" height="8" rx="2" fill="url(#neonPulseGradAbout)"/>
+              <rect x="25" y="63" width="6" height="8" rx="2" fill="url(#neonPulseGradAbout)"/>
+              <rect x="69" y="29" width="6" height="8" rx="2" fill="url(#neonPulseGradAbout)"/>
+              <rect x="69" y="46" width="6" height="8" rx="2" fill="url(#neonPulseGradAbout)"/>
+              <rect x="69" y="63" width="6" height="8" rx="2" fill="url(#neonPulseGradAbout)"/>
+              <polygon points="46,38 64,50 46,62" fill="#ffffff"/>
+            </svg>
+          </div>
+          <span class="brand-name">Lumière</span>
+        </div>
+      </div>
+      <div class="about-nav-right">
+        <div class="story-tag">
+          <span class="story-dot"></span>
+          <span>THE STORY BEHIND LUMIÈRE</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Story Main Body -->
+    <div class="about-container">
+      <!-- Maker Hero Row -->
+      <section class="about-hero-row">
+        <div class="maker-avatar-wrap">
+          <div class="maker-avatar-ring">
+            <img src="ayushman.jpg" alt="Ayushman Mitra - Creator and Lead Architect of Lumière" class="maker-avatar-img" onerror="this.src='ayushman.png'">
+          </div>
+          <span class="maker-pill-badge">THE MAKER</span>
+        </div>
+
+        <div class="maker-info-col">
+          <div class="about-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#fee75c">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            <span>ABOUT THE BUILDER</span>
+          </div>
+
+          <h2 class="maker-title">
+            Hi, I'm <span class="coral-name">Ayushman Mitra</span>.
+          </h2>
+
+          <p class="maker-lead-text">
+            A developer from India who kept getting locked out of movie nights with friends — so I built the movie night I wanted to be in.
+          </p>
+
+          <div class="maker-badges-row">
+            <div class="info-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+              <span>Developer from India</span>
+            </div>
+            <div class="info-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span>Building from a bedroom desk</span>
+            </div>
+            <div class="info-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              <span>Making things for friends</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 01: The Hard Truth -->
+      <section class="story-section">
+        <div class="section-num-tag">01 • THE HARD TRUTH</div>
+        <h2 class="section-heading">
+          Web browsers were never built to be <span class="coral-name">VLC</span>.
+        </h2>
+        <div class="section-card story-prose-card">
+          <p>
+            Modern web browsers are engineered for the open web, not home theater archives. While engines like Chromium, WebKit, and Gecko natively support <code>.mp4</code> and <code>.webm</code> containers, high-definition personal libraries almost universally rely on <code>.mkv</code> (Matroska) packaging high-bitrate video with multi-channel surround audio like Dolby Digital (<code>AC-3</code>, <code>E-AC-3</code>) or <code>DTS</code>. Because multi-channel surround codecs carry proprietary patent licensing pools, browser vendors legally refuse native decoders. Drag an <code>.mkv</code> file into any web browser, and it either fails to parse the container or plays video in total, eerie silence.
+          </p>
+          <p>
+            A common developer impulse is to bridge this gap client-side using in-browser WebAssembly (WASM) decoders like FFmpeg.wasm. In practice, software-decoding high-bitrate 1080p or 4K containers without hardware acceleration overwhelms laptop CPUs and mobile SoCs. It triggers aggressive thermal throttling, drains batteries in minutes, drops frames during high-action scenes, and crashes browser tabs as memory allocations collide with V8 heap limits.
+          </p>
+          <p>
+            Meanwhile, traditional cloud streaming workarounds require uploading 5&nbsp;GB to 15&nbsp;GB movie files to third-party servers. On typical residential uplink speeds (10–25&nbsp;Mbps), uploading a single film wastes 30 to 60+ minutes before a watch party can even begin.
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 02: Current Options -->
+      <section class="story-section">
+        <div class="section-num-tag">02 • THE COMPROMISE TRAP</div>
+        <h2 class="section-heading">
+          Every existing workaround breaks the <span class="yellow-name">experience</span>.
+        </h2>
+
+        <div class="compromise-grid">
+          <div class="compromise-card">
+            <div class="compromise-icon screen-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+            </div>
+            <div class="compromise-tag">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <span>COMPROMISE</span>
+            </div>
+            <h4>Screen Sharing</h4>
+            <span class="sub-label">DISCORD &amp; ZOOM</span>
+            <p>
+              Real-time screen capture re-encodes the host's desktop under aggressive bitrate limits. Discord caps free streams at 720p and 30&nbsp;fps (locking 1080p behind a $9.99/mo Nitro subscription). Dark scenes dissolve into heavy macroblocking, capturing 24fps film causes severe telecine judder and audio-video desync, and remote friends have zero personal autonomy over subtitle tracks or volume.
+            </p>
+          </div>
+
+          <div class="compromise-card">
+            <div class="compromise-icon sync-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+            </div>
+            <div class="compromise-tag">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <span>COMPROMISE</span>
+            </div>
+            <h4>Local Sync Tools</h4>
+            <span class="sub-label">SYNCPLAY &amp; MPV-SYNC</span>
+            <p>
+              Tools like Syncplay coordinate playhead timestamps between standalone desktop media players (VLC, mpv), but they do not stream video. Every friend must manually locate, download, and verify identical 5&nbsp;GB to 15&nbsp;GB files hours in advance. There is zero integrated voice or video chat, requiring users to juggle disparate third-party call apps.
+            </p>
+          </div>
+
+          <div class="compromise-card">
+            <div class="compromise-icon lock-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <div class="compromise-tag">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <span>COMPROMISE</span>
+            </div>
+            <h4>Commercial Walled Gardens</h4>
+            <span class="sub-label">TELEPARTY &amp; SCENER</span>
+            <p>
+              Traditional services lock you into paid catalogs with zero support for personal MKVs, indie cinema, or home rips. Lumière bridges both worlds: stream uncompressed local high-bitrate MKV files with zero disk wear, OR sync major streaming services (Netflix, Prime Video, JioHotstar, Zee5) with frame-accurate micro-steering alongside Lumière's integrated WebRTC voice, video, and cinema stage.
+            </p>
+
+          </div>
+
+          <div class="compromise-card">
+            <div class="compromise-icon cloud-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="16 16 12 12 8 16"></polyline>
+                <line x1="12" y1="12" x2="12" y2="21"></line>
+                <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
+              </svg>
+            </div>
+            <div class="compromise-tag">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <span>COMPROMISE</span>
+            </div>
+            <h4>Dedicated Media Servers</h4>
+            <span class="sub-label">PLEX &amp; JELLYFIN</span>
+            <p>
+              Designed for 24/7 home server infrastructure, demanding complex router port forwarding (port 32400 for Plex, 8096 for Jellyfin), dynamic DNS, reverse proxies, and SSL management. When multiple friends connect from varied devices, simultaneous GPU/CPU transcoding triggers heavy thermal load and fan noise, transforming movie night into a server administration chore.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 03: The Architecture -->
+      <section class="story-section">
+        <div class="section-num-tag">03 • THE ARCHITECTURE</div>
+        <h2 class="section-heading">
+          Host-side remuxing with <span class="green-name">zero-loss</span> stream copy.
+        </h2>
+
+        <div class="section-card solution-card">
+          <p>
+            Lumière completely eliminates cloud uploads. The media file never leaves the host's machine, and friends stream directly on demand without waiting on multi-gigabyte downloads. For native web containers (<code>.mp4</code> and <code>.webm</code>), the Express backend serves direct byte ranges via HTTP 206 Partial Content, delivering instantaneous timeline scrubbing with zero FFmpeg invocation.
+          </p>
+          <p>
+            When streaming high-definition <code>.mkv</code> files, Lumière runs an intelligent on-the-fly packaging pipeline. Instead of crushing video through costly GPU/CPU re-encoding, FFmpeg performs a zero-loss video stream copy (<code>-c:v copy</code>), extracting raw H.264 or HEVC bitstream packets and remuxing them on the fly into fragmented MP4 (fMP4) via <code>-movflags frag_keyframe+empty_moov+default_base_moof</code>. The video pipeline operates at near 0% CPU load, preserving 100% of the film's original color depth, bit depth, and crisp master clarity.
+          </p>
+          <p>
+            To conquer browser audio silence, Lumière selectively normalizes surround sound tracks. Only proprietary multi-channel codecs (such as 5.1 DTS or Dolby AC-3/E-AC-3) are downmixed into crystal-clear stereo AAC (<code>-c:a aac -b:a 192k -ac 2</code>). This targeted audio transcode consumes negligible host overhead (under 2–3% CPU) while delivering immediate, synchronized audio to every connected web client.
+          </p>
+          <p>
+            Crucially, the synchronization and media layers are decoupled. Playback synchronization is coordinated through sub-second Socket.IO heartbeats with automated rate steering (adjusting between 0.95× and 1.06× to eliminate buffer underruns without pitch distortion). Meanwhile, voice chat, webcams, and reactions operate on an isolated peer-to-peer WebRTC mesh (<code>RTCPeerConnection</code>). If someone's Wi-Fi drops voice packets, the movie stream never stutters, drops frames, or buffers.
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 04: The Philosophy -->
+      <section class="story-section">
+        <div class="section-num-tag">04 • THE PHILOSOPHY</div>
+        <h2 class="section-heading">
+          Self-hosted, private, and built for <span class="cyan-name">friends</span>.
+        </h2>
+        <div class="section-card diff-card">
+          <p>
+            Lumière was built on a simple conviction: watching cinema with people you care about should not be an exercise in surveillance capitalism, subscription fees, or cloud gatekeeping. There are no account sign-ups, no passwords to manage, and no centralized databases harvesting user profiles. Room states are strictly ephemeral, living entirely in host memory and evaporating the instant a screening ends.
+          </p>
+          <p>
+            There are zero analytics trackers, third-party telemetry scripts, or cloud servers logging your watch history. You retain complete sovereignty over your bandwidth, your files, and your privacy.
+          </p>
+          <p>
+            Connecting is seamless and secure. Lumière operates directly over your local home Wi-Fi or across zero-configuration private mesh networks like Tailscale and WireGuard. By leveraging direct mesh routing, you get end-to-end encrypted cinema streaming between friends without ever opening router ports (no UPnP or public 32400/8096 forwarding required). It is private, resilient software designed purely for the joy of shared cinema.
+          </p>
+        </div>
+      </section>
+
+      <!-- Special Mention Card (Shifted to bottom as requested) -->
+      <section class="special-mention-card">
+        <div class="mention-heart-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#eb3b5a" stroke-width="2.2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </div>
+        <div class="mention-body">
+          <span class="mention-tag">SPECIAL MENTION</span>
+          <h3>This idea was sparked by my friend <span class="coral-name">Yashvi Singh</span>.</h3>
+          <p>
+            A lot of the momentum behind Lumière came from conversations with my friend Yashvi. She was the person who kept pointing out — from a real user's angle — why watching a movie together with friends was still so awkward in 2026, and what she wished a tool like this would just do. That perspective shaped the whole app, so this bit is just to say: thank you, Yashvi.
+          </p>
+        </div>
+      </section>
+
+      <div class="story-action-buttons">
+        <button id="aboutLaunchBtn" class="btn btn-coral btn-lg">Launch Theater Now →</button>
+        <button id="aboutSupportBtn" class="btn btn-secondary btn-lg">Support Me</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 2. MAIN APPLICATION (Matching Image 1 & Image 2)             -->
+  <!-- ============================================================ -->
+  <div id="appContainer" class="app-container hidden">
+
+    <!-- Top Bar (Image 1 top left: Speaker icon + "Lumière"; top right: Chat icon) -->
+    <header class="top-bar" id="topBar">
+      <div class="top-bar-left">
+        <div class="room-brand-mark" title="Lumière Watch Party">
+          <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="neonPulseGradTop" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff0844"/>
+                <stop offset="60%" stop-color="#ff4b2b"/>
+                <stop offset="100%" stop-color="#f72585"/>
+              </linearGradient>
+            </defs>
+            <rect width="100" height="100" rx="24" fill="#111218"/>
+            <rect width="98" height="98" x="1" y="1" rx="23" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+            <rect x="20" y="20" width="60" height="60" rx="14" stroke="url(#neonPulseGradTop)" stroke-width="5" fill="rgba(255,8,68,0.12)"/>
+            <rect x="25" y="29" width="6" height="8" rx="2" fill="url(#neonPulseGradTop)"/>
+            <rect x="25" y="46" width="6" height="8" rx="2" fill="url(#neonPulseGradTop)"/>
+            <rect x="25" y="63" width="6" height="8" rx="2" fill="url(#neonPulseGradTop)"/>
+            <rect x="69" y="29" width="6" height="8" rx="2" fill="url(#neonPulseGradTop)"/>
+            <rect x="69" y="46" width="6" height="8" rx="2" fill="url(#neonPulseGradTop)"/>
+            <rect x="69" y="63" width="6" height="8" rx="2" fill="url(#neonPulseGradTop)"/>
+            <polygon points="46,38 64,50 46,62" fill="#ffffff"/>
+          </svg>
+        </div>
+        <span class="room-heading" id="roomTitleDisplay">Lumière</span>
+        <span class="host-indicator" id="hostPill">
+          <span id="hostNameDisplay">Host</span>
+        </span>
+      </div>
+
+      <div class="top-bar-right">
+        <!-- Chat Bubble Button (Image 1 top right) -->
+        <button id="topChatBtn" class="icon-btn" title="Toggle Chat">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
+          </svg>
+          <span id="chatBadge" class="chat-badge hidden">0</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace (Stage Area + Slide-in Chat) -->
+    <div class="main-workspace" id="mainWorkspace">
+
+      <!-- Theater Center Stage -->
+      <section class="stage-section" id="stageSection">
+
+        <!-- Stage Cinema Group: wraps cinema stage + participants so they collectively drop down in idle mode -->
+        <div class="stage-cinema-group" id="stageCinemaGroup">
+
+          <!-- Top Participant Area (Balances participant videos above the movie in portrait mode) -->
+          <div class="participants-tile-area participants-top-area hidden" id="participantTopArea">
+            <div class="participants-row" id="participantStripTop">
+              <!-- Dynamic cards placed above screen in portrait mode -->
+            </div>
+          </div>
+
+          <!-- Cinema Stage Wrapper (Houses ambient glow canvas strictly behind cinema box) -->
+          <div class="cinema-stage-wrapper" id="cinemaStageWrapper">
+            <!-- Windows-Style App Title Bar for Movie Screen -->
+            <div class="window-title-bar hidden" id="movieWindowTitleBar">
+              <div class="window-title-left">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                  <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"></polygon>
+                </svg>
+                <span class="window-title-name">Movie Screen</span>
+                <span class="window-size-badge" id="movieWindowSizeBadge">100%</span>
+              </div>
+              <div class="window-title-right">
+                <button type="button" class="window-action-btn" id="movieWindowResetBtn" title="Reset Size to 16:9 Standard">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
+                </button>
+                <button type="button" class="window-action-btn window-dock-btn" id="movieWindowDockBtn" title="Dock back to theater layout">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M4 10h6m0 0V4m0 6L3 3m17 7h-6m0 0V4m0 6l7-7"></path></svg>
+                  <span>Dock</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 8 Windows-Style Edge & Corner Resize Handles -->
+            <div class="window-resize-handle handle-n" data-direction="n"></div>
+            <div class="window-resize-handle handle-s" data-direction="s"></div>
+            <div class="window-resize-handle handle-e" data-direction="e"></div>
+            <div class="window-resize-handle handle-w" data-direction="w"></div>
+            <div class="window-resize-handle handle-ne" data-direction="ne"></div>
+            <div class="window-resize-handle handle-nw" data-direction="nw"></div>
+            <div class="window-resize-handle handle-se" data-direction="se"></div>
+            <div class="window-resize-handle handle-sw" data-direction="sw"></div>
+
+            <!-- Ambient Cinema Glow Canvas (Radiates dynamic blurred color glow strictly behind stage) -->
+            <canvas id="ambientGlowCanvas" class="ambient-glow-canvas"></canvas>
+
+          <!-- Main Cinema Frame (Image 1 Center) -->
+          <div class="cinema-box" id="cinemaBox">
+          <video id="moviePlayer" preload="auto" playsinline crossorigin="anonymous"></video>
+          <video id="screenSharePlayer" class="screen-share-player hidden" autoplay playsinline></video>
+          <div id="youtubePlayerBox" class="youtube-player-box hidden">
+            <div id="youtubeIframe"></div>
+          </div>
+
+          <!-- Streaming Platform Theater Stage (Netflix, Prime Video, JioHotstar, Zee5, etc.) -->
+          <div id="streamingPlayerBox" class="streaming-player-box hidden">
+            <div class="streaming-backdrop" id="streamingBackdrop"></div>
+            <div class="streaming-cinema-card">
+              <div class="streaming-badge-row">
+                <div class="streaming-platform-pill" id="streamingPlatformPill">
+                  <span class="streaming-platform-dot"></span>
+                  <span id="streamingPlatformName">Netflix</span>
+                </div>
+                <div class="streaming-live-tag">
+                  <span class="live-dot pulse"></span>
+                  <span>LUMIÈRE SYNC ACTIVE</span>
+                </div>
+              </div>
+
+              <h2 class="streaming-content-title" id="streamingContentTitle">Stranger Things</h2>
+
+              <p class="streaming-content-desc" id="streamingContentDesc">
+                Streaming party is live. Open your video to stay frame-synchronized via the Lumière Extension, or share this video tab directly into the theater stage!
+              </p>
+
+              <div class="streaming-actions-grid">
+                <a id="streamingLaunchBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary streaming-launch-action">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                  <span id="streamingLaunchText">Open in Netflix</span>
+                </a>
+
+                <button type="button" id="streamingShareTabBtn" class="btn btn-secondary streaming-share-action">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                  </svg>
+                  <span>Share Video into Theater</span>
+                </button>
+
+                <button type="button" id="streamingExtensionBtn" class="btn btn-glass streaming-ext-action">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  </svg>
+                  <span>Get Sync Extension</span>
+                </button>
+              </div>
+
+              <!-- Real-Time Playback Synchronization Metrics -->
+              <div class="streaming-sync-status-bar">
+                <div class="sync-status-metric">
+                  <span class="metric-label">PLAYBACK STATE</span>
+                  <span class="metric-value" id="streamingPlayStatus">Playing</span>
+                </div>
+                <div class="sync-status-metric">
+                  <span class="metric-label">CURRENT POSITION</span>
+                  <span class="metric-value" id="streamingTimeDisplay">00:00:00</span>
+                </div>
+                <div class="sync-status-metric">
+                  <span class="metric-label">MICRO-STEERING</span>
+                  <span class="metric-value green" id="streamingDriftStatus">Synchronized (&lt; 0.05s drift)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Drag and Drop Subtitle File Target Overlay -->
+          <div id="subtitleDropOverlay" class="subtitle-drop-overlay hidden">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span>Drop .SRT or .VTT file here to load subtitles</span>
+          </div>
+
+          <!-- Mobile Touch Gesture Skip Feedback Overlay -->
+          <div id="mobileGestureOverlay" class="mobile-gesture-overlay hidden">
+            <div id="gestureLeftIndicator" class="gesture-indicator-side gesture-left hidden">
+              <span class="gesture-pill">-10s</span>
+            </div>
+            <div id="gestureRightIndicator" class="gesture-indicator-side gesture-right hidden">
+              <span class="gesture-pill">+10s</span>
+            </div>
+          </div>
+
+          <!-- Screen Hold to Resize & Reposition Indicator Ring -->
+          <div id="videoHoldIndicator" class="video-hold-indicator hidden" aria-hidden="true">
+            <div class="hold-ring-wrapper">
+              <svg class="hold-progress-svg" width="76" height="76" viewBox="0 0 76 76">
+                <circle class="hold-ring-bg" cx="38" cy="38" r="32" />
+                <circle class="hold-ring-progress" id="holdRingProgress" cx="38" cy="38" r="32" />
+              </svg>
+              <div class="hold-icon-center">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+              </div>
+            </div>
+            <div class="hold-tooltip-badge">Hold to Pop Out Window</div>
+          </div>
+
+          <!-- Active Room Poll Floating Widget -->
+          <div id="activePollWidget" class="active-poll-widget hidden">
+            <div class="poll-widget-header">
+              <div class="poll-badge-live">LIVE POLL</div>
+              <button type="button" id="closePollWidgetBtn" class="poll-close-btn" title="Dismiss Poll">&times;</button>
+            </div>
+            <h4 id="pollWidgetQuestion" class="poll-widget-question">What movie should we watch?</h4>
+            <div id="pollWidgetOptions" class="poll-widget-options"></div>
+            <div class="poll-widget-footer">
+              <span id="pollTotalVotesText">0 votes</span>
+            </div>
+          </div>
+
+          <!-- Empty Cinema State (Avatar in center when no movie is playing) -->
+          <div id="stagePlaceholder" class="stage-placeholder">
+            <div class="stage-center-avatar" id="stageCenterAvatar">
+              <img id="stageAvatarImg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23949ba4'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Active Cinema Host Avatar">
+            </div>
+            <button id="openMovieLibraryBtn" class="btn btn-primary host-only-btn load-movie-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"></polygon>
+              </svg>
+              <span>Load Movie from PC</span>
+            </button>
+          </div>
+
+          <!-- Live Screen Reactions Container -->
+          <div class="reaction-burst-container" id="reactionBurstContainer"></div>
+
+          <!-- Top Right Cinema Volume HUD Indicator -->
+          <div class="cinema-volume-meter hidden" id="cinemaVolumeMeter">
+            <svg id="meterVolHighIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+            <svg id="meterVolMuteIcon" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+            </svg>
+            <div class="meter-bar-track">
+              <div class="meter-bar-fill" id="meterBarFill"></div>
+            </div>
+            <span class="meter-value" id="meterValueText">100%</span>
+          </div>
+
+          <!-- Top Left Broadcaster Pill (Repositioned to top-left to eliminate control overlap) -->
+          <div class="stage-bottom-tag" id="stageBottomTag">
+            <span class="stage-pill-dot" id="stageLiveDot"></span>
+            <svg id="stageMicIcon" class="tag-mic-icon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.12L12 8.14V5a3 3 0 0 1 3 3v3.12zM4.41 2.86L3 4.27l6 6V11a3 3 0 0 0 3 3c.39 0 .76-.08 1.1-.21l2.45 2.45C14.39 16.73 13.24 17 12 17c-3.87 0-7-3.13-7-7H3a9 9 0 0 0 8 8.94V21h2v-2.06c1.38-.17 2.66-.67 3.75-1.42l2.84 2.84 1.41-1.41L4.41 2.86z"/>
+            </svg>
+            <span id="stageUsername" class="stage-username-text">Stream</span>
+          </div>
+
+          <!-- Tap Unmute Banner for mobile browsers -->
+          <button id="unmuteMovieBanner" class="unmute-banner hidden">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+            </svg>
+            <span>Tap to Enable Audio</span>
+          </button>
+
+          <!-- Cinema Controls Overlay (Auto-Hides) -->
+          <div class="cinema-controls-hud" id="cinemaControls">
+            <div class="hud-timeline-container" id="timelineContainer">
+              <div class="hud-timeline-bar" id="timelineBar">
+                <div class="hud-buffered" id="timelineBuffered"></div>
+                <div class="hud-progress" id="timelineProgress"></div>
+                <div class="hud-thumb" id="timelineThumb"></div>
+              </div>
+              <div class="hud-hover-time" id="timelineHoverTime">00:00</div>
+            </div>
+
+            <div class="hud-row">
+              <div class="hud-left">
+                <!-- Play / Pause Circular Button -->
+                <button id="playPauseBtn" class="hud-circle-btn" title="Play/Pause (Space)">
+                  <svg id="playIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  <svg id="pauseIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="4" width="4" height="16" rx="1"></rect>
+                    <rect x="14" y="4" width="4" height="16" rx="1"></rect>
+                  </svg>
+                </button>
+
+                <!-- Stop Movie / Return to Stage Button -->
+                <button id="stopMovieBtn" class="hud-icon-btn host-only-control" title="Stop Movie (Eject to Stage)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="5" y="5" width="14" height="14" rx="2"></rect>
+                  </svg>
+                </button>
+
+                <!-- Rewind 10s -->
+                <button id="rewind10Btn" class="hud-icon-btn host-only-control" title="Rewind 10s">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                    <text x="12" y="15.5" font-size="7.5" font-family="sans-serif" font-weight="bold" fill="currentColor" text-anchor="middle" stroke="none">10</text>
+                  </svg>
+                </button>
+
+                <!-- Forward 10s -->
+                <button id="forward10Btn" class="hud-icon-btn host-only-control" title="Forward 10s">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                    <path d="M21 3v5h-5"></path>
+                    <text x="12" y="15.5" font-size="7.5" font-family="sans-serif" font-weight="bold" fill="currentColor" text-anchor="middle" stroke="none">10</text>
+                  </svg>
+                </button>
+
+                <!-- Volume Slider Group -->
+                <div class="hud-volume-group">
+                  <button id="volumeToggleBtn" class="hud-icon-btn" title="Toggle Mute (M)">
+                    <svg id="volHighIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                    </svg>
+                    <svg id="volMuteIcon" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                    </svg>
+                  </button>
+                  <input type="range" id="volumeSlider" min="0" max="100" step="1" value="100" class="hud-slider" title="Volume">
+                </div>
+
+                <!-- Time Display -->
+                <div class="hud-time">
+                  <span id="currentTimeDisplay">00:00</span>
+                  <span class="hud-time-slash">/</span>
+                  <span id="durationDisplay">00:00</span>
+                </div>
+              </div>
+
+              <div class="hud-right">
+                <!-- Audio Selector Pill -->
+                <div class="hud-pill-group host-only-control" id="audioPickerGroup" title="Select Audio Track">
+                  <svg class="hud-pill-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 18V5l12-2v13"></path>
+                    <circle cx="6" cy="18" r="3"></circle>
+                    <circle cx="18" cy="16" r="3"></circle>
+                  </svg>
+                  <select id="audioTrackSelect" class="hud-select">
+                    <option value="0">Default</option>
+                  </select>
+                </div>
+
+                <!-- Subtitle Selector Pill with Settings Button -->
+                <div class="hud-pill-group host-only-control" id="subtitlePickerGroup" title="Select Subtitles">
+                  <svg class="hud-pill-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect>
+                    <path d="M7 15h3M7 11h2M14 15h3M14 11h1"></path>
+                  </svg>
+                  <select id="subtitleTrackSelect" class="hud-select">
+                    <option value="off">Off</option>
+                  </select>
+                  <button type="button" id="subtitleSettingsBtn" class="hud-sub-gear-btn" title="Subtitle Settings & Timing Delay">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Playback Speed Selector Pill -->
+                <div class="hud-pill-group host-only-control" id="speedPickerGroup" title="Playback Speed">
+                  <svg class="hud-pill-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 2v2"></path>
+                    <path d="M4.93 4.93l1.41 1.41"></path>
+                    <path d="M20 12h2"></path>
+                    <path d="M2 12h2"></path>
+                    <path d="M17.66 6.34l1.41-1.41"></path>
+                    <path d="M12 6a6 6 0 1 0 6 6"></path>
+                    <path d="m14 10-3 3"></path>
+                  </svg>
+                  <select id="speedSelect" class="hud-select">
+                    <option value="0.5">0.5x</option>
+                    <option value="0.75">0.75x</option>
+                    <option value="1" selected>1.0x</option>
+                    <option value="1.25">1.25x</option>
+                    <option value="1.5">1.5x</option>
+                    <option value="2">2.0x</option>
+                  </select>
+                </div>
+
+                <!-- Ambient Glow Toggle Button -->
+                <button type="button" id="ambientToggleBtn" class="hud-icon-btn active-toggle" title="Toggle Ambient Cinema Glow">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                  </svg>
+                </button>
+
+                <!-- Picture in Picture (PiP) Button -->
+                <button type="button" id="pipBtn" class="hud-icon-btn" title="Picture in Picture (P)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                    <rect x="12" y="10" width="8" height="7" rx="1" fill="currentColor"></rect>
+                  </svg>
+                </button>
+
+                <!-- Fullscreen Toggle Button -->
+                <button id="hudFullscreenBtn" class="hud-icon-btn" title="Toggle Fullscreen (F)">
+                  <svg id="hudFullscreenExpand" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                  </svg>
+                  <svg id="hudFullscreenCompress" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+        <!-- Participant Tile Strip (Image 1 Centered beneath stage) -->
+        <div class="participants-tile-area participants-bottom-area" id="participantStripArea">
+          <div class="participants-row" id="participantStrip">
+            <!-- Dynamic cards inserted here -->
+          </div>
+        </div>
+
+        </div> <!-- /.stage-cinema-group -->
+
+      </section>
+
+      <!-- Discord Chat Sidebar (Matching Image 3) -->
+      <aside class="chat-panel hidden" id="chatSidebar">
+        <div class="chat-panel-header">
+          <div class="chat-panel-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
+            </svg>
+            <span>Stream Room</span>
+          </div>
+          <button id="closeChatBtn" class="chat-close-btn" title="Close Chat">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Chat Messages List (Empty state matches Image 3) -->
+        <div class="chat-messages-scroll" id="chatMessages">
+          <div class="chat-welcome-hero" id="chatWelcomeHero">
+            <div class="welcome-icon-circle">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+              </svg>
+            </div>
+            <h3>Welcome to Stream Room!</h3>
+            <p>This is the start of the Stream Room channel.</p>
+          </div>
+        </div>
+
+        <!-- Chat Reaction Particles Container -->
+        <div class="chat-reaction-burst-container" id="chatReactionBurstContainer"></div>
+
+        <!-- Bottom Chat Input Bar with Popovers -->
+        <div class="chat-bottom-wrapper">
+          <!-- Emoji Picker Popover -->
+          <div class="chat-emoji-picker hidden" id="chatEmojiPicker">
+            <div class="emoji-picker-header">
+              <span class="emoji-picker-title">EMOJIS</span>
+              <div class="emoji-picker-tabs">
+                <button type="button" class="emoji-tab-btn active" data-category="cinema" title="Cinema & Vibes">🍿</button>
+                <button type="button" class="emoji-tab-btn" data-category="popular" title="Reactions">😂</button>
+                <button type="button" class="emoji-tab-btn" data-category="hype" title="Hype & Love">🔥</button>
+                <button type="button" class="emoji-tab-btn" data-category="gestures" title="Gestures">👏</button>
+              </div>
+            </div>
+            <div class="emoji-picker-search-bar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="emojiSearchInput" placeholder="Search emojis..." autocomplete="off">
+            </div>
+            <div class="emoji-picker-grid" id="emojiPickerGrid">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Quick Reactions Tray (Replaces GIF popup) -->
+          <div class="chat-reactions-tray hidden" id="chatReactionsTray">
+            <span class="reactions-tray-label">REACTION</span>
+            <div class="reaction-tray-buttons">
+              <button type="button" class="reaction-item-btn" data-emoji="❤️" title="Love">❤️</button>
+              <button type="button" class="reaction-item-btn" data-emoji="🔥" title="Fire">🔥</button>
+              <button type="button" class="reaction-item-btn" data-emoji="🍿" title="Popcorn">🍿</button>
+              <button type="button" class="reaction-item-btn" data-emoji="👏" title="Applause">👏</button>
+              <button type="button" class="reaction-item-btn" data-emoji="😂" title="Laugh">😂</button>
+              <button type="button" class="reaction-item-btn" data-emoji="😮" title="Shock">😮</button>
+              <button type="button" class="reaction-item-btn" data-emoji="🚀" title="Hype">🚀</button>
+              <button type="button" class="reaction-item-btn" data-emoji="🎉" title="Party">🎉</button>
+              <button type="button" class="reaction-item-btn" data-emoji="💀" title="Dead">💀</button>
+            </div>
+          </div>
+
+          <form class="chat-compose-bar" id="chatForm">
+            <div class="chat-pill-input-box">
+              <input type="text" id="chatInput" placeholder="Message Stream Room" autocomplete="off">
+              <div class="chat-input-right-icons">
+                <button type="button" id="chatEmojiBtn" class="chat-action-icon-btn" title="Add Emoji">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
+                  </svg>
+                </button>
+                <button type="button" id="chatReactionBtn" class="chat-action-icon-btn chat-reaction-trigger-btn" title="Send Live Reaction">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- 3. FLOATING ACTION DOCK (Image 1 Bottom Dock)                -->
+    <!-- Auto-hides on 3-second mouse idle (Image 2)                  -->
+    <!-- ============================================================ -->
+    <footer class="dock-wrapper" id="dockWrapper">
+      <div class="dock-container">
+
+        <!-- Left corner: Invite button (Image 1 bottom left) -->
+        <button id="dockInviteBtn" class="corner-icon-btn" title="Copy Invite Link">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+        </button>
+
+        <!-- Center floating action pill dock (Image 1) -->
+        <div class="floating-pill-dock">
+
+          <!-- 1. Mic Button with Chevron -->
+          <div class="split-dock-btn" id="micSplitBtn">
+            <button id="toggleMicBtn" class="pill-btn pill-btn-muted" title="Mute/Unmute">
+              <!-- Mic on icon -->
+              <svg id="micOnIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+              </svg>
+              <!-- Mic off icon (default in Image 1) -->
+              <svg id="micOffIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.12L12 8.14V5a3 3 0 0 1 3 3v3.12zM4.41 2.86L3 4.27l6 6V11a3 3 0 0 0 3 3c.39 0 .76-.08 1.1-.21l2.45 2.45C14.39 16.73 13.24 17 12 17c-3.87 0-7-3.13-7-7H3a9 9 0 0 0 8 8.94V21h2v-2.06c1.38-.17 2.66-.67 3.75-1.42l2.84 2.84 1.41-1.41L4.41 2.86z"/>
+              </svg>
+            </button>
+            <button id="micDeviceDropdownBtn" class="pill-chevron-btn" title="Microphone Settings">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div id="micDeviceMenu" class="device-menu hidden">
+              <div class="device-menu-header">Audio Inputs</div>
+              <div id="micDeviceList" class="device-menu-items"></div>
+              <div class="device-menu-divider"></div>
+              <div class="device-menu-header">Audio Processing</div>
+              <label class="device-menu-toggle-row">
+                <span>Noise Suppression</span>
+                <input type="checkbox" id="noiseSuppressionToggle" checked>
+              </label>
+              <label class="device-menu-toggle-row">
+                <span>Echo Cancellation</span>
+                <input type="checkbox" id="echoCancellationToggle" checked>
+              </label>
+            </div>
+          </div>
+
+          <!-- 2. Video Camera Button with Chevron -->
+          <div class="split-dock-btn" id="cameraSplitBtn">
+            <button id="toggleCameraBtn" class="pill-btn pill-btn-off" title="Camera On/Off">
+              <!-- Camera on icon -->
+              <svg id="camOnIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+              </svg>
+              <!-- Camera off icon (default in Image 1) -->
+              <svg id="camOffIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.55-.18L19.73 21 21 19.73 3.27 2zM15 16H6c-.55 0-1-.45-1-1V8.27L12.73 16H15z"/>
+              </svg>
+            </button>
+            <button id="camDeviceDropdownBtn" class="pill-chevron-btn" title="Camera Settings">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div id="camDeviceMenu" class="device-menu hidden">
+              <div class="device-menu-header">Video Devices</div>
+              <div id="camDeviceList" class="device-menu-items"></div>
+            </div>
+          </div>
+
+          <!-- 3. Screen Share / Movie Library Button (Image 1 monitor icon) -->
+          <button id="hostMovieLibraryDockBtn" class="pill-btn" title="Load / Share Movie">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/>
+              <path d="M12.5 14l3.5-3.5-1.41-1.41L13 10.67V8h-2v2.67l-1.59-1.58L8 10.5l3.5 3.5h1z"/>
+            </svg>
+          </button>
+
+          <!-- 4. Grid / Theater Layout Toggle (Image 1 four squares icon) -->
+          <button id="layoutToggleBtn" class="pill-btn" title="Toggle Grid / Theater View">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 3v8h8V3H3zm6 6H5V5h4v4zm-6 4v8h8v-8H3zm6 6H5v-4h4v4zm4-16v8h8V3h-8zm6 6h-4V5h4v4zm-6 4v8h8v-8h-8zm6 6h-4v-4h4v4z"/>
+            </svg>
+          </button>
+
+          <!-- 5. Activity Button Group (Star icon: Polls, Trivia, Soundboard) -->
+          <div class="split-dock-btn" id="activityGroup">
+            <button id="activityBtn" class="pill-btn" title="Party Activities & Games">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L9.09 8.26 2 9.27l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7 5.46-4.73-7.09-1.01L12 2z"/>
+              </svg>
+            </button>
+            <div id="activityMenu" class="device-menu more-options-menu hidden">
+              <div class="device-menu-header">Party Activities</div>
+              <div class="device-menu-items">
+                <button type="button" class="more-menu-item" id="menuPollBtn" title="Create Room Poll">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Live Poll</span>
+                    <span class="more-menu-desc">Vote on movies or ask a question</span>
+                  </div>
+                </button>
+                <button type="button" class="more-menu-item" id="menuTriviaBtn" title="Movie Trivia Game">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Movie Trivia</span>
+                    <span class="more-menu-desc">Play 5-round cinema quiz game</span>
+                  </div>
+                </button>
+                <button type="button" class="more-menu-item" id="menuSoundboardBtn" title="Watch Party Soundboard">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Party Soundboard</span>
+                    <span class="more-menu-desc">Airhorn, applause, drumroll, rimshot</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. More Options Button Group (Screenshare, YouTube, Direct URL) -->
+          <div class="split-dock-btn" id="moreOptionsGroup">
+            <button id="moreOptionsBtn" class="pill-btn" title="More Options">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="2"/>
+                <circle cx="19" cy="12" r="2"/>
+                <circle cx="5" cy="12" r="2"/>
+              </svg>
+            </button>
+            <div id="moreOptionsMenu" class="device-menu more-options-menu hidden">
+              <div class="device-menu-header">More Stream Options</div>
+              <div class="device-menu-items">
+                <button type="button" class="more-menu-item" id="menuAmbientGlowBtn" title="Toggle Ambient Cinema Glow">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Ambient Lighting <span id="moreMenuAmbientStatus" class="more-status-badge badge-active">ON</span></span>
+                    <span class="more-menu-desc">Dynamic cinema backglow</span>
+                  </div>
+                </button>
+                <button type="button" class="more-menu-item" id="menuScreenshareBtn" title="Share Screen">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title" id="menuScreenshareText">Share Screen</span>
+                    <span class="more-menu-desc">Broadcast your screen or window</span>
+                  </div>
+                </button>
+                <button type="button" class="more-menu-item" id="menuYouTubeBtn" title="Watch YouTube">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21.58 7.19a2.5 2.5 0 0 0-1.76-1.77C18.26 5 12 5 12 5s-6.26 0-7.82.42c-.86.23-1.54.91-1.76 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.9 1.54 1.76 1.77C5.74 19 12 19 12 19s6.26 0 7.82-.42a2.5 2.5 0 0 0 1.76-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Watch YouTube</span>
+                    <span class="more-menu-desc">Stream any YouTube link together</span>
+                  </div>
+                </button>
+                <button type="button" class="more-menu-item" id="menuUrlBtn" title="Play from URL">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Play from URL</span>
+                    <span class="more-menu-desc">Direct .mp4, .webm or live web stream</span>
+                  </div>
+                </button>
+                <button type="button" class="more-menu-item" id="menuStreamingBtn" title="Streaming Watch Party">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+                    <polyline points="17 2 12 7 7 2"></polyline>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Streaming Party</span>
+                    <span class="more-menu-desc">Netflix, Prime Video, JioHotstar, Zee5</span>
+                  </div>
+                </button>
+                <button type="button" class="more-menu-item" id="menuTransformBtn" title="Pop Out Movie Screen Window">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <polyline points="9 3 9 21"></polyline>
+                    <polyline points="15 9 18 9 18 6"></polyline>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title" id="menuTransformTitle">Pop Out Movie Window</span>
+                    <span class="more-menu-desc">Resize &amp; reposition like a Windows app</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. Disconnect Button (Image 1 Red Pill) -->
+          <button id="disconnectBtn" class="pill-btn pill-btn-danger" title="Disconnect">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.99.99 0 0 1 0-1.41C3.28 8.8 7.42 7 12 7s8.72 1.8 11.71 4.67c.39.39.39 1.02 0 1.41l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+            </svg>
+          </button>
+
+        </div>
+
+        <!-- Right corner: Fullscreen toggle button (Image 1 bottom right) -->
+        <button id="theaterFullscreenBtn" class="corner-icon-btn" title="Toggle Cinema Fullscreen">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+          </svg>
+        </button>
+
+      </div>
+    </footer>
+
+    <!-- Mobile Bottom Sheet Backdrop (Smooth backdrop blur for mobile dropdown sheets) -->
+    <div id="mobileSheetBackdrop" class="mobile-sheet-backdrop hidden"></div>
+
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 4. MOVIE LIBRARY MODAL (Zero emojis, clean Discord theme)     -->
+  <!-- ============================================================ -->
+  <div id="movieModal" class="modal-overlay hidden">
+    <div class="modal-card modal-large">
+      <div class="modal-header-row">
+        <h3>Host Movie Library</h3>
+        <button id="closeMovieModalBtn" class="modal-x-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-sub-row">
+        <span class="folder-path-text" id="folderHint">Scanning movies/ folder...</span>
+        <button id="refreshMoviesBtn" class="btn btn-secondary btn-sm">Refresh</button>
+      </div>
+
+      <!-- Currently Playing Banner with Stop Option -->
+      <div id="modalNowPlayingBanner" class="modal-now-playing-banner hidden">
+        <div class="modal-now-playing-info">
+          <span class="modal-now-playing-dot"></span>
+          <span class="modal-now-playing-text">Now Playing: <strong id="modalNowPlayingTitle">Movie</strong></span>
+        </div>
+        <button id="modalStopMovieBtn" class="btn btn-danger btn-sm">Stop Movie</button>
+      </div>
+
+      <div class="upload-drop-area" id="uploadDropzone">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        <p>Drop movie files here (.mkv, .mp4, .webm)</p>
+        <span>or click to browse your PC</span>
+        <input type="file" id="movieFileInput" accept=".mp4,.mkv,.webm,.mov" style="display: none;">
+        <div id="uploadProgress" class="upload-progress-bar hidden">
+          <div class="upload-progress-fill" id="uploadProgressFill"></div>
+        </div>
+      </div>
+
+      <div class="movie-items-list" id="movieLibraryList">
+        <div class="loading-state">Loading movies...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 5. GIVE FEEDBACK MODAL                                       -->
+  <!-- ============================================================ -->
+  <div id="feedbackModal" class="modal-overlay hidden">
+    <div class="modal-card feedback-modal-card">
+      <div class="modal-header-row">
+        <h3>Give Feedback</h3>
+        <button id="closeFeedbackBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <p class="modal-subtitle-text">
+        Help Ayushman improve Lumière. Tell us what you like or report any bug!
+      </p>
+
+      <form id="feedbackForm" class="feedback-form">
+        <div class="form-group">
+          <label>FEEDBACK TYPE</label>
+          <div class="category-pills-row">
+            <label class="category-pill-label">
+              <input type="radio" name="feedbackCategory" value="idea" checked>
+              <span>💡 Idea / Feature</span>
+            </label>
+            <label class="category-pill-label">
+              <input type="radio" name="feedbackCategory" value="bug">
+              <span>🐞 Bug Report</span>
+            </label>
+            <label class="category-pill-label">
+              <input type="radio" name="feedbackCategory" value="general">
+              <span>⭐ General</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="feedbackName">YOUR NAME (OPTIONAL)</label>
+          <input type="text" id="feedbackName" placeholder="e.g. Yashvi or Alex">
+        </div>
+
+        <div class="form-group">
+          <label for="feedbackMessage">MESSAGE</label>
+          <textarea id="feedbackMessage" rows="4" placeholder="What's working great? What feels awkward? Tell us everything..." required></textarea>
+        </div>
+
+        <div class="feedback-email-notice">
+          <span>📬 Delivered directly to:</span>
+          <a href="mailto:mitraayushman00@gmail.com" class="feedback-gmail-link">mitraayushman00@gmail.com</a>
+        </div>
+
+        <div class="modal-actions-row">
+          <button type="button" id="cancelFeedbackBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="submitFeedbackBtn" class="btn btn-coral">Send Feedback</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 6. SUPPORT ME MODAL (QR Code & UPI)                          -->
+  <!-- ============================================================ -->
+  <div id="supportModal" class="modal-overlay hidden">
+    <div class="modal-card support-modal-card">
+      <div class="modal-header-row">
+        <h3>Support the Maker</h3>
+        <button id="closeSupportBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="maker-verified-seal" id="makerVerifiedSeal">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#57F287" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+        <span>Verified Creator: <a href="https://github.com/AyushmanMItra" target="_blank" rel="noopener noreferrer">Ayushman Mitra (@AyushmanMItra)</a></span>
+      </div>
+
+      <p class="modal-subtitle-text">
+        Lumière was built with care by <strong>Ayushman Mitra</strong> (India). Your support helps keep this platform free, independent, and ad-free!
+      </p>
+
+      <div class="qr-showcase-box">
+        <div class="qr-scanner-frame" id="qrContainer">
+          <img id="supportQrImage" src="https://raw.githubusercontent.com/AyushmanMItra/lumiere/main/public/support-qr.png" alt="UPI QR Code for Project Support" class="support-qr-img" onerror="this.src='support-qr.png'">
+          <div class="qr-scan-line"></div>
+        </div>
+
+        <p class="qr-instructions">
+          Scan using Google Pay, PhonePe, Paytm, BHIM, or any banking UPI app.
+        </p>
+
+        <div class="upi-copy-row">
+          <div class="upi-id-box">
+            <span class="upi-label">UPI ID:</span>
+            <span class="upi-value" id="upiValueText">ayushmanmitra@upi</span>
+          </div>
+          <button id="copyUpiBtn" class="btn btn-secondary btn-sm copy-upi-btn" title="Copy UPI ID">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span id="copyUpiText">Copy</span>
+          </button>
+        </div>
+
+        <div class="upi-security-notice">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#57F287" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>Locked &amp; Cryptographically Bound to Ayushman Mitra</span>
+        </div>
+      </div>
+
+      <div class="support-github-cta">
+        <span>⭐ Loving the project? Give it a star on GitHub!</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 7. YOUTUBE WATCH PARTY MODAL                                 -->
+  <!-- ============================================================ -->
+  <div id="youtubeModal" class="modal-overlay hidden">
+    <div class="modal-card extra-feature-modal-card">
+      <div class="modal-header-row">
+        <div class="modal-title-with-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#ff0000">
+            <path d="M21.58 7.19a2.5 2.5 0 0 0-1.76-1.77C18.26 5 12 5 12 5s-6.26 0-7.82.42c-.86.23-1.54.91-1.76 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.9 1.54 1.76 1.77C5.74 19 12 19 12 19s6.26 0 7.82-.42a2.5 2.5 0 0 0 1.76-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/>
+          </svg>
+          <h3>Watch YouTube Together</h3>
+        </div>
+        <button id="closeYouTubeBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <p class="modal-subtitle-text">
+        Paste any YouTube link or video ID. Playback, pause, and seek will synchronize in real-time for everyone in the room.
+      </p>
+      <form id="youtubeForm" class="extra-feature-form">
+        <div class="form-group">
+          <label for="youtubeUrlInput">YOUTUBE URL OR VIDEO ID</label>
+          <input type="text" id="youtubeUrlInput" placeholder="https://www.youtube.com/watch?v=... or ID" class="form-input" required autocomplete="off">
+        </div>
+        <div class="modal-actions-row">
+          <button type="button" id="cancelYouTubeBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="startYouTubeBtn" class="btn btn-coral">Watch in Room</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 8. PLAY FROM DIRECT URL MODAL                                -->
+  <!-- ============================================================ -->
+  <div id="urlModal" class="modal-overlay hidden">
+    <div class="modal-card extra-feature-modal-card">
+      <div class="modal-header-row">
+        <div class="modal-title-with-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+          <h3>Play Video from URL</h3>
+        </div>
+        <button id="closeUrlBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <p class="modal-subtitle-text">
+        Enter a direct video stream link (.mp4, .webm, or HTTP video stream). It will stream synchronously to everyone in the room.
+      </p>
+      <form id="urlForm" class="extra-feature-form">
+        <div class="form-group">
+          <label for="directVideoUrlInput">VIDEO STREAM URL</label>
+          <input type="url" id="directVideoUrlInput" placeholder="https://stream.lumiere.live/media/feature.mp4" class="form-input" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="directVideoTitleInput">TITLE (OPTIONAL)</label>
+          <input type="text" id="directVideoTitleInput" placeholder="e.g. Interstellar, Dune, Severance" class="form-input" autocomplete="off">
+        </div>
+        <div class="modal-actions-row">
+          <button type="button" id="cancelUrlBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="startUrlStreamBtn" class="btn btn-coral">Stream in Room</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 8.5 STREAMING WATCH PARTY MODAL (Netflix, Prime, JioHotstar, Zee5) -->
+  <!-- ============================================================ -->
+  <div id="streamingModal" class="modal-overlay hidden">
+    <div class="modal-card extra-feature-modal-card streaming-modal-card">
+      <div class="modal-header-row">
+        <div class="modal-title-with-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+            <polyline points="17 2 12 7 7 2"></polyline>
+          </svg>
+          <h3>Streaming Watch Party</h3>
+        </div>
+        <button id="closeStreamingBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <p class="modal-subtitle-text">
+        Synchronize Netflix, Prime Video, JioHotstar, Zee5, and more. All participants stay frame-locked via the Lumière Sync Extension while enjoying live WebRTC voice, video, and theater chat!
+      </p>
+
+      <form id="streamingForm" class="extra-feature-form">
+        <div class="form-group">
+          <label>SELECT STREAMING PLATFORM</label>
+          <div class="streaming-platform-selector" id="streamingPlatformSelector">
+            <button type="button" class="platform-chip active" data-platform="netflix" data-color="#E50914">
+              <span class="chip-dot" style="background:#E50914;"></span>
+              <span>Netflix</span>
+            </button>
+            <button type="button" class="platform-chip" data-platform="primevideo" data-color="#00A8E1">
+              <span class="chip-dot" style="background:#00A8E1;"></span>
+              <span>Prime Video</span>
+            </button>
+            <button type="button" class="platform-chip" data-platform="jiohotstar" data-color="#0C6EFD">
+              <span class="chip-dot" style="background:#0C6EFD;"></span>
+              <span>JioHotstar</span>
+            </button>
+            <button type="button" class="platform-chip" data-platform="zee5" data-color="#8230C6">
+              <span class="chip-dot" style="background:#8230C6;"></span>
+              <span>Zee5</span>
+            </button>
+            <button type="button" class="platform-chip" data-platform="disneyplus" data-color="#113CCF">
+              <span class="chip-dot" style="background:#113CCF;"></span>
+              <span>Disney+</span>
+            </button>
+            <button type="button" class="platform-chip" data-platform="sonyliv" data-color="#1F4A85">
+              <span class="chip-dot" style="background:#1F4A85;"></span>
+              <span>SonyLIV</span>
+            </button>
+          </div>
+          <input type="hidden" id="streamingPlatformInput" value="netflix">
+        </div>
+
+        <div class="form-group">
+          <label for="streamingTitleInput">TITLE / SHOW NAME</label>
+          <input type="text" id="streamingTitleInput" placeholder="e.g. Stranger Things, Mirzapur, Panchayat" class="form-input" required autocomplete="off">
+        </div>
+
+        <div class="form-group">
+          <label for="streamingUrlInput">CONTENT / WATCH URL (OPTIONAL)</label>
+          <input type="url" id="streamingUrlInput" placeholder="https://www.netflix.com/watch/... or platform link" class="form-input" autocomplete="off">
+          <span class="input-hint-sub">Paste the direct link to let room members jump straight to the title with one click!</span>
+        </div>
+
+        <div class="modal-actions-row">
+          <button type="button" id="openExtGuideBtn" class="btn btn-glass btn-sm">Extension Setup Guide</button>
+          <div style="flex:1"></div>
+          <button type="button" id="cancelStreamingBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="startStreamingBtn" class="btn btn-coral">Start Streaming Party</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 8.6 EXTENSION INSTALL & SETUP GUIDE MODAL                    -->
+  <!-- ============================================================ -->
+  <div id="extensionModal" class="modal-overlay hidden">
+    <div class="modal-card extra-feature-modal-card ext-modal-card">
+      <div class="modal-header-row">
+        <div class="modal-title-with-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          </svg>
+          <h3>Lumière Sync Browser Extension</h3>
+        </div>
+        <button id="closeExtensionBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <p class="modal-subtitle-text">
+        The Lumière extension synchronizes playback in real-time across Netflix, Prime Video, JioHotstar, Zee5, and more with zero lag.
+      </p>
+
+      <div class="ext-room-badge-banner">
+        <div class="ext-room-info-label">Active Lumière Room Code:</div>
+        <div class="ext-room-code-wrapper">
+          <span id="extModalRoomCode" class="ext-room-code-pill">---</span>
+          <button type="button" id="copyExtRoomCodeBtn" class="btn btn-sm btn-ghost" title="Copy Room Code">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>Copy Code</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="ext-steps-list">
+        <div class="ext-step-item">
+          <div class="ext-step-num">1</div>
+          <div class="ext-step-content">
+            <strong>Download Extension Package</strong>
+            <p>Download the pre-bundled extension zip archive directly from this Lumière server instance.</p>
+            <a href="/api/extension/download" id="downloadExtZipBtn" class="btn btn-primary btn-sm" download>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Download Extension (.ZIP)</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="ext-step-item">
+          <div class="ext-step-num">2</div>
+          <div class="ext-step-content">
+            <strong>Unpack the Zip &amp; Open Browser Extensions</strong>
+            <p>Extract the zip to a folder on your PC. In Chrome, Edge, or Brave, navigate to <code>chrome://extensions</code> and toggle <strong>Developer mode</strong> (top right).</p>
+          </div>
+        </div>
+
+        <div class="ext-step-item">
+          <div class="ext-step-num">3</div>
+          <div class="ext-step-content">
+            <strong>Click &quot;Load unpacked&quot;</strong>
+            <p>Select the extracted folder. The Lumière Watch Party Sync icon will appear in your browser toolbar.</p>
+          </div>
+        </div>
+
+        <div class="ext-step-item">
+          <div class="ext-step-num">4</div>
+          <div class="ext-step-content">
+            <strong>Play &amp; Watch Together!</strong>
+            <p>Open Netflix, Prime Video, JioHotstar, or Zee5. Click the extension icon, enter this room code, and enjoy seamless frame-synced playback alongside Lumière's WebRTC voice/video stage!</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions-row">
+        <div style="flex:1"></div>
+        <button type="button" id="dismissExtensionBtn" class="btn btn-secondary">Got It!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 9. SUBTITLE SETTINGS & SYNC DELAY MODAL                      -->
+  <!-- ============================================================ -->
+
+  <div id="subtitleModal" class="modal-overlay hidden">
+    <div class="modal-card extra-feature-modal-card">
+      <div class="modal-header-row">
+        <div class="modal-title-with-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect>
+            <path d="M7 15h3M7 11h2M14 15h3M14 11h1"></path>
+          </svg>
+          <h3>Subtitle Settings & Timing</h3>
+        </div>
+        <button id="closeSubtitleModalBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="sub-settings-content">
+        <!-- Subtitle Sync Timing Offset -->
+        <div class="form-group">
+          <label>SYNC TIMING OFFSET</label>
+          <div class="sub-offset-control-row">
+            <button type="button" class="btn btn-secondary btn-sm sub-offset-btn" data-delta="-1.0">-1.0s</button>
+            <button type="button" class="btn btn-secondary btn-sm sub-offset-btn" data-delta="-0.5">-0.5s</button>
+            <span id="subOffsetDisplay" class="sub-offset-badge">0.0s</span>
+            <button type="button" class="btn btn-secondary btn-sm sub-offset-btn" data-delta="0.5">+0.5s</button>
+            <button type="button" class="btn btn-secondary btn-sm sub-offset-btn" data-delta="1.0">+1.0s</button>
+            <button type="button" id="subOffsetResetBtn" class="btn btn-secondary btn-sm">Reset</button>
+          </div>
+          <span class="sub-hint-text">Adjust subtitle timing if dialog is ahead or behind the audio.</span>
+        </div>
+
+        <!-- Subtitle Appearance -->
+        <div class="form-group">
+          <label>FONT SIZE</label>
+          <div class="sub-pill-row">
+            <button type="button" class="sub-style-btn active" data-style-type="size" data-val="normal">Normal (18px)</button>
+            <button type="button" class="sub-style-btn" data-style-type="size" data-val="large">Large (24px)</button>
+            <button type="button" class="sub-style-btn" data-style-type="size" data-val="xlarge">Extra Large (30px)</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>TEXT COLOR</label>
+          <div class="sub-pill-row">
+            <button type="button" class="sub-style-btn active" data-style-type="color" data-val="#ffffff">White</button>
+            <button type="button" class="sub-style-btn" data-style-type="color" data-val="#ffd700">Yellow</button>
+            <button type="button" class="sub-style-btn" data-style-type="color" data-val="#00e5ff">Cyan</button>
+            <button type="button" class="sub-style-btn" data-style-type="color" data-val="#69f0ae">Green</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>LOAD CUSTOM SUBTITLE FILE (.SRT / .VTT)</label>
+          <label class="custom-file-upload-btn">
+            <input type="file" id="customSubFileInput" accept=".srt,.vtt">
+            <span>Browse Subtitle File (.srt, .vtt)</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-actions-row">
+        <button type="button" id="doneSubtitleBtn" class="btn btn-coral">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 10. CREATE LIVE POLL MODAL                                   -->
+  <!-- ============================================================ -->
+  <div id="pollModal" class="modal-overlay hidden">
+    <div class="modal-card extra-feature-modal-card">
+      <div class="modal-header-row">
+        <div class="modal-title-with-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <h3>Create Live Room Poll</h3>
+        </div>
+        <button id="closePollModalBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <p class="modal-subtitle-text">
+        Ask room members what to watch next or run a live prediction poll.
+      </p>
+      <form id="createPollForm" class="extra-feature-form">
+        <div class="form-group">
+          <label for="pollQuestionInput">POLL QUESTION</label>
+          <input type="text" id="pollQuestionInput" placeholder="e.g. Which movie should we watch next?" class="form-input" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>OPTIONS (AT LEAST 2)</label>
+          <div class="poll-options-input-list">
+            <input type="text" id="pollOpt1" placeholder="Option 1 (e.g. Inception)" class="form-input" required autocomplete="off">
+            <input type="text" id="pollOpt2" placeholder="Option 2 (e.g. Interstellar)" class="form-input" required autocomplete="off">
+            <input type="text" id="pollOpt3" placeholder="Option 3 (optional)" class="form-input" autocomplete="off">
+            <input type="text" id="pollOpt4" placeholder="Option 4 (optional)" class="form-input" autocomplete="off">
+          </div>
+        </div>
+        <div class="modal-actions-row">
+          <button type="button" id="cancelPollBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="startPollBtn" class="btn btn-coral">Launch Live Poll</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 11. MOVIE TRIVIA GAME MODAL                                  -->
+  <!-- ============================================================ -->
+  <div id="triviaModal" class="modal-overlay hidden">
+    <div class="modal-card trivia-modal-card">
+      <div class="modal-header-row">
+        <div class="modal-title-with-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <h3>Cinema Trivia Challenge</h3>
+        </div>
+        <button id="closeTriviaModalBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="trivia-timer-track">
+        <div id="triviaTimerFill" class="trivia-timer-fill"></div>
+      </div>
+
+      <div class="trivia-game-body" id="triviaGameBody">
+        <div class="trivia-meta-row">
+          <span id="triviaRoundText" class="trivia-round-badge">Question 1 of 5</span>
+          <span id="triviaTimerCountdown" class="trivia-timer-text">15s</span>
+        </div>
+        <h3 id="triviaQuestionText" class="trivia-question-text">Loading question...</h3>
+        <div id="triviaOptionsGrid" class="trivia-options-grid"></div>
+        <div id="triviaFeedback" class="trivia-feedback hidden"></div>
+      </div>
+
+      <div class="trivia-scoreboard-footer">
+        <div class="trivia-scores-header">LIVE SCORES</div>
+        <div id="triviaScoresList" class="trivia-scores-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 12. WATCH PARTY SOUNDBOARD MODAL                             -->
+  <!-- ============================================================ -->
+  <div id="soundboardModal" class="modal-overlay hidden">
+    <div class="modal-card extra-feature-modal-card">
+      <div class="modal-header-row">
+        <div class="modal-title-with-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+          <h3>Party Soundboard</h3>
+        </div>
+        <button id="closeSoundboardBtn" class="modal-x-btn" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <p class="modal-subtitle-text">
+        Tap any sound effect to play it instantly for everyone in the watch party!
+      </p>
+
+      <div class="soundboard-grid">
+        <button type="button" class="soundboard-btn" data-sound="airhorn">
+          <span class="soundboard-icon">📢</span>
+          <span class="soundboard-name">Airhorn</span>
+        </button>
+        <button type="button" class="soundboard-btn" data-sound="applause">
+          <span class="soundboard-icon">👏</span>
+          <span class="soundboard-name">Applause</span>
+        </button>
+        <button type="button" class="soundboard-btn" data-sound="drumroll">
+          <span class="soundboard-icon">🥁</span>
+          <span class="soundboard-name">Drumroll</span>
+        </button>
+        <button type="button" class="soundboard-btn" data-sound="sting">
+          <span class="soundboard-icon">😱</span>
+          <span class="soundboard-name">Dramatic</span>
+        </button>
+        <button type="button" class="soundboard-btn" data-sound="laugh">
+          <span class="soundboard-icon">😂</span>
+          <span class="soundboard-name">Laugh Track</span>
+        </button>
+        <button type="button" class="soundboard-btn" data-sound="rimshot">
+          <span class="soundboard-icon">🥁</span>
+          <span class="soundboard-name">Ba-Dum-Tss</span>
+        </button>
+      </div>
+
+      <div class="modal-actions-row">
+        <button type="button" id="doneSoundboardBtn" class="btn btn-secondary">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-shelf"></div>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js?v=2.9"></script>
+</body>
+</html>
