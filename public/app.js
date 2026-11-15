@@ -5656,6 +5656,49 @@
       });
     }
 
+    // ==========================================================================
+    // 6. AUDIENCE DISPATCHES & COMMUNITY REVIEWS CONTROLLER
+    // ==========================================================================
+    const reviewFilterBtns = document.querySelectorAll('.review-filter-btn');
+    const reviewCards = document.querySelectorAll('.review-card');
+    const openReviewSubmitBtn = document.getElementById('openReviewSubmitBtn');
+
+    if (reviewFilterBtns.length > 0) {
+      reviewFilterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          reviewFilterBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          const filter = btn.getAttribute('data-filter') || 'all';
+
+          reviewCards.forEach(card => {
+            if (filter === 'all') {
+              card.style.display = 'flex';
+            } else {
+              const categories = card.getAttribute('data-category') || '';
+              if (categories.includes(filter)) {
+                card.style.display = 'flex';
+              } else {
+                card.style.display = 'none';
+              }
+            }
+          });
+        });
+      });
+    }
+
+    if (openReviewSubmitBtn) {
+      openReviewSubmitBtn.addEventListener('click', (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        openFeedback(e, 'cinema');
+        const textarea = document.getElementById('feedbackMessage');
+        if (textarea) {
+          textarea.placeholder = "Tell us about your screening: movie title, container (.mkv, .mp4), distance or network setup, and audio experience...";
+          textarea.focus();
+        }
+      });
+    }
+
     // Top Invite & Dock Invite
     const copyLink = () => {
       const url = `${window.location.origin}/room/${state.roomId}`;
