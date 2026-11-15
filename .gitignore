@@ -28,6 +28,11 @@ feedback.json
 .gemini/
 .idea/
 .vscode/
+.21st/
+
+# Backup directories
+*backup*/
+*_backup*
 
 tests/results.json
 

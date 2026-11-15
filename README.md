@@ -220,7 +220,9 @@ lumiere/
 ├── cert.pem / key.pem      # Auto-generated self-signed SSL for WebRTC
 ├── package.json
 ├── android/                # Native Android Studio app project (Java/Gradle)
+├── build_bundles.js        # Production JS & CSS bundle minifier
 ├── build_apk.py            # Automated command-line APK builder & signer
+├── tests/                  # Automated verification & test suite
 ├── lumiere.apk             # Pre-built installable Android APK
 ├── server.js               # Express, Socket.io, FFmpeg streaming pipeline
 ├── start.bat               # 1-click Windows launcher

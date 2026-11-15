@@ -20,7 +20,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "build": "node scratch/minify_bundles.js"
+    "build": "node build_bundles.js"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
