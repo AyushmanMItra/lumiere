@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎬 Lumière
+# Lumière
 ### Watch together. Synchronized to the frame.
 
 A decentralized, private screening platform that turns the host's PC into an on-the-fly streaming engine with frame-accurate playback, multi-track MKV streaming, and WebRTC voice/video for friends.
@@ -16,7 +16,7 @@ A decentralized, private screening platform that turns the host's PC into an on-
 
 ---
 
-## 📖 The Story Behind Lumière
+## The Story Behind Lumière
 
 > *"A developer from India who kept getting locked out of movie nights with friends — so I built the movie night I wanted to be in."*  
 > — **Ayushman Mitra (Maker)**
@@ -25,8 +25,6 @@ Watching high-quality local movie files (2GB+ `.mkv` or `.mp4` rips) remotely wi
 - **Walled Gardens (Teleparty, Amazon Watch Party):** Restricted strictly to licensed Netflix/Prime catalogs. Your own `.mkv` rips or school films aren't allowed.
 - **Traditional Screen Sharing (Zoom, Google Meet):** Choppy 15fps compression, heavy upload bandwidth overhead, and audio drifting out of sync.
 - **Cloud-Sync Sites:** Waiting hours to upload a 3GB file to third-party servers, only to hit storage limits.
-
-**The Spark:** The momentum behind Lumière came from conversations between Ayushman and his friend **Yashvi Singh**, who pointed out why watching movies with friends was still awkward in 2026 and what a truly great watch party tool should feel like.
 
 ---
 
@@ -54,7 +52,7 @@ Watching high-quality local movie files (2GB+ `.mkv` or `.mp4` rips) remotely wi
 
 ---
 
-## 🛠️ Architecture & Tech Stack
+## ️ Architecture & Tech Stack
 
 ```text
 [Host Machine (movies/)]
@@ -78,7 +76,7 @@ Watching high-quality local movie files (2GB+ `.mkv` or `.mp4` rips) remotely wi
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Option A: Desktop (Windows, macOS, Linux)
 
@@ -108,7 +106,7 @@ movies/
 Your terminal will display your active connection addresses:
 ```text
 ================================================================
-               🎬 LUMIÈRE PRIVATE CINEMA SERVER
+                LUMIÈRE PRIVATE CINEMA SERVER
 ================================================================
   [HTTP - Standard Browsing]
   > Local Host PC:     http://localhost:3000
@@ -187,7 +185,7 @@ For an optimal mobile theater experience, install the dedicated native Android a
 
 ---
 
-## 🌐 Connecting With Friends
+## Connecting With Friends
 
 ### On the Same Wi-Fi / Phone Hotspot (Zero Internet Data):
 - **Desktop Host:** Connect devices to the same home Wi-Fi and open `http://<host-ip>:3000` or `https://<host-ip>:3443`.
@@ -201,7 +199,7 @@ For an optimal mobile theater experience, install the dedicated native Android a
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 lumiere/
@@ -232,6 +230,6 @@ lumiere/
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the [MIT License](LICENSE).

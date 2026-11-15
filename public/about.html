@@ -83,13 +83,13 @@
   <style>
     .about-standalone-page {
       min-height: 100vh;
-      background-color: #28301C;
+      background-color: #08090d;
       background-image: 
-        radial-gradient(ellipse 65% 55% at 50% -10%, rgba(154, 126, 59, 0.28) 0%, transparent 70%),
-        radial-gradient(circle 500px at 85% 25%, rgba(154, 126, 59, 0.22) 0%, transparent 70%),
-        radial-gradient(circle 550px at 15% 75%, rgba(50, 61, 37, 0.55) 0%, transparent 70%),
-        radial-gradient(circle at 50% 100%, rgba(0, 0, 0, 0.5) 0%, transparent 100%);
-      color: #D2CF9A;
+        radial-gradient(circle at 50% 0%, rgba(255, 8, 68, 0.16) 0%, transparent 60%),
+        radial-gradient(ellipse at 85% 18%, rgba(88, 101, 242, 0.14) 0%, transparent 60%),
+        radial-gradient(ellipse at 15% 85%, rgba(247, 37, 133, 0.10) 0%, transparent 65%),
+        radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.35) 0%, transparent 100%);
+      color: #f2f3f5;
       display: flex;
       flex-direction: column;
     }
@@ -157,14 +157,14 @@
         <svg width="26" height="26" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="neonPulseGradAbout" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#9A7E3B"/>
-              <stop offset="60%" stop-color="#B89B4E"/>
-              <stop offset="100%" stop-color="#D2CF9A"/>
+              <stop offset="0%" stop-color="#ff0844"/>
+              <stop offset="60%" stop-color="#ff4b2b"/>
+              <stop offset="100%" stop-color="#f72585"/>
             </linearGradient>
           </defs>
-          <rect width="100" height="100" rx="24" fill="#323D25"/>
-          <rect width="98" height="98" x="1" y="1" rx="23" fill="none" stroke="rgba(210,207,154,0.18)" stroke-width="1.5"/>
-          <rect x="20" y="20" width="60" height="60" rx="14" stroke="url(#neonPulseGradAbout)" stroke-width="5" fill="rgba(154,126,59,0.14)"/>
+          <rect width="100" height="100" rx="24" fill="#111218"/>
+          <rect width="98" height="98" x="1" y="1" rx="23" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+          <rect x="20" y="20" width="60" height="60" rx="14" stroke="url(#neonPulseGradAbout)" stroke-width="5" fill="rgba(255,8,68,0.12)"/>
           <rect x="25" y="29" width="6" height="8" rx="2" fill="url(#neonPulseGradAbout)"/>
           <rect x="25" y="46" width="6" height="8" rx="2" fill="url(#neonPulseGradAbout)"/>
           <rect x="25" y="63" width="6" height="8" rx="2" fill="url(#neonPulseGradAbout)"/>
@@ -409,21 +409,7 @@
       </div>
     </section>
 
-    <!-- Special Mention Card -->
-    <section class="special-mention-card">
-      <div class="mention-heart-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#eb3b5a" stroke-width="2.2">
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-        </svg>
-      </div>
-      <div class="mention-body">
-        
-        <h2>This idea was sparked by my friend Yashvi Singh.</h2>
-        <p>
-          A lot of the momentum behind Lumière came from conversations with my friend Yashvi. She was the person who kept pointing out — from a real user's angle — why watching a movie together with friends was still so awkward in 2026, and what she wished a tool like this would just do. That perspective shaped the whole app, so this bit is just to say: thank you, Yashvi.
-        </p>
-      </div>
-    </section>
+    
 
     <div class="story-action-buttons">
       <a href="/" class="btn btn-coral btn-lg" style="text-decoration: none;">Launch Theater</a>
