@@ -5292,9 +5292,13 @@
       diagPlatform.textContent = navigator.userAgentData?.platform || navigator.platform || 'Desktop';
     }
 
-    const openFeedback = (e) => {
-      if (e) e.preventDefault();
+    const openFeedback = (e, preselectedCat) => {
+      if (e && e.preventDefault) e.preventDefault();
       if (el.feedbackModal) {
+        if (preselectedCat) {
+          const pill = el.feedbackModal.querySelector(`.category-pill[data-category="${preselectedCat}"]`);
+          if (pill) pill.click();
+        }
         el.feedbackModal.classList.remove('hidden');
         document.getElementById('feedbackMessage')?.focus();
       }
@@ -5501,6 +5505,156 @@
     };
     if (el.navApkBtn) el.navApkBtn.addEventListener('click', onApkDownloadClick);
     if (el.androidTvApkCard) el.androidTvApkCard.addEventListener('click', onApkDownloadClick);
+
+    // ==========================================================================
+    // LANDING PAGE & FOOTER BUTTON ROUTING
+    // ==========================================================================
+    // Brand Header Home Link -> Smooth Scroll to Top
+    const brandHomeLink = document.getElementById('brandHomeLink') || document.querySelector('[data-purpose="site-brand"]');
+    if (brandHomeLink) {
+      brandHomeLink.addEventListener('click', (e) => {
+        if (window.location.pathname === '/' || window.location.pathname === '') {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    }
+
+    // Hero Feature Badges -> Smooth Navigation
+    const heroSyncBadge = document.getElementById('heroBadgeSync');
+    if (heroSyncBadge) {
+      heroSyncBadge.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('technology-story')?.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+    const heroVoiceBadge = document.getElementById('heroBadgeVoice');
+    if (heroVoiceBadge) {
+      heroVoiceBadge.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('technology-story')?.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+
+    // Section 04 CTA: Join Network -> Scroll to Theater Entrance & Focus Room Key
+    const ctaJoinNetworkBtn = document.getElementById('ctaJoinNetworkBtn') || document.querySelector('a[href="#android"]');
+    if (ctaJoinNetworkBtn) {
+      ctaJoinNetworkBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (el.roomInput) {
+          setTimeout(() => el.roomInput.focus(), 400);
+        }
+      });
+    }
+
+    // Device Cards: Chrome Extension Card -> Open Extension Modal
+    const landingChromeExtCard = document.getElementById('landingChromeExtCard');
+    if (landingChromeExtCard) {
+      landingChromeExtCard.addEventListener('click', (e) => {
+        e.preventDefault();
+        openExtensionModal();
+      });
+    }
+
+    // Tailscale Guide Modal Handlers
+    const tailscaleModal = document.getElementById('tailscaleModal');
+    const openTailscaleModal = (e) => {
+      if (e && e.preventDefault) e.preventDefault();
+      if (tailscaleModal) tailscaleModal.classList.remove('hidden');
+    };
+    const closeTailscaleModal = () => {
+      if (tailscaleModal) tailscaleModal.classList.add('hidden');
+    };
+    const heroTailscaleBadge = document.getElementById('heroBadgeTailscale');
+    if (heroTailscaleBadge) heroTailscaleBadge.addEventListener('click', openTailscaleModal);
+
+    const footerTailscaleBtn = document.getElementById('footerTailscaleBtn');
+    if (footerTailscaleBtn) footerTailscaleBtn.addEventListener('click', openTailscaleModal);
+    const tailscaleCloseBtn = document.getElementById('tailscaleCloseBtn');
+    if (tailscaleCloseBtn) tailscaleCloseBtn.addEventListener('click', closeTailscaleModal);
+    const tailscaleDoneBtn = document.getElementById('tailscaleDoneBtn');
+    if (tailscaleDoneBtn) tailscaleDoneBtn.addEventListener('click', closeTailscaleModal);
+    if (tailscaleModal) {
+      tailscaleModal.addEventListener('click', (e) => {
+        if (e.target === tailscaleModal) closeTailscaleModal();
+      });
+    }
+
+    // Discord Community Modal Handlers
+    const discordModal = document.getElementById('discordModal');
+    const openDiscordModal = (e) => {
+      if (e && e.preventDefault) e.preventDefault();
+      if (discordModal) discordModal.classList.remove('hidden');
+    };
+    const closeDiscordModal = () => {
+      if (discordModal) discordModal.classList.add('hidden');
+    };
+    const footerDiscordBtn = document.getElementById('footerDiscordBtn');
+    if (footerDiscordBtn) footerDiscordBtn.addEventListener('click', openDiscordModal);
+    const discordCloseBtn = document.getElementById('discordCloseBtn');
+    if (discordCloseBtn) discordCloseBtn.addEventListener('click', closeDiscordModal);
+    const discordDoneBtn = document.getElementById('discordDoneBtn');
+    if (discordDoneBtn) discordDoneBtn.addEventListener('click', closeDiscordModal);
+    if (discordModal) {
+      discordModal.addEventListener('click', (e) => {
+        if (e.target === discordModal) closeDiscordModal();
+      });
+    }
+
+    // Close modals on Escape key
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (tailscaleModal && !tailscaleModal.classList.contains('hidden')) closeTailscaleModal();
+        if (discordModal && !discordModal.classList.contains('hidden')) closeDiscordModal();
+      }
+    });
+
+    // Footer Items Wiring
+    const footerWasmBtn = document.getElementById('footerWasmBtn');
+    if (footerWasmBtn) {
+      footerWasmBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('technology-story')?.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+
+    const footerExtBtn = document.getElementById('footerExtBtn');
+    if (footerExtBtn) {
+      footerExtBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openExtensionModal();
+      });
+    }
+
+    const footerFeatureBtn = document.getElementById('footerFeatureBtn');
+    if (footerFeatureBtn) {
+      footerFeatureBtn.addEventListener('click', (e) => {
+        openFeedback(e, 'feature');
+      });
+    }
+
+    const footerDirectNoteBtn = document.getElementById('footerDirectNoteBtn');
+    if (footerDirectNoteBtn) {
+      footerDirectNoteBtn.addEventListener('click', (e) => {
+        openFeedback(e, 'direct');
+      });
+    }
+
+    const footerSupportBtn = document.getElementById('footerSupportBtn');
+    if (footerSupportBtn) {
+      footerSupportBtn.addEventListener('click', (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        showSupport();
+      });
+    }
+
+    const footerAboutBtn = document.getElementById('footerAboutBtn');
+    if (footerAboutBtn) {
+      footerAboutBtn.addEventListener('click', (e) => {
+        showAbout(e);
+      });
+    }
 
     // Top Invite & Dock Invite
     const copyLink = () => {
