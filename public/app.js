@@ -507,7 +507,11 @@
     document.body.classList.add('in-room');
     if (el.aboutPage) el.aboutPage.classList.add('hidden');
     el.appContainer.classList.remove('hidden');
-    el.roomTitleDisplay.innerText = `Lumière - ${roomId}`;
+    el.roomTitleDisplay.innerText = `ROOM #${roomId}`;
+    const copyCodeEl = document.getElementById('copyRoomCodeText');
+    if (copyCodeEl) copyCodeEl.innerText = `#${roomId}`;
+    const chatRoomNameEl = document.getElementById('chatRoomName');
+    if (chatRoomNameEl) chatRoomNameEl.innerText = `Screening Room #${roomId}`;
     el.stageUsername.innerText = username;
 
     // 1. Start in clean media playback mode (no eager mic capture holding phone in Call/Earpiece mode)
@@ -3956,8 +3960,15 @@
   function updateHostStatusUI() {
     const hostMember = Array.from(state.members.values()).find(m => m.isHost);
     el.hostNameDisplay.innerText = hostMember
-      ? (hostMember.id === state.selfId ? 'You (Host)' : `Host: ${hostMember.username}`)
-      : 'Host';
+      ? (hostMember.id === state.selfId ? 'HOST' : hostMember.username.toUpperCase())
+      : 'HOST';
+
+    const hudHostTag = document.getElementById('hudHostTag');
+    if (hudHostTag) {
+      hudHostTag.innerText = hostMember
+        ? (hostMember.id === state.selfId ? 'You (Direct Feed)' : `${hostMember.username} (Direct Feed)`)
+        : 'Host (Direct Feed)';
+    }
 
     document.querySelectorAll('.host-only-control, .host-only-btn').forEach(btn => {
       btn.classList.toggle('hidden', !state.isHost);
@@ -4405,12 +4416,14 @@
 
   function updatePlayPauseIcons(isPlaying) {
     if (isPlaying) {
-      el.playIcon.classList.add('hidden');
-      el.pauseIcon.classList.remove('hidden');
+      if (el.playIcon) el.playIcon.classList.add('hidden');
+      if (el.pauseIcon) el.pauseIcon.classList.remove('hidden');
     } else {
-      el.playIcon.classList.remove('hidden');
-      el.pauseIcon.classList.add('hidden');
+      if (el.playIcon) el.playIcon.classList.remove('hidden');
+      if (el.pauseIcon) el.pauseIcon.classList.add('hidden');
     }
+    const heartbeatIcon = document.getElementById('dockHeartbeatIcon');
+    if (heartbeatIcon) heartbeatIcon.innerText = isPlaying ? 'pause' : 'play_arrow';
   }
 
   function formatTime(sec) {
@@ -5706,7 +5719,47 @@
         showToast('Invite link copied!');
       }).catch(() => prompt('Room Link:', url));
     };
-    el.dockInviteBtn.onclick = copyLink;
+    if (el.dockInviteBtn) el.dockInviteBtn.onclick = copyLink;
+    const topInviteBtn = document.getElementById('topInviteBtn');
+    if (topInviteBtn) topInviteBtn.onclick = copyLink;
+    const copyRoomBtn = document.getElementById('copyRoomBtn');
+    if (copyRoomBtn) copyRoomBtn.onclick = copyLink;
+
+    const dockHeartbeatBtn = document.getElementById('dockPlayPauseHeartbeatBtn');
+    if (dockHeartbeatBtn) {
+      dockHeartbeatBtn.onclick = () => {
+        if (el.playPauseBtn) el.playPauseBtn.click();
+      };
+    }
+
+    const timecodeStampBtn = document.getElementById('chatTimecodeStampBtn');
+    if (timecodeStampBtn) {
+      timecodeStampBtn.onclick = () => {
+        const time = el.currentTimeDisplay ? el.currentTimeDisplay.innerText : '00:00';
+        if (el.chatInput) {
+          el.chatInput.value += ` [${time}] `;
+          el.chatInput.focus();
+        }
+      };
+    }
+
+    const dockReactionTrigger = document.getElementById('dockReactionTriggerBtn');
+    if (dockReactionTrigger) {
+      dockReactionTrigger.onclick = () => {
+        if (el.chatReactionBtn) el.chatReactionBtn.click();
+      };
+    }
+
+    document.querySelectorAll('.chat-tab-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.chat-tab-btn').forEach(b => {
+          b.classList.remove('active', 'text-primary', 'border-l-2', 'border-primary', 'bg-surface-container-high/30');
+          b.classList.add('text-on-surface/50');
+        });
+        btn.classList.add('active', 'text-primary', 'border-l-2', 'border-primary', 'bg-surface-container-high/30');
+        btn.classList.remove('text-on-surface/50');
+      };
+    });
 
     // Chat Toggles
     el.topChatBtn.onclick = toggleChat;

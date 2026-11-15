@@ -116,17 +116,62 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Caveat:wght@500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
   <!-- Tailwind CSS v3 & Configuration -->
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <script>
+    <script>
     tailwind.config = {
+      darkMode: "class",
       theme: {
         extend: {
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'monospace'],
-          },
           colors: {
+            "on-secondary-container": "#fff1ef",
+            "secondary-container": "#e10111",
+            "surface-bright": "#373940",
+            "on-error-container": "#ffdad6",
+            "outline-variant": "#5c3f3f",
+            "on-secondary-fixed-variant": "#930007",
+            "background": "#111319",
+            "on-error": "#690005",
+            "on-secondary": "#690003",
+            "tertiary-fixed": "#ffddb8",
+            "tertiary": "#ffb95f",
+            "on-secondary-fixed": "#410001",
+            "surface-container-high": "#282a30",
+            "inverse-surface": "#e2e2eb",
+            "secondary-fixed-dim": "#ffb4aa",
+            "primary-container": "#ff5261",
+            "surface-container-lowest": "#0c0e14",
+            "inverse-primary": "#bf002f",
+            "on-tertiary-fixed": "#2a1700",
+            "surface-variant": "#33343b",
+            "on-tertiary": "#472a00",
+            "on-tertiary-fixed-variant": "#653e00",
+            "on-primary-fixed": "#400009",
+            "surface-container": "#1e1f26",
+            "on-primary": "#680015",
+            "surface-tint": "#ffb3b3",
+            "on-surface": "#e2e2eb",
+            "error": "#ffb4ab",
+            "tertiary-fixed-dim": "#ffb95f",
+            "on-tertiary-container": "#3e2400",
+            "surface-container-low": "#191b22",
+            "inverse-on-surface": "#2e3037",
+            "on-surface-variant": "#e5bdbc",
+            "surface": "#111319",
+            "outline": "#ac8888",
+            "surface-dim": "#111319",
+            "on-background": "#e2e2eb",
+            "secondary-fixed": "#ffdad5",
+            "primary-fixed-dim": "#ffb3b3",
+            "surface-container-highest": "#33343b",
+            "error-container": "#93000a",
+            "secondary": "#ffb4aa",
+            "tertiary-container": "#ca8100",
+            "primary": "#ffb3b3",
+            "on-primary-fixed-variant": "#920022",
+            "primary-fixed": "#ffdad9",
+            "on-primary-container": "#5b0011",
             obsidian: {
               DEFAULT: '#09090b',
               surface: '#0f1015',
@@ -139,6 +184,41 @@
               500: '#e63956',
               600: '#c92a45'
             }
+          },
+          spacing: {
+            "gutter-mobile": "0.75rem",
+            "space-md": "1rem",
+            "space-xl": "2.5rem",
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "margin": "2rem",
+            "margin-mobile": "1rem",
+            "gutter": "1rem",
+            "space-lg": "1.5rem"
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+            "body-md": ["Inter", "sans-serif"],
+            "label-code": ["JetBrains Mono", "monospace"],
+            "headline-lg": ["Inter", "sans-serif"],
+            "headline-xl": ["Inter", "sans-serif"],
+            "label-timecode": ["JetBrains Mono", "monospace"],
+            "body-sm": ["Inter", "sans-serif"],
+            "body-lg": ["Inter", "sans-serif"],
+            "label-caps": ["Inter", "sans-serif"],
+            "headline-sm": ["Inter", "sans-serif"]
+          },
+          fontSize: {
+            "body-md": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "label-code": ["11px", { "lineHeight": "14px", "fontWeight": "400" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+            "headline-xl": ["40px", { "lineHeight": "48px", "fontWeight": "700" }],
+            "label-timecode": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "body-sm": ["11px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "body-lg": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "label-caps": ["10px", { "lineHeight": "14px", "fontWeight": "600" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
           },
           boxShadow: {
             'glow-coral': '0 0 35px -5px rgba(230, 57, 86, 0.45)',
@@ -948,84 +1028,79 @@
 
   <!-- ============================================================ -->
   <!-- 2. MAIN APPLICATION (Matching Image 1 & Image 2)             -->
+    <!-- ============================================================ -->
+  <!-- 2. MAIN APPLICATION (Minimalist Pure Theater Room)           -->
   <!-- ============================================================ -->
   <div id="appContainer" class="app-container hidden">
 
-    <!-- Top Bar (Image 1 top left: Speaker icon + "Lumière"; top right: Chat icon) -->
-    <header class="top-bar" id="topBar">
-      <div class="top-bar-left">
-        <div class="room-brand-mark" title="Lumière Watch Party">
-          <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="neonPulseGradTop" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#ff0844"/>
-                <stop offset="60%" stop-color="#ff4b2b"/>
-                <stop offset="100%" stop-color="#f72585"/>
-              </linearGradient>
-            </defs>
-            <rect width="100" height="100" rx="24" fill="#111218"/>
-            <rect width="98" height="98" x="1" y="1" rx="23" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
-            <rect x="20" y="20" width="60" height="60" rx="14" stroke="url(#neonPulseGradTop)" stroke-width="5" fill="rgba(255,8,68,0.12)"/>
-            <rect x="25" y="29" width="6" height="8" rx="2" fill="url(#neonPulseGradTop)"/>
-            <rect x="25" y="46" width="6" height="8" rx="2" fill="url(#neonPulseGradTop)"/>
-            <rect x="25" y="63" width="6" height="8" rx="2" fill="url(#neonPulseGradTop)"/>
-            <rect x="69" y="29" width="6" height="8" rx="2" fill="url(#neonPulseGradTop)"/>
-            <rect x="69" y="46" width="6" height="8" rx="2" fill="url(#neonPulseGradTop)"/>
-            <rect x="69" y="63" width="6" height="8" rx="2" fill="url(#neonPulseGradTop)"/>
-            <polygon points="46,38 64,50 46,62" fill="#ffffff"/>
-          </svg>
+    <!-- ================= TOP APP BAR (IMMUTABLE BRAND COMPONENT) ================= -->
+    <header class="top-bar flex justify-between items-center w-full px-6 h-[52px] z-50 fixed top-0 left-0 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/30 shadow-2xl" id="topBar">
+      <!-- Brand Anchor & Room Code -->
+      <div class="flex items-center gap-space-md">
+        <span class="text-headline-sm font-headline-sm font-semibold tracking-wider text-on-surface">Lumière</span>
+        <div class="h-4 w-[1px] bg-outline-variant/40"></div>
+        <!-- Room Code Badge & Host Tag -->
+        <div class="flex items-center gap-space-xs px-2.5 py-1 rounded bg-surface-container-low border border-outline-variant/30">
+          <span class="text-label-code font-label-code text-on-surface" id="roomTitleDisplay">ROOM #F55CYR</span>
+          <span class="px-1 py-0.2 rounded text-label-caps font-label-caps bg-primary-container text-on-secondary-container" id="hostPill"><span id="hostNameDisplay">HOST</span></span>
         </div>
-        <span class="room-heading" id="roomTitleDisplay">Lumière</span>
-        <span class="host-indicator" id="hostPill">
-          <span id="hostNameDisplay">Host</span>
-        </span>
       </div>
 
-      <div class="top-bar-right">
-        <!-- Chat Bubble Button (Image 1 top right) -->
-        <button id="topChatBtn" class="icon-btn" title="Toggle Chat">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
-          </svg>
-          <span id="chatBadge" class="chat-badge hidden">0</span>
+      <!-- Center Navigation Links (Cleaned out as in Stitch) -->
+      <nav class="hidden md:flex items-center gap-space-lg"></nav>
+
+      <!-- Trailing Actions Cluster -->
+      <div class="flex items-center gap-space-sm">
+        <button type="button" class="flex items-center gap-1.5 px-3 py-1 rounded bg-secondary-container hover:bg-primary-container text-on-secondary-container font-label-caps text-label-caps tracking-wider transition-all duration-150 active:scale-95 shadow-lg" id="topInviteBtn" title="Copy Invite Link">
+          <span class="material-symbols-outlined text-[15px]">person_add</span>
+          <span>Invite</span>
+        </button>
+        <button type="button" class="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface/70 hover:text-on-surface text-label-code font-label-code border border-outline-variant/30 transition-all duration-150" id="copyRoomBtn" title="Copy Room ID">
+          <span class="material-symbols-outlined text-[14px]">content_copy</span>
+          <span id="copyRoomCodeText">#F55CYR</span>
+        </button>
+        <!-- Chat Drawer Trigger with Notification Badge -->
+        <button type="button" class="relative p-1.5 ml-1 rounded bg-surface-container-high/40 border border-outline-variant/30 text-on-surface hover:text-primary transition-all duration-150" id="topChatBtn" title="Toggle Theater Chat">
+          <span class="material-symbols-outlined text-[18px]">chat_bubble</span>
+          <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-secondary-container ring-2 ring-surface-container-lowest hidden" id="chatBadge"></span>
         </button>
       </div>
     </header>
 
     <!-- Main Workspace (Stage Area + Slide-in Chat) -->
-    <div class="main-workspace" id="mainWorkspace">
+    <main class="main-workspace relative w-full h-[calc(100vh-52px)] mt-[52px] flex flex-row overflow-hidden bg-surface-container-lowest" id="mainWorkspace">
 
-      <!-- Theater Center Stage -->
-      <section class="stage-section" id="stageSection">
+      <!-- Theater Center Stage Section -->
+      <section class="stage-section flex-1 h-full flex flex-col justify-between items-center p-4 lg:p-6 transition-all duration-300 relative" id="stageSection">
 
-        <!-- Stage Cinema Group: wraps cinema stage + participants so they collectively drop down in idle mode -->
-        <div class="stage-cinema-group" id="stageCinemaGroup">
+        <!-- Stage Cinema Group -->
+        <div class="stage-cinema-group w-full max-w-[1240px] flex-1 flex flex-col justify-center items-center relative my-auto" id="stageCinemaGroup">
 
-          <!-- Top Participant Area (Balances participant videos above the movie in portrait mode) -->
+          <!-- Ambient Backlight Halo behind the canvas -->
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+            <div class="w-4/5 h-3/5 rounded-[40px] bg-tertiary/10 blur-[120px] transition-all duration-700 cinema-ambient-glow"></div>
+          </div>
+
+          <!-- Top Participant Area (For portrait mode) -->
           <div class="participants-tile-area participants-top-area hidden" id="participantTopArea">
-            <div class="participants-row" id="participantStripTop">
-              <!-- Dynamic cards placed above screen in portrait mode -->
-            </div>
+            <div class="participants-row" id="participantStripTop"></div>
           </div>
 
           <!-- Cinema Stage Wrapper (Houses ambient glow canvas strictly behind cinema box) -->
-          <div class="cinema-stage-wrapper" id="cinemaStageWrapper">
+          <div class="cinema-stage-wrapper relative w-full aspect-video rounded-xl overflow-hidden specular-rim bg-surface-container-low border border-white/5 group z-10" id="cinemaStageWrapper">
             <!-- Windows-Style App Title Bar for Movie Screen -->
             <div class="window-title-bar hidden" id="movieWindowTitleBar">
               <div class="window-title-left">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                  <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"></polygon>
-                </svg>
+                <span class="material-symbols-outlined text-[14px]">movie</span>
                 <span class="window-title-name">Movie Screen</span>
                 <span class="window-size-badge" id="movieWindowSizeBadge">100%</span>
               </div>
               <div class="window-title-right">
                 <button type="button" class="window-action-btn" id="movieWindowResetBtn" title="Reset Size to 16:9 Standard">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
+                  <span class="material-symbols-outlined text-[12px]">restart_alt</span>
                 </button>
                 <button type="button" class="window-action-btn window-dock-btn" id="movieWindowDockBtn" title="Dock back to theater layout">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M4 10h6m0 0V4m0 6L3 3m17 7h-6m0 0V4m0 6l7-7"></path></svg>
+                  <span class="material-symbols-outlined text-[12px]">fit_screen</span>
                   <span>Dock</span>
                 </button>
               </div>
@@ -1041,686 +1116,503 @@
             <div class="window-resize-handle handle-se" data-direction="se"></div>
             <div class="window-resize-handle handle-sw" data-direction="sw"></div>
 
-            <!-- Ambient Cinema Glow Canvas (Radiates dynamic blurred color glow strictly behind stage) -->
+            <!-- Ambient Cinema Glow Canvas -->
             <canvas id="ambientGlowCanvas" class="ambient-glow-canvas"></canvas>
 
-          <!-- Main Cinema Frame (Image 1 Center) -->
-          <div class="cinema-box" id="cinemaBox">
-          <video id="moviePlayer" preload="auto" playsinline crossorigin="anonymous"></video>
-          <video id="screenSharePlayer" class="screen-share-player hidden" autoplay playsinline></video>
-          <div id="youtubePlayerBox" class="youtube-player-box hidden">
-            <div id="youtubeIframe"></div>
-          </div>
+            <!-- Main Cinema Frame (16:9 Stage Screen) -->
+            <div class="cinema-box w-full h-full relative overflow-hidden bg-black flex items-center justify-center" id="cinemaBox">
+              <video id="moviePlayer" preload="auto" playsinline crossorigin="anonymous"></video>
+              <video id="screenSharePlayer" class="screen-share-player hidden" autoplay playsinline></video>
 
-          <!-- Streaming Platform Theater Stage (Netflix, Prime Video, JioHotstar, Zee5, etc.) -->
-          <div id="streamingPlayerBox" class="streaming-player-box hidden">
-            <div class="streaming-backdrop" id="streamingBackdrop"></div>
-            <div class="streaming-cinema-card">
-              <div class="streaming-badge-row">
-                <div class="streaming-platform-pill" id="streamingPlatformPill">
-                  <span class="streaming-platform-dot"></span>
-                  <span id="streamingPlatformName">Netflix</span>
-                </div>
-                <div class="streaming-live-tag">
-                  <span class="live-dot pulse"></span>
-                  <span>LUMIÈRE SYNC ACTIVE</span>
+              <div id="youtubePlayerBox" class="youtube-player-box hidden">
+                <div id="youtubeIframe"></div>
+              </div>
+
+              <!-- Streaming Platform Theater Stage -->
+              <div id="streamingPlayerBox" class="streaming-player-box hidden">
+                <div class="streaming-backdrop" id="streamingBackdrop"></div>
+                <div class="streaming-cinema-card">
+                  <div class="streaming-badge-row">
+                    <div class="streaming-platform-pill" id="streamingPlatformPill">
+                      <span class="streaming-platform-dot"></span>
+                      <span id="streamingPlatformName">Netflix</span>
+                    </div>
+                    <div class="streaming-live-tag">
+                      <span class="live-dot pulse"></span>
+                      <span>LUMIÈRE SYNC ACTIVE</span>
+                    </div>
+                  </div>
+
+                  <h2 class="streaming-content-title" id="streamingContentTitle">Stranger Things</h2>
+
+                  <p class="streaming-content-desc" id="streamingContentDesc">
+                    Streaming party is live. Open your video to stay frame-synchronized via the Lumière Extension, or share this video tab directly into the theater stage!
+                  </p>
+
+                  <div class="streaming-actions-grid">
+                    <a id="streamingLaunchBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary streaming-launch-action">
+                      <span class="material-symbols-outlined text-[17px]">open_in_new</span>
+                      <span id="streamingLaunchText">Open in Netflix</span>
+                    </a>
+
+                    <button type="button" id="streamingShareTabBtn" class="btn btn-secondary streaming-share-action">
+                      <span class="material-symbols-outlined text-[17px]">screen_share</span>
+                      <span>Share Video into Theater</span>
+                    </button>
+
+                    <button type="button" id="streamingExtensionBtn" class="btn btn-glass streaming-ext-action">
+                      <span class="material-symbols-outlined text-[17px]">extension</span>
+                      <span>Get Sync Extension</span>
+                    </button>
+                  </div>
+
+                  <!-- Real-Time Playback Synchronization Metrics -->
+                  <div class="streaming-sync-status-bar">
+                    <div class="sync-status-metric">
+                      <span class="metric-label">PLAYBACK STATE</span>
+                      <span class="metric-value" id="streamingPlayStatus">Playing</span>
+                    </div>
+                    <div class="sync-status-metric">
+                      <span class="metric-label">CURRENT POSITION</span>
+                      <span class="metric-value" id="streamingTimeDisplay">00:00:00</span>
+                    </div>
+                    <div class="sync-status-metric">
+                      <span class="metric-label">MICRO-STEERING</span>
+                      <span class="metric-value green" id="streamingDriftStatus">Synchronized (&lt; 0.05s drift)</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <h2 class="streaming-content-title" id="streamingContentTitle">Stranger Things</h2>
-
-              <p class="streaming-content-desc" id="streamingContentDesc">
-                Streaming party is live. Open your video to stay frame-synchronized via the Lumière Extension, or share this video tab directly into the theater stage!
-              </p>
-
-              <div class="streaming-actions-grid">
-                <a id="streamingLaunchBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary streaming-launch-action">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                    <polyline points="15 3 21 3 21 9"></polyline>
-                    <line x1="10" y1="14" x2="21" y2="3"></line>
-                  </svg>
-                  <span id="streamingLaunchText">Open in Netflix</span>
-                </a>
-
-                <button type="button" id="streamingShareTabBtn" class="btn btn-secondary streaming-share-action">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                    <line x1="8" y1="21" x2="16" y2="21"></line>
-                    <line x1="12" y1="17" x2="12" y2="21"></line>
-                  </svg>
-                  <span>Share Video into Theater</span>
-                </button>
-
-                <button type="button" id="streamingExtensionBtn" class="btn btn-glass streaming-ext-action">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                  </svg>
-                  <span>Get Sync Extension</span>
-                </button>
+              <!-- Drag and Drop Subtitle File Target Overlay -->
+              <div id="subtitleDropOverlay" class="subtitle-drop-overlay hidden">
+                <span class="material-symbols-outlined text-[34px]">subtitles</span>
+                <span>Drop .SRT or .VTT file here to load subtitles</span>
               </div>
 
-              <!-- Real-Time Playback Synchronization Metrics -->
-              <div class="streaming-sync-status-bar">
-                <div class="sync-status-metric">
-                  <span class="metric-label">PLAYBACK STATE</span>
-                  <span class="metric-value" id="streamingPlayStatus">Playing</span>
+              <!-- Mobile Touch Gesture Skip Feedback Overlay -->
+              <div id="mobileGestureOverlay" class="mobile-gesture-overlay hidden">
+                <div id="gestureLeftIndicator" class="gesture-indicator-side gesture-left hidden">
+                  <span class="gesture-pill">-10s</span>
                 </div>
-                <div class="sync-status-metric">
-                  <span class="metric-label">CURRENT POSITION</span>
-                  <span class="metric-value" id="streamingTimeDisplay">00:00:00</span>
-                </div>
-                <div class="sync-status-metric">
-                  <span class="metric-label">MICRO-STEERING</span>
-                  <span class="metric-value green" id="streamingDriftStatus">Synchronized (&lt; 0.05s drift)</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Drag and Drop Subtitle File Target Overlay -->
-          <div id="subtitleDropOverlay" class="subtitle-drop-overlay hidden">
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="17 8 12 3 7 8"></polyline>
-              <line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg>
-            <span>Drop .SRT or .VTT file here to load subtitles</span>
-          </div>
-
-          <!-- Mobile Touch Gesture Skip Feedback Overlay -->
-          <div id="mobileGestureOverlay" class="mobile-gesture-overlay hidden">
-            <div id="gestureLeftIndicator" class="gesture-indicator-side gesture-left hidden">
-              <span class="gesture-pill">-10s</span>
-            </div>
-            <div id="gestureRightIndicator" class="gesture-indicator-side gesture-right hidden">
-              <span class="gesture-pill">+10s</span>
-            </div>
-          </div>
-
-          <!-- Screen Hold to Resize & Reposition Indicator Ring -->
-          <div id="videoHoldIndicator" class="video-hold-indicator hidden" aria-hidden="true">
-            <div class="hold-ring-wrapper">
-              <svg class="hold-progress-svg" width="76" height="76" viewBox="0 0 76 76">
-                <circle class="hold-ring-bg" cx="38" cy="38" r="32" />
-                <circle class="hold-ring-progress" id="holdRingProgress" cx="38" cy="38" r="32" />
-              </svg>
-              <div class="hold-icon-center">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="15 3 21 3 21 9"></polyline>
-                  <polyline points="9 21 3 21 3 15"></polyline>
-                  <line x1="21" y1="3" x2="14" y2="10"></line>
-                  <line x1="3" y1="21" x2="10" y2="14"></line>
-                </svg>
-              </div>
-            </div>
-            <div class="hold-tooltip-badge">Hold to Pop Out Window</div>
-          </div>
-
-          <!-- Active Room Poll Floating Widget -->
-          <div id="activePollWidget" class="active-poll-widget hidden">
-            <div class="poll-widget-header">
-              <div class="poll-badge-live">LIVE POLL</div>
-              <button type="button" id="closePollWidgetBtn" class="poll-close-btn" title="Dismiss Poll">&times;</button>
-            </div>
-            <h4 id="pollWidgetQuestion" class="poll-widget-question">What movie should we watch?</h4>
-            <div id="pollWidgetOptions" class="poll-widget-options"></div>
-            <div class="poll-widget-footer">
-              <span id="pollTotalVotesText">0 votes</span>
-            </div>
-          </div>
-
-          <!-- Empty Cinema State (Avatar in center when no movie is playing) -->
-          <div id="stagePlaceholder" class="stage-placeholder">
-            <div class="stage-center-avatar" id="stageCenterAvatar">
-              <img id="stageAvatarImg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23949ba4'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Active Cinema Host Avatar">
-            </div>
-            <button id="openMovieLibraryBtn" class="btn btn-primary host-only-btn load-movie-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"></polygon>
-              </svg>
-              <span>Load Movie from PC</span>
-            </button>
-          </div>
-
-          <!-- Live Screen Reactions Container -->
-          <div class="reaction-burst-container" id="reactionBurstContainer"></div>
-
-          <!-- Top Right Cinema Volume HUD Indicator -->
-          <div class="cinema-volume-meter hidden" id="cinemaVolumeMeter">
-            <svg id="meterVolHighIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-            </svg>
-            <svg id="meterVolMuteIcon" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
-            </svg>
-            <div class="meter-bar-track">
-              <div class="meter-bar-fill" id="meterBarFill"></div>
-            </div>
-            <span class="meter-value" id="meterValueText">100%</span>
-          </div>
-
-          <!-- Top Left Broadcaster Pill (Repositioned to top-left to eliminate control overlap) -->
-          <div class="stage-bottom-tag" id="stageBottomTag">
-            <span class="stage-pill-dot" id="stageLiveDot"></span>
-            <svg id="stageMicIcon" class="tag-mic-icon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.12L12 8.14V5a3 3 0 0 1 3 3v3.12zM4.41 2.86L3 4.27l6 6V11a3 3 0 0 0 3 3c.39 0 .76-.08 1.1-.21l2.45 2.45C14.39 16.73 13.24 17 12 17c-3.87 0-7-3.13-7-7H3a9 9 0 0 0 8 8.94V21h2v-2.06c1.38-.17 2.66-.67 3.75-1.42l2.84 2.84 1.41-1.41L4.41 2.86z"/>
-            </svg>
-            <span id="stageUsername" class="stage-username-text">Stream</span>
-          </div>
-
-          <!-- Tap Unmute Banner for mobile browsers -->
-          <button id="unmuteMovieBanner" class="unmute-banner hidden">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
-            </svg>
-            <span>Tap to Enable Audio</span>
-          </button>
-
-          <!-- Cinema Controls Overlay (Auto-Hides) -->
-          <div class="cinema-controls-hud" id="cinemaControls">
-            <div class="hud-timeline-container" id="timelineContainer">
-              <div class="hud-timeline-bar" id="timelineBar">
-                <div class="hud-buffered" id="timelineBuffered"></div>
-                <div class="hud-progress" id="timelineProgress"></div>
-                <div class="hud-thumb" id="timelineThumb"></div>
-              </div>
-              <div class="hud-hover-time" id="timelineHoverTime">00:00</div>
-            </div>
-
-            <div class="hud-row">
-              <div class="hud-left">
-                <!-- Play / Pause Circular Button -->
-                <button id="playPauseBtn" class="hud-circle-btn" title="Play/Pause (Space)">
-                  <svg id="playIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                  </svg>
-                  <svg id="pauseIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <rect x="6" y="4" width="4" height="16" rx="1"></rect>
-                    <rect x="14" y="4" width="4" height="16" rx="1"></rect>
-                  </svg>
-                </button>
-
-                <!-- Stop Movie / Return to Stage Button -->
-                <button id="stopMovieBtn" class="hud-icon-btn host-only-control" title="Stop Movie (Eject to Stage)">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <rect x="5" y="5" width="14" height="14" rx="2"></rect>
-                  </svg>
-                </button>
-
-                <!-- Rewind 10s -->
-                <button id="rewind10Btn" class="hud-icon-btn host-only-control" title="Rewind 10s">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                    <path d="M3 3v5h5"></path>
-                    <text x="12" y="15.5" font-size="7.5" font-family="sans-serif" font-weight="bold" fill="currentColor" text-anchor="middle" stroke="none">10</text>
-                  </svg>
-                </button>
-
-                <!-- Forward 10s -->
-                <button id="forward10Btn" class="hud-icon-btn host-only-control" title="Forward 10s">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
-                    <path d="M21 3v5h-5"></path>
-                    <text x="12" y="15.5" font-size="7.5" font-family="sans-serif" font-weight="bold" fill="currentColor" text-anchor="middle" stroke="none">10</text>
-                  </svg>
-                </button>
-
-                <!-- Volume Slider Group -->
-                <div class="hud-volume-group">
-                  <button id="volumeToggleBtn" class="hud-icon-btn" title="Toggle Mute (M)">
-                    <svg id="volHighIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
-                    </svg>
-                    <svg id="volMuteIcon" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
-                    </svg>
-                  </button>
-                  <input type="range" id="volumeSlider" min="0" max="100" step="1" value="100" class="hud-slider" title="Volume">
-                </div>
-
-                <!-- Time Display -->
-                <div class="hud-time">
-                  <span id="currentTimeDisplay">00:00</span>
-                  <span class="hud-time-slash">/</span>
-                  <span id="durationDisplay">00:00</span>
+                <div id="gestureRightIndicator" class="gesture-indicator-side gesture-right hidden">
+                  <span class="gesture-pill">+10s</span>
                 </div>
               </div>
 
-              <div class="hud-right">
-                <!-- Audio Selector Pill -->
-                <div class="hud-pill-group host-only-control" id="audioPickerGroup" title="Select Audio Track">
-                  <svg class="hud-pill-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 18V5l12-2v13"></path>
-                    <circle cx="6" cy="18" r="3"></circle>
-                    <circle cx="18" cy="16" r="3"></circle>
+              <!-- Windows Pop-Out Press-and-Hold Indicator Overlay -->
+              <div id="videoHoldIndicator" class="video-hold-indicator hidden">
+                <div class="hold-ring-wrapper">
+                  <svg class="hold-ring-svg" viewBox="0 0 48 48">
+                    <circle class="hold-ring-bg" cx="24" cy="24" r="20"></circle>
+                    <circle id="holdRingProgress" class="hold-ring-fg" cx="24" cy="24" r="20"></circle>
                   </svg>
-                  <select id="audioTrackSelect" class="hud-select">
-                    <option value="0">Default</option>
-                  </select>
+                  <span class="material-symbols-outlined text-[18px]">picture_in_picture_alt</span>
                 </div>
+                <span class="hold-label">Hold to pop out window...</span>
+              </div>
 
-                <!-- Subtitle Selector Pill with Settings Button -->
-                <div class="hud-pill-group host-only-control" id="subtitlePickerGroup" title="Select Subtitles">
-                  <svg class="hud-pill-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect>
-                    <path d="M7 15h3M7 11h2M14 15h3M14 11h1"></path>
-                  </svg>
-                  <select id="subtitleTrackSelect" class="hud-select">
-                    <option value="off">Off</option>
-                  </select>
-                  <button type="button" id="subtitleSettingsBtn" class="hud-sub-gear-btn" title="Subtitle Settings & Timing Delay">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
-                    </svg>
+              <!-- Active Poll HUD Widget Overlay (Displays over the movie for all viewers) -->
+              <div id="activePollWidget" class="active-poll-widget hidden">
+                <div class="poll-widget-header">
+                  <div class="poll-widget-badge">LIVE CINEMA POLL</div>
+                  <button type="button" id="closePollWidgetBtn" class="poll-widget-close-btn" title="Dismiss Poll">
+                    <span class="material-symbols-outlined text-[14px]">close</span>
                   </button>
                 </div>
-
-                <!-- Playback Speed Selector Pill -->
-                <div class="hud-pill-group host-only-control" id="speedPickerGroup" title="Playback Speed">
-                  <svg class="hud-pill-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M12 2v2"></path>
-                    <path d="M4.93 4.93l1.41 1.41"></path>
-                    <path d="M20 12h2"></path>
-                    <path d="M2 12h2"></path>
-                    <path d="M17.66 6.34l1.41-1.41"></path>
-                    <path d="M12 6a6 6 0 1 0 6 6"></path>
-                    <path d="m14 10-3 3"></path>
-                  </svg>
-                  <select id="speedSelect" class="hud-select">
-                    <option value="0.5">0.5x</option>
-                    <option value="0.75">0.75x</option>
-                    <option value="1" selected>1.0x</option>
-                    <option value="1.25">1.25x</option>
-                    <option value="1.5">1.5x</option>
-                    <option value="2">2.0x</option>
-                  </select>
+                <div class="poll-widget-question" id="pollWidgetQuestion">Loading poll...</div>
+                <div class="poll-widget-options" id="pollWidgetOptions"></div>
+                <div class="poll-widget-footer">
+                  <span id="pollTotalVotesText">0 votes submitted</span>
                 </div>
+              </div>
 
-                <!-- Ambient Glow Toggle Button -->
-                <button type="button" id="ambientToggleBtn" class="hud-icon-btn active-toggle" title="Toggle Ambient Cinema Glow">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <line x1="12" y1="1" x2="12" y2="3"></line>
-                    <line x1="12" y1="21" x2="12" y2="23"></line>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                    <line x1="1" y1="12" x2="3" y2="12"></line>
-                    <line x1="21" y1="12" x2="23" y2="12"></line>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                  </svg>
-                </button>
-
-                <!-- Picture in Picture (PiP) Button -->
-                <button type="button" id="pipBtn" class="hud-icon-btn" title="Picture in Picture (P)">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
-                    <rect x="12" y="10" width="8" height="7" rx="1" fill="currentColor"></rect>
-                  </svg>
-                </button>
-
-                <!-- Fullscreen Toggle Button -->
-                <button id="hudFullscreenBtn" class="hud-icon-btn" title="Toggle Fullscreen (F)">
-                  <svg id="hudFullscreenExpand" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-                  </svg>
-                  <svg id="hudFullscreenCompress" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
-                  </svg>
+              <!-- Center Stage Placeholder (Default before host loads movie) -->
+              <div class="stage-placeholder" id="stagePlaceholder">
+                <div class="stage-center-avatar" id="stageCenterAvatar">
+                  <img id="stageAvatarImg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e2e2eb'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Active Cinema Host Avatar">
+                </div>
+                <button type="button" id="openMovieLibraryBtn" class="btn btn-primary host-only-btn load-movie-btn flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary-container hover:bg-primary-container text-white font-medium transition-all shadow-lg active:scale-95">
+                  <span class="material-symbols-outlined text-[18px]">movie</span>
+                  <span>Load Movie from PC</span>
                 </button>
               </div>
+
+              <!-- Live Screen Reactions Container -->
+              <div class="reaction-burst-container" id="reactionBurstContainer"></div>
+
+              <!-- Top Right Cinema Volume HUD Indicator -->
+              <div class="cinema-volume-meter hidden" id="cinemaVolumeMeter">
+                <span id="meterVolHighIcon" class="material-symbols-outlined text-[18px]">volume_up</span>
+                <span id="meterVolMuteIcon" class="material-symbols-outlined text-[18px] hidden">volume_off</span>
+                <div class="meter-bar-track">
+                  <div class="meter-bar-fill" id="meterBarFill"></div>
+                </div>
+                <span class="meter-value" id="meterValueText">100%</span>
+              </div>
+
+              <!-- Top Left Broadcaster Pill -->
+              <div class="stage-bottom-tag" id="stageBottomTag">
+                <span class="stage-pill-dot" id="stageLiveDot"></span>
+                <span id="stageMicIcon" class="material-symbols-outlined tag-mic-icon text-[13px]">mic</span>
+                <span id="stageUsername" class="stage-username-text">Stream</span>
+              </div>
+
+              <!-- Tap Unmute Banner for mobile browsers -->
+              <button type="button" id="unmuteMovieBanner" class="unmute-banner hidden">
+                <span class="material-symbols-outlined text-[16px]">volume_off</span>
+                <span>Tap to Enable Audio</span>
+              </button>
+
+              <!-- IN-PLAYER TOP HUD (Shows seamlessly on hover) -->
+              <div class="in-player-top-hud absolute top-0 inset-x-0 p-4 flex justify-between items-center bg-gradient-to-b from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">
+                <div class="flex items-center gap-space-sm pointer-events-auto">
+                  <span class="px-2.5 py-1 rounded bg-black/60 backdrop-blur-md border border-white/10 text-label-code font-label-code text-on-surface">
+                    Host: <span class="text-tertiary" id="hudHostTag">Host (Direct Feed)</span>
+                  </span>
+                </div>
+                <div class="flex items-center gap-space-xs pointer-events-auto">
+                  <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-label-code font-label-code text-tertiary">
+                    <span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+                    Synchronized 0.00s drift
+                  </span>
+                </div>
+              </div>
+
+              <!-- IN-PLAYER BOTTOM HUD & AMBER SCRUBBER -->
+              <div class="cinema-controls-hud absolute bottom-0 inset-x-0 p-4 pt-10 flex flex-col gap-2.5 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20" id="cinemaControls">
+                <!-- Scrubber Track -->
+                <div class="relative w-full h-3 flex items-center cursor-pointer group/scrubber" id="timelineContainer">
+                  <!-- Background Rail -->
+                  <div class="w-full h-1 bg-surface-bright/50 rounded-full overflow-hidden" id="timelineBar">
+                    <!-- Buffer progress -->
+                    <div class="w-[0%] h-full bg-white/20 transition-all" id="timelineBuffered"></div>
+                  </div>
+                  <!-- Played Progress Amber Bar -->
+                  <div class="absolute left-0 top-1 h-1 bg-tertiary rounded-full shadow-[0_0_8px_rgba(255,185,95,0.8)]" id="timelineProgress" style="width: 0%;"></div>
+                  <!-- Playhead Thumb -->
+                  <div class="absolute top-0.5 -ml-2 w-3 h-3 rounded-full bg-on-secondary-container border border-surface-container-lowest shadow-[0_0_10px_rgba(255,185,95,1)] transition-transform group-hover/scrubber:scale-125" id="timelineThumb" style="left: 0%;"></div>
+                  <div class="hud-hover-time hidden" id="timelineHoverTime">00:00</div>
+                </div>
+
+                <!-- Bottom Micro-Controls -->
+                <div class="flex justify-between items-center text-label-code font-label-code">
+                  <div class="flex items-center gap-space-md">
+                    <button type="button" class="text-on-surface hover:text-tertiary transition-colors flex items-center" id="playPauseBtn" title="Play/Pause (Space)">
+                      <span class="material-symbols-outlined text-[20px]" id="playIcon">play_arrow</span>
+                      <span class="material-symbols-outlined text-[20px] hidden" id="pauseIcon">pause</span>
+                    </button>
+                    <!-- Stop Movie / Return to Stage Button -->
+                    <button type="button" id="stopMovieBtn" class="text-on-surface/70 hover:text-rose-500 transition-colors flex items-center host-only-control" title="Stop Movie (Eject to Stage)">
+                      <span class="material-symbols-outlined text-[18px]">stop</span>
+                    </button>
+                    <!-- Rewind 10s -->
+                    <button type="button" id="rewind10Btn" class="text-on-surface/70 hover:text-tertiary transition-colors flex items-center host-only-control" title="Rewind 10s">
+                      <span class="material-symbols-outlined text-[18px]">replay_10</span>
+                    </button>
+                    <!-- Forward 10s -->
+                    <button type="button" id="forward10Btn" class="text-on-surface/70 hover:text-tertiary transition-colors flex items-center host-only-control" title="Forward 10s">
+                      <span class="material-symbols-outlined text-[18px]">forward_10</span>
+                    </button>
+                    <!-- Time Display -->
+                    <div class="text-label-timecode font-label-timecode text-on-surface/90 flex items-center gap-1">
+                      <span class="text-tertiary" id="currentTimeDisplay">00:00</span>
+                      <span class="text-on-surface/40">/</span>
+                      <span class="text-on-surface/60" id="durationDisplay">00:00</span>
+                    </div>
+                    <!-- Volume Slider Group -->
+                    <div class="hidden sm:flex items-center gap-1.5 text-on-surface/60">
+                      <button type="button" id="volumeToggleBtn" class="hover:text-on-surface transition-colors flex items-center" title="Toggle Mute (M)">
+                        <span class="material-symbols-outlined text-[16px]" id="volHighIcon">volume_up</span>
+                        <span class="material-symbols-outlined text-[16px] hidden" id="volMuteIcon">volume_off</span>
+                      </button>
+                      <input type="range" id="volumeSlider" min="0" max="100" step="1" value="100" class="w-16 h-1 bg-white/20 rounded-full appearance-none cursor-pointer accent-tertiary" title="Volume">
+                    </div>
+                  </div>
+
+                  <!-- Selector Pills & Toggles -->
+                  <div class="flex items-center gap-space-xs">
+                    <!-- Audio Track Picker -->
+                    <div class="hud-pill-group host-only-control relative" id="audioPickerGroup" title="Select Audio Track">
+                      <select id="audioTrackSelect" class="px-2 py-0.5 rounded bg-surface-container-high/60 border border-white/10 hover:border-tertiary/60 text-on-surface/80 hover:text-on-surface text-label-code font-label-code transition-colors cursor-pointer appearance-none pr-4">
+                        <option value="0">Default Audio</option>
+                      </select>
+                    </div>
+                    <!-- Subtitle Track Picker -->
+                    <div class="hud-pill-group host-only-control relative flex items-center" id="subtitlePickerGroup" title="Select Subtitles">
+                      <select id="subtitleTrackSelect" class="px-2 py-0.5 rounded bg-surface-container-high/60 border border-white/10 hover:border-tertiary/60 text-on-surface/80 hover:text-on-surface text-label-code font-label-code transition-colors cursor-pointer appearance-none pr-4">
+                        <option value="off">Subtitles Off</option>
+                      </select>
+                      <button type="button" id="subtitleSettingsBtn" class="p-1 text-on-surface/60 hover:text-on-surface" title="Subtitle Settings">
+                        <span class="material-symbols-outlined text-[12px]">settings</span>
+                      </button>
+                    </div>
+                    <!-- Speed Picker -->
+                    <div class="hud-pill-group host-only-control relative flex items-center gap-1" id="speedPickerGroup" title="Playback Speed">
+                      <svg class="hud-pill-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                      </svg>
+                      <select id="speedSelect" class="px-2 py-0.5 rounded bg-surface-container-high/60 border border-white/10 hover:border-tertiary/60 text-on-surface/80 hover:text-on-surface text-label-code font-label-code transition-colors cursor-pointer appearance-none">
+                        <option value="1">1.0x</option>
+                        <option value="0.75">0.75x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                        <option value="2">2.0x</option>
+                      </select>
+                    </div>
+                    <!-- Ambient Toggle -->
+                    <button type="button" id="ambientToggleBtn" class="p-1 rounded text-on-surface/70 hover:text-tertiary transition-colors" title="Toggle Ambient Backlight">
+                      <span class="material-symbols-outlined text-[18px]">wb_incandescent</span>
+                    </button>
+                    <!-- Picture-in-Picture -->
+                    <button type="button" id="pipBtn" class="p-1 rounded text-on-surface/70 hover:text-tertiary transition-colors" title="Picture in Picture">
+                      <span class="material-symbols-outlined text-[18px]">picture_in_picture</span>
+                    </button>
+                    <!-- Fullscreen Expansion Button -->
+                    <button type="button" id="hudFullscreenBtn" class="p-1 rounded text-on-surface/70 hover:text-tertiary transition-colors" title="Cinema Expansion">
+                      <span class="material-symbols-outlined text-[18px]" id="hudFullscreenExpand">aspect_ratio</span>
+                      <span class="material-symbols-outlined text-[18px] hidden" id="hudFullscreenCompress">fullscreen_exit</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
-        </div>
-      </div>
 
-        <!-- Participant Tile Strip (Image 1 Centered beneath stage) -->
-        <div class="participants-tile-area participants-bottom-area" id="participantStripArea">
-          <div class="participants-row" id="participantStrip">
-            <!-- Dynamic cards inserted here -->
+          <!-- BOTTOM AUDITORIUM SPECTATOR TILE ROW -->
+          <div class="w-full max-w-[1240px] flex items-center justify-between gap-space-md z-10 py-2" id="participantStripArea">
+            <!-- Live Participants Stream Strip -->
+            <div class="participants-row flex items-center gap-space-sm overflow-x-auto py-1 scrollbar-none" id="participantStrip">
+              <!-- Rendered dynamically by app.js -->
+            </div>
+            <!-- Room Mesh Quality Metric (Small Stage Anchor) -->
+            <div class="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-low/70 border border-outline-variant/20 text-label-code font-label-code text-on-surface/60 flex-shrink-0">
+              <span class="material-symbols-outlined text-[16px] text-tertiary">hub</span>
+              <span>WebRTC P2P Mesh · 0 Dropped Pkts</span>
+            </div>
           </div>
-        </div>
 
-        </div> <!-- /.stage-cinema-group -->
+        </div>
 
       </section>
 
-      <!-- Discord Chat Sidebar (Matching Image 3) -->
-      <aside class="chat-panel hidden" id="chatSidebar">
-        <div class="chat-panel-header">
-          <div class="chat-panel-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
-            </svg>
-            <span>Stream Room</span>
+      <!-- ================= RIGHT-SIDE THEATRE CHAT / PARTY SYNC SIDEBAR ================= -->
+      <aside class="chat-panel fixed right-0 top-[52px] bottom-0 w-[360px] flex flex-col justify-between p-4 z-40 bg-surface-container-low/95 backdrop-blur-xl border-l border-outline-variant/20 shadow-2xl transition-transform duration-300 hidden" id="chatSidebar">
+        <!-- Panel Header & Navigation Switcher -->
+        <div class="flex flex-col gap-3 pb-3 border-b border-outline-variant/20">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-headline-sm font-headline-sm font-bold text-on-surface" id="chatRoomName">Screening Room</h2>
+            </div>
+            <!-- Close / Collapse Sidebar -->
+            <button type="button" class="p-1 rounded text-on-surface/50 hover:text-on-surface hover:bg-surface-container-high/40 transition-colors" id="closeChatBtn" title="Close Chat">
+              <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
           </div>
-          <button id="closeChatBtn" class="chat-close-btn" title="Close Chat">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
+
+          <!-- Tab Links (Exact match with Stitch SideNavBar schema) -->
+          <div class="grid grid-cols-4 gap-1 p-0.5 rounded-lg bg-surface-container-lowest border border-outline-variant/20">
+            <button type="button" class="chat-tab-btn active text-primary border-l-2 border-primary bg-surface-container-high/30 px-2 py-1.5 font-medium text-label-code font-label-code flex flex-col items-center gap-0.5" data-tab="chat">
+              <span class="material-symbols-outlined text-[16px]">chat_bubble</span>
+              <span class="text-[9px]">Chat</span>
+            </button>
+            <button type="button" class="chat-tab-btn text-on-surface/50 px-2 py-1.5 font-normal text-label-code font-label-code flex flex-col items-center gap-0.5 hover:text-on-surface transition-colors" data-tab="sync">
+              <span class="material-symbols-outlined text-[16px]">sync</span>
+              <span class="text-[9px]">Sync</span>
+            </button>
+            <button type="button" class="chat-tab-btn text-on-surface/50 px-2 py-1.5 font-normal text-label-code font-label-code flex flex-col items-center gap-0.5 hover:text-on-surface transition-colors" data-tab="mesh">
+              <span class="material-symbols-outlined text-[16px]">graphic_eq</span>
+              <span class="text-[9px]">Mesh</span>
+            </button>
+            <button type="button" class="chat-tab-btn text-on-surface/50 px-2 py-1.5 font-normal text-label-code font-label-code flex flex-col items-center gap-0.5 hover:text-on-surface transition-colors" data-tab="config">
+              <span class="material-symbols-outlined text-[16px]">settings</span>
+              <span class="text-[9px]">Config</span>
+            </button>
+          </div>
         </div>
 
-        <!-- Chat Messages List (Empty state matches Image 3) -->
-        <div class="chat-messages-scroll" id="chatMessages">
+        <!-- Scrollable Message Feed -->
+        <div class="chat-messages-container flex-1 overflow-y-auto py-3 space-y-3.5 pr-1" id="chatMessages">
           <div class="chat-welcome-hero" id="chatWelcomeHero">
-            <div class="welcome-icon-circle">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
-              </svg>
+            <span class="hero-welcome-badge">ROOM MESSAGES</span>
+            <p class="hero-welcome-title">Synchronized Theater Chat</p>
+          </div>
+          <div class="chat-reaction-burst-container" id="chatReactionBurstContainer"></div>
+        </div>
+
+        <!-- Quick Reactions Tray & Emoji Picker -->
+        <div class="chat-emoji-picker hidden" id="chatEmojiPicker">
+          <div class="emoji-picker-header">
+            <span class="emoji-picker-title">EMOJIS</span>
+            <div class="emoji-picker-tabs">
+              <button type="button" class="emoji-tab-btn active" data-category="cinema" title="Cinema & Vibes">[CINEMA]</button>
+              <button type="button" class="emoji-tab-btn" data-category="popular" title="Reactions">[REACT]</button>
+              <button type="button" class="emoji-tab-btn" data-category="hype" title="Hype & Love">[HYPE]</button>
             </div>
-            <h3>Welcome to Stream Room!</h3>
-            <p>This is the start of the Stream Room channel.</p>
+          </div>
+          <div class="emoji-picker-search-bar">
+            <input type="text" id="emojiSearchInput" placeholder="Search reactions..." autocomplete="off">
+          </div>
+          <div class="emoji-picker-grid" id="emojiPickerGrid"></div>
+        </div>
+
+        <div class="chat-reactions-tray hidden" id="chatReactionsTray">
+          <span class="reactions-tray-label">REACTION</span>
+          <div class="reaction-tray-buttons">
+            <button type="button" class="reaction-item-btn" data-emoji="[LOVE]" title="Love">[LOVE]</button>
+            <button type="button" class="reaction-item-btn" data-emoji="[FIRE]" title="Fire">[FIRE]</button>
+            <button type="button" class="reaction-item-btn" data-emoji="[POP]" title="Popcorn">[POP]</button>
+            <button type="button" class="reaction-item-btn" data-emoji="[CLAP]" title="Applause">[CLAP]</button>
+            <button type="button" class="reaction-item-btn" data-emoji="[HYPE]" title="Hype">[HYPE]</button>
           </div>
         </div>
 
-        <!-- Chat Reaction Particles Container -->
-        <div class="chat-reaction-burst-container" id="chatReactionBurstContainer"></div>
-
-        <!-- Bottom Chat Input Bar with Popovers -->
-        <div class="chat-bottom-wrapper">
-          <!-- Emoji Picker Popover -->
-          <div class="chat-emoji-picker hidden" id="chatEmojiPicker">
-            <div class="emoji-picker-header">
-              <span class="emoji-picker-title">EMOJIS</span>
-              <div class="emoji-picker-tabs">
-                <button type="button" class="emoji-tab-btn active" data-category="cinema" title="Cinema & Vibes">🍿</button>
-                <button type="button" class="emoji-tab-btn" data-category="popular" title="Reactions">😂</button>
-                <button type="button" class="emoji-tab-btn" data-category="hype" title="Hype & Love">🔥</button>
-                <button type="button" class="emoji-tab-btn" data-category="gestures" title="Gestures">👏</button>
-              </div>
-            </div>
-            <div class="emoji-picker-search-bar">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <input type="text" id="emojiSearchInput" placeholder="Search emojis..." autocomplete="off">
-            </div>
-            <div class="emoji-picker-grid" id="emojiPickerGrid">
-              <!-- Rendered dynamically -->
-            </div>
-          </div>
-
-          <!-- Quick Reactions Tray (Replaces GIF popup) -->
-          <div class="chat-reactions-tray hidden" id="chatReactionsTray">
-            <span class="reactions-tray-label">REACTION</span>
-            <div class="reaction-tray-buttons">
-              <button type="button" class="reaction-item-btn" data-emoji="❤️" title="Love">❤️</button>
-              <button type="button" class="reaction-item-btn" data-emoji="🔥" title="Fire">🔥</button>
-              <button type="button" class="reaction-item-btn" data-emoji="🍿" title="Popcorn">🍿</button>
-              <button type="button" class="reaction-item-btn" data-emoji="👏" title="Applause">👏</button>
-              <button type="button" class="reaction-item-btn" data-emoji="😂" title="Laugh">😂</button>
-              <button type="button" class="reaction-item-btn" data-emoji="😮" title="Shock">😮</button>
-              <button type="button" class="reaction-item-btn" data-emoji="🚀" title="Hype">🚀</button>
-              <button type="button" class="reaction-item-btn" data-emoji="🎉" title="Party">🎉</button>
-              <button type="button" class="reaction-item-btn" data-emoji="💀" title="Dead">💀</button>
-            </div>
-          </div>
-
-          <form class="chat-compose-bar" id="chatForm">
-            <div class="chat-pill-input-box">
-              <input type="text" id="chatInput" placeholder="Message Stream Room" autocomplete="off">
-              <div class="chat-input-right-icons">
-                <button type="button" id="chatEmojiBtn" class="chat-action-icon-btn" title="Add Emoji">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
-                  </svg>
-                </button>
-                <button type="button" id="chatReactionBtn" class="chat-action-icon-btn chat-reaction-trigger-btn" title="Send Live Reaction">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                  </svg>
-                </button>
-              </div>
+        <!-- Message Composer -->
+        <div class="pt-3 border-t border-outline-variant/20 flex flex-col gap-2.5 pb-2">
+          <form class="chat-compose-bar relative flex items-center" id="chatForm">
+            <input class="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg pl-3 pr-20 py-2.5 text-body-sm font-body-sm text-on-surface placeholder:text-on-surface/30 focus:outline-none focus:border-secondary-container transition-all" id="chatInput" placeholder="Comment with live timecode [00:00:00]..." type="text" autocomplete="off">
+            <div class="absolute right-1.5 flex items-center gap-1">
+              <button type="button" class="p-1 rounded text-on-surface/40 hover:text-tertiary transition-colors" id="chatTimecodeStampBtn" title="Stamp current timecode">
+                <span class="material-symbols-outlined text-[16px]">schedule</span>
+              </button>
+              <button type="button" class="p-1 rounded text-on-surface/40 hover:text-primary transition-colors hidden" id="chatEmojiBtn" title="Add Reaction">
+                <span class="material-symbols-outlined text-[16px]">mood</span>
+              </button>
+              <button type="button" class="p-1 rounded text-on-surface/40 hover:text-tertiary transition-colors hidden" id="chatReactionBtn" title="Live Reaction">
+                <span class="material-symbols-outlined text-[16px]">favorite</span>
+              </button>
+              <button type="submit" class="p-1.5 rounded-md bg-secondary-container hover:bg-primary-container text-on-secondary-container transition-all" title="Send Message">
+                <span class="material-symbols-outlined text-[14px]">send</span>
+              </button>
             </div>
           </form>
         </div>
       </aside>
 
-    </div>
+    </main>
 
-    <!-- ============================================================ -->
-    <!-- 3. FLOATING ACTION DOCK (Image 1 Bottom Dock)                -->
-    <!-- Auto-hides on 3-second mouse idle (Image 2)                  -->
-    <!-- ============================================================ -->
-    <footer class="dock-wrapper" id="dockWrapper">
-      <div class="dock-container">
+    <!-- ================= FLOATING ACTION DOCK (TACTILE GLASS CAPSULE) ================= -->
+    <footer class="dock-wrapper w-full flex justify-center items-center py-2 z-30 fixed bottom-2 inset-x-0 pointer-events-none" id="dockWrapper">
+      <div class="floating-pill-dock h-14 px-3 rounded-full bg-surface-container-low/85 backdrop-blur-2xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.85)] flex items-center gap-space-xs specular-rim pointer-events-auto">
+        <!-- Left Corner Invite Button (hidden fallback for backward compatibility) -->
+        <button id="dockInviteBtn" class="corner-icon-btn hidden" title="Copy Invite Link"></button>
 
-        <!-- Left corner: Invite button (Image 1 bottom left) -->
-        <button id="dockInviteBtn" class="corner-icon-btn" title="Copy Invite Link">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-          </svg>
-        </button>
-
-        <!-- Center floating action pill dock (Image 1) -->
-        <div class="floating-pill-dock">
-
-          <!-- 1. Mic Button with Chevron -->
-          <div class="split-dock-btn" id="micSplitBtn">
-            <button id="toggleMicBtn" class="pill-btn pill-btn-muted" title="Mute/Unmute">
-              <!-- Mic on icon -->
-              <svg id="micOnIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-              </svg>
-              <!-- Mic off icon (default in Image 1) -->
-              <svg id="micOffIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.12L12 8.14V5a3 3 0 0 1 3 3v3.12zM4.41 2.86L3 4.27l6 6V11a3 3 0 0 0 3 3c.39 0 .76-.08 1.1-.21l2.45 2.45C14.39 16.73 13.24 17 12 17c-3.87 0-7-3.13-7-7H3a9 9 0 0 0 8 8.94V21h2v-2.06c1.38-.17 2.66-.67 3.75-1.42l2.84 2.84 1.41-1.41L4.41 2.86z"/>
-              </svg>
-            </button>
-            <button id="micDeviceDropdownBtn" class="pill-chevron-btn" title="Microphone Settings">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
-            <div id="micDeviceMenu" class="device-menu hidden">
-              <div class="device-menu-header">Audio Inputs</div>
-              <div id="micDeviceList" class="device-menu-items"></div>
-              <div class="device-menu-divider"></div>
-              <div class="device-menu-header">Audio Processing</div>
-              <label class="device-menu-toggle-row">
-                <span>Noise Suppression</span>
-                <input type="checkbox" id="noiseSuppressionToggle" checked>
-              </label>
-              <label class="device-menu-toggle-row">
-                <span>Echo Cancellation</span>
-                <input type="checkbox" id="echoCancellationToggle" checked>
-              </label>
-            </div>
-          </div>
-
-          <!-- 2. Video Camera Button with Chevron -->
-          <div class="split-dock-btn" id="cameraSplitBtn">
-            <button id="toggleCameraBtn" class="pill-btn pill-btn-off" title="Camera On/Off">
-              <!-- Camera on icon -->
-              <svg id="camOnIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
-              </svg>
-              <!-- Camera off icon (default in Image 1) -->
-              <svg id="camOffIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.55-.18L19.73 21 21 19.73 3.27 2zM15 16H6c-.55 0-1-.45-1-1V8.27L12.73 16H15z"/>
-              </svg>
-            </button>
-            <button id="camDeviceDropdownBtn" class="pill-chevron-btn" title="Camera Settings">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
-            <div id="camDeviceMenu" class="device-menu hidden">
-              <div class="device-menu-header">Video Devices</div>
-              <div id="camDeviceList" class="device-menu-items"></div>
-            </div>
-          </div>
-
-          <!-- 3. Screen Share / Movie Library Button (Image 1 monitor icon) -->
-          <button id="hostMovieLibraryDockBtn" class="pill-btn" title="Load / Share Movie">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/>
-              <path d="M12.5 14l3.5-3.5-1.41-1.41L13 10.67V8h-2v2.67l-1.59-1.58L8 10.5l3.5 3.5h1z"/>
-            </svg>
+        <!-- 1. Mic Toggle with Settings Chevron -->
+        <div class="split-dock-btn relative" id="micSplitBtn">
+          <button type="button" id="toggleMicBtn" class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container hover:bg-surface-container-high text-on-surface hover:text-primary transition-all active:scale-95" title="Mute Microphone">
+            <span id="micOnIcon" class="material-symbols-outlined text-[19px] hidden">mic</span>
+            <span id="micOffIcon" class="material-symbols-outlined text-[19px]">mic_off</span>
           </button>
-
-          <!-- 4. Grid / Theater Layout Toggle (Image 1 four squares icon) -->
-          <button id="layoutToggleBtn" class="pill-btn" title="Toggle Grid / Theater View">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 3v8h8V3H3zm6 6H5V5h4v4zm-6 4v8h8v-8H3zm6 6H5v-4h4v4zm4-16v8h8V3h-8zm6 6h-4V5h4v4zm-6 4v8h8v-8h-8zm6 6h-4v-4h4v4z"/>
-            </svg>
+          <button type="button" id="micDeviceDropdownBtn" class="pill-chevron-btn hidden" title="Microphone Settings">
+            <span class="material-symbols-outlined text-[12px]">expand_more</span>
           </button>
-
-          <!-- 5. Activity Button Group (Star icon: Polls, Trivia, Soundboard) -->
-          <div class="split-dock-btn" id="activityGroup">
-            <button id="activityBtn" class="pill-btn" title="Party Activities & Games">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L9.09 8.26 2 9.27l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7 5.46-4.73-7.09-1.01L12 2z"/>
-              </svg>
-            </button>
-            <div id="activityMenu" class="device-menu more-options-menu hidden">
-              <div class="device-menu-header">Party Activities</div>
-              <div class="device-menu-items">
-                <button type="button" class="more-menu-item" id="menuPollBtn" title="Create Room Poll">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="20" x2="18" y2="10"></line>
-                    <line x1="12" y1="20" x2="12" y2="4"></line>
-                    <line x1="6" y1="20" x2="6" y2="14"></line>
-                  </svg>
-                  <div class="more-menu-text">
-                    <span class="more-menu-title">Live Poll</span>
-                    <span class="more-menu-desc">Vote on movies or ask a question</span>
-                  </div>
-                </button>
-                <button type="button" class="more-menu-item" id="menuTriviaBtn" title="Movie Trivia Game">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                  </svg>
-                  <div class="more-menu-text">
-                    <span class="more-menu-title">Movie Trivia</span>
-                    <span class="more-menu-desc">Play 5-round cinema quiz game</span>
-                  </div>
-                </button>
-                <button type="button" class="more-menu-item" id="menuSoundboardBtn" title="Watch Party Soundboard">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                  </svg>
-                  <div class="more-menu-text">
-                    <span class="more-menu-title">Party Soundboard</span>
-                    <span class="more-menu-desc">Airhorn, applause, drumroll, rimshot</span>
-                  </div>
-                </button>
-              </div>
-            </div>
+          <div id="micDeviceMenu" class="device-menu hidden">
+            <div class="device-menu-header">Audio Inputs</div>
+            <div id="micDeviceList" class="device-menu-items"></div>
+            <div class="device-menu-divider"></div>
+            <div class="device-menu-header">Audio Processing</div>
+            <label class="device-menu-toggle-row"><span>Noise Suppression</span><input type="checkbox" id="noiseSuppressionToggle" checked></label>
+            <label class="device-menu-toggle-row"><span>Echo Cancellation</span><input type="checkbox" id="echoCancellationToggle" checked></label>
           </div>
-
-          <!-- 6. More Options Button Group (Screenshare, YouTube, Direct URL) -->
-          <div class="split-dock-btn" id="moreOptionsGroup">
-            <button id="moreOptionsBtn" class="pill-btn" title="More Options">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <circle cx="12" cy="12" r="2"/>
-                <circle cx="19" cy="12" r="2"/>
-                <circle cx="5" cy="12" r="2"/>
-              </svg>
-            </button>
-            <div id="moreOptionsMenu" class="device-menu more-options-menu hidden">
-              <div class="device-menu-header">More Stream Options</div>
-              <div class="device-menu-items">
-                <button type="button" class="more-menu-item" id="menuAmbientGlowBtn" title="Toggle Ambient Cinema Glow">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <line x1="12" y1="1" x2="12" y2="3"></line>
-                    <line x1="12" y1="21" x2="12" y2="23"></line>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                    <line x1="1" y1="12" x2="3" y2="12"></line>
-                    <line x1="21" y1="12" x2="23" y2="12"></line>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                  </svg>
-                  <div class="more-menu-text">
-                    <span class="more-menu-title">Ambient Lighting <span id="moreMenuAmbientStatus" class="more-status-badge badge-active">ON</span></span>
-                    <span class="more-menu-desc">Dynamic cinema backglow</span>
-                  </div>
-                </button>
-                <button type="button" class="more-menu-item" id="menuScreenshareBtn" title="Share Screen">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                    <line x1="8" y1="21" x2="16" y2="21"></line>
-                    <line x1="12" y1="17" x2="12" y2="21"></line>
-                  </svg>
-                  <div class="more-menu-text">
-                    <span class="more-menu-title" id="menuScreenshareText">Share Screen</span>
-                    <span class="more-menu-desc">Broadcast your screen or window</span>
-                  </div>
-                </button>
-                <button type="button" class="more-menu-item" id="menuYouTubeBtn" title="Watch YouTube">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M21.58 7.19a2.5 2.5 0 0 0-1.76-1.77C18.26 5 12 5 12 5s-6.26 0-7.82.42c-.86.23-1.54.91-1.76 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.9 1.54 1.76 1.77C5.74 19 12 19 12 19s6.26 0 7.82-.42a2.5 2.5 0 0 0 1.76-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/>
-                  </svg>
-                  <div class="more-menu-text">
-                    <span class="more-menu-title">Watch YouTube</span>
-                    <span class="more-menu-desc">Stream any YouTube link together</span>
-                  </div>
-                </button>
-                <button type="button" class="more-menu-item" id="menuUrlBtn" title="Play from URL">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                  </svg>
-                  <div class="more-menu-text">
-                    <span class="more-menu-title">Play from URL</span>
-                    <span class="more-menu-desc">Direct .mp4, .webm or live web stream</span>
-                  </div>
-                </button>
-                <button type="button" class="more-menu-item" id="menuStreamingBtn" title="Streaming Watch Party">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
-                    <polyline points="17 2 12 7 7 2"></polyline>
-                  </svg>
-                  <div class="more-menu-text">
-                    <span class="more-menu-title">Streaming Party</span>
-                    <span class="more-menu-desc">Netflix, Prime Video, JioHotstar, Zee5</span>
-                  </div>
-                </button>
-                <button type="button" class="more-menu-item" id="menuTransformBtn" title="Pop Out Movie Screen Window">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <polyline points="9 3 9 21"></polyline>
-                    <polyline points="15 9 18 9 18 6"></polyline>
-                  </svg>
-                  <div class="more-menu-text">
-                    <span class="more-menu-title" id="menuTransformTitle">Pop Out Movie Window</span>
-                    <span class="more-menu-desc">Resize &amp; reposition like a Windows app</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- 7. Disconnect Button (Image 1 Red Pill) -->
-          <button id="disconnectBtn" class="pill-btn pill-btn-danger" title="Disconnect">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.99.99 0 0 1 0-1.41C3.28 8.8 7.42 7 12 7s8.72 1.8 11.71 4.67c.39.39.39 1.02 0 1.41l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
-            </svg>
-          </button>
-
         </div>
 
-        <!-- Right corner: Fullscreen toggle button (Image 1 bottom right) -->
-        <button id="theaterFullscreenBtn" class="corner-icon-btn" title="Toggle Cinema Fullscreen">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-          </svg>
+        <!-- 2. Video Camera Toggle with Settings Chevron -->
+        <div class="split-dock-btn relative" id="cameraSplitBtn">
+          <button type="button" id="toggleCameraBtn" class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container hover:bg-surface-container-high text-on-surface hover:text-primary transition-all active:scale-95" title="Camera On/Off">
+            <span id="camOnIcon" class="material-symbols-outlined text-[19px] hidden">videocam</span>
+            <span id="camOffIcon" class="material-symbols-outlined text-[19px]">videocam_off</span>
+          </button>
+          <button type="button" id="camDeviceDropdownBtn" class="pill-chevron-btn hidden" title="Camera Settings">
+            <span class="material-symbols-outlined text-[12px]">expand_more</span>
+          </button>
+          <div id="camDeviceMenu" class="device-menu hidden">
+            <div class="device-menu-header">Video Devices</div>
+            <div id="camDeviceList" class="device-menu-items"></div>
+          </div>
+        </div>
+
+        <!-- 3. Screen Share / Movie Media Library -->
+        <button type="button" id="hostMovieLibraryDockBtn" class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container hover:bg-surface-container-high text-on-surface hover:text-tertiary transition-all active:scale-95" title="Share Screen / Film Media">
+          <span class="material-symbols-outlined text-[19px]">screen_share</span>
         </button>
 
+        <div class="h-5 w-[1px] bg-white/10 mx-1"></div>
+
+        <!-- 4. Play/Pause Central Heartbeat Button -->
+        <button type="button" id="dockPlayPauseHeartbeatBtn" class="w-11 h-11 rounded-full flex items-center justify-center bg-on-surface text-surface-container-lowest hover:bg-white transition-all shadow-[0_0_15px_rgba(255,255,255,0.25)] active:scale-95" title="Play / Synchronize Room">
+          <span class="material-symbols-outlined text-[24px]" id="dockHeartbeatIcon">play_arrow</span>
+        </button>
+
+        <div class="h-5 w-[1px] bg-white/10 mx-1"></div>
+
+        <!-- 5. Activities Pill (Poll, Trivia, Soundboard) -->
+        <div class="activity-btn-group relative" id="activityGroup">
+          <button type="button" id="activityBtn" class="flex items-center gap-1.5 px-3 h-10 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface/90 hover:text-on-surface text-label-code font-label-code border border-white/5 transition-all active:scale-95" title="Activities">
+            <span class="material-symbols-outlined text-[17px] text-tertiary">theater_comedy</span>
+            <span class="hidden sm:inline">Activities</span>
+          </button>
+          <div id="activityMenu" class="activity-menu hidden">
+            <button type="button" class="activity-menu-item" id="menuPollBtn"><span class="material-symbols-outlined text-[16px]">poll</span><span>Create Live Poll</span></button>
+            <button type="button" class="activity-menu-item" id="menuTriviaBtn"><span class="material-symbols-outlined text-[16px]">quiz</span><span>Movie Trivia</span></button>
+            <button type="button" class="activity-menu-item" id="menuSoundboardBtn"><span class="material-symbols-outlined text-[16px]">volume_up</span><span>Soundboard</span></button>
+          </div>
+        </div>
+
+        <!-- 6. Reaction Trigger -->
+        <button type="button" id="dockReactionTriggerBtn" class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container hover:bg-surface-container-high text-on-surface hover:text-tertiary transition-all active:scale-95" title="Send Live Reaction">
+          <span class="material-symbols-outlined text-[19px]">favorite</span>
+        </button>
+
+        <!-- 7. More Options Menu -->
+        <div class="more-options-group relative" id="moreOptionsGroup">
+          <button type="button" id="moreOptionsBtn" class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container hover:bg-surface-container-high text-on-surface hover:text-on-surface transition-all active:scale-95" title="Theater Preferences">
+            <span class="material-symbols-outlined text-[19px]">more_horiz</span>
+          </button>
+          <div id="moreOptionsMenu" class="more-options-menu hidden">
+            <button type="button" class="more-menu-item" id="menuAmbientGlowBtn">
+              <span class="material-symbols-outlined text-[17px]">wb_incandescent</span>
+              <div class="more-menu-text"><span class="more-menu-title">Dynamic Ambient Glow</span><span class="more-menu-desc" id="moreMenuAmbientStatus">Real-time reactive backlight</span></div>
+            </button>
+            <button type="button" class="more-menu-item" id="menuScreenshareBtn">
+              <span class="material-symbols-outlined text-[17px]">present_to_all</span>
+              <div class="more-menu-text"><span class="more-menu-title" id="menuScreenshareText">Share Screen</span><span class="more-menu-desc">Broadcast your screen</span></div>
+            </button>
+            <button type="button" class="more-menu-item" id="menuYouTubeBtn">
+              <span class="material-symbols-outlined text-[17px]">smart_display</span>
+              <div class="more-menu-text"><span class="more-menu-title">Watch YouTube</span><span class="more-menu-desc">Stream any YouTube link together</span></div>
+            </button>
+            <button type="button" class="more-menu-item" id="menuUrlBtn">
+              <span class="material-symbols-outlined text-[17px]">link</span>
+              <div class="more-menu-text"><span class="more-menu-title">Play from URL</span><span class="more-menu-desc">Direct .mp4, .webm or live web stream</span></div>
+            </button>
+            <button type="button" class="more-menu-item" id="menuStreamingBtn">
+              <span class="material-symbols-outlined text-[17px]">live_tv</span>
+              <div class="more-menu-text"><span class="more-menu-title">Streaming Party</span><span class="more-menu-desc">Netflix, Prime Video, JioHotstar, Zee5</span></div>
+            </button>
+            <button type="button" class="more-menu-item" id="menuTransformBtn">
+              <span class="material-symbols-outlined text-[17px]">picture_in_picture_alt</span>
+              <div class="more-menu-text"><span class="more-menu-title" id="menuTransformTitle">Pop Out Movie Window</span><span class="more-menu-desc">Resize &amp; reposition like a Windows app</span></div>
+            </button>
+            <button type="button" class="more-menu-item" id="layoutToggleBtn">
+              <span class="material-symbols-outlined text-[17px]">grid_view</span>
+              <div class="more-menu-text"><span class="more-menu-title">Toggle Layout</span><span class="more-menu-desc">Switch Grid or Cinema view</span></div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 8. Leave / Disconnect Room (Crimson Red) -->
+        <button type="button" id="disconnectBtn" class="ml-1 px-4 h-10 rounded-full bg-secondary-container hover:bg-primary-container text-on-secondary-container text-label-caps font-label-caps tracking-wider flex items-center gap-1.5 shadow-[0_0_16px_rgba(225,1,17,0.4)] transition-all active:scale-95" title="Disconnect / Leave Room">
+          <span class="material-symbols-outlined text-[16px]">call_end</span>
+          <span class="hidden sm:inline">Leave</span>
+        </button>
       </div>
+
+      <!-- Right Corner Fullscreen toggle (hidden fallback for backward compatibility) -->
+      <button type="button" id="theaterFullscreenBtn" class="corner-icon-btn hidden" title="Toggle Cinema Fullscreen"></button>
     </footer>
 
-    <!-- Mobile Bottom Sheet Backdrop (Smooth backdrop blur for mobile dropdown sheets) -->
+    <!-- Mobile Bottom Sheet Backdrop -->
     <div id="mobileSheetBackdrop" class="mobile-sheet-backdrop hidden"></div>
 
   </div>

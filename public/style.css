@@ -7985,3 +7985,176 @@ body.window-dragging-active {
 .review-metric {
   color: #949ba4;
 }
+
+
+/* ============================================================ */
+/* LUMIÈRE CINEMA — MINIMALIST PURE THEATER ROOM STYLES         */
+/* ============================================================ */
+
+/* 1. Isolation: Never show landing page elements when inside a room */
+body.in-room #joinModal,
+body.in-room .landing-page-wrapper,
+body.in-room .landing-nav {
+  display: none !important;
+}
+
+body.in-room {
+  background-color: #0c0e14 !important;
+  color: #e2e2eb !important;
+  font-family: 'Inter', sans-serif !important;
+  overflow: hidden !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+}
+
+body.in-room #appContainer {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  overflow: hidden !important;
+  background-color: #0c0e14 !important;
+}
+
+/* 2. Stitch Atmospheric Shadows, Rims, & Glow */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 350, 'GRAD' 0, 'opsz' 20;
+  line-height: 1;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.specular-rim {
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), 0 20px 40px -15px rgba(0, 0, 0, 0.95);
+}
+
+.cinema-ambient-glow {
+  box-shadow: 0 0 140px -20px rgba(255, 185, 95, 0.08), 0 0 80px -10px rgba(225, 1, 17, 0.06);
+}
+
+@keyframes eq-wave {
+  0%, 100% { height: 4px; }
+  50% { height: 14px; }
+}
+.animate-eq-1 { animation: eq-wave 0.8s ease-in-out infinite; }
+.animate-eq-2 { animation: eq-wave 0.6s ease-in-out 0.2s infinite; }
+.animate-eq-3 { animation: eq-wave 0.7s ease-in-out 0.4s infinite; }
+
+/* 3. Refined Participant Tiles (16:10 Spectator Cards) */
+.participant-tile {
+  width: 140px !important;
+  aspect-ratio: 16 / 10 !important;
+  border-radius: 0.5rem !important;
+  overflow: hidden !important;
+  background: #191b22 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.participant-tile.speaking {
+  border-color: #e10111 !important;
+  box-shadow: 0 0 12px rgba(225, 1, 17, 0.4) !important;
+}
+
+.participant-tile .tile-avatar-center {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+}
+
+.participant-tile .tile-video {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+.participant-tile .tile-bottom-badge {
+  position: absolute !important;
+  bottom: 6px !important;
+  left: 6px !important;
+  right: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  background: rgba(12, 14, 20, 0.8) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: #e2e2eb !important;
+  pointer-events: none !important;
+  z-index: 5 !important;
+}
+
+.participant-tile .tile-top-pill {
+  display: none !important;
+}
+
+.participant-tile .tile-vol-btn {
+  position: absolute !important;
+  top: 6px !important;
+  right: 6px !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 4px !important;
+  background: rgba(12, 14, 20, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #e2e2eb !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  opacity: 0 !important;
+  transition: opacity 0.2s ease !important;
+  z-index: 6 !important;
+}
+
+.participant-tile:hover .tile-vol-btn {
+  opacity: 1 !important;
+}
+
+/* 4. Chat Panel Refinements */
+.chat-panel {
+  position: fixed !important;
+  right: 0 !important;
+  top: 52px !important;
+  bottom: 0 !important;
+  width: 360px !important;
+  background: rgba(25, 27, 34, 0.95) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-left: 1px solid rgba(92, 63, 63, 0.2) !important;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.7) !important;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  z-index: 40 !important;
+}
+
+body.chat-is-open .stage-section {
+  margin-right: 360px !important;
+}
+
+/* 5. Custom Scrollbar for Chat & Participant Strip */
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+}
+.scrollbar-none {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
