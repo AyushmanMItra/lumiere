@@ -1377,6 +1377,130 @@ app.use((req, res) => {
   }
 });
 
+// ==========================================================================
+// ADMIN CONSOLE & RESTART CONTROLLER (y/n/r)
+// ==========================================================================
+let isPromptingShutdown = false;
+let adminReadline = null;
+let isAdminConsoleInitialized = false;
+
+function restartLumiereServer() {
+  console.log('[Server] Shutting down active connections for restart...');
+  try {
+    rooms.clear();
+    if (io) {
+      io.disconnectSockets(true);
+    }
+  } catch (e) {}
+
+  const finalizeRestart = () => {
+    if (process.env.LUMIERE_BATCH_RUNNER === '1') {
+      console.log('[Server] Handing off to batch runner for fresh reload (code 42)...');
+      process.exit(42);
+      return;
+    }
+
+    console.log('[Server] Launching replacement server process...');
+    const { spawn } = require('child_process');
+    const child = spawn(process.argv[0], process.argv.slice(1), {
+      stdio: 'inherit',
+      env: process.env
+    });
+
+    child.on('exit', (code) => {
+      process.exit(code || 0);
+    });
+
+    setTimeout(() => {
+      process.exit(0);
+    }, 250);
+  };
+
+  try {
+    httpServer.close(() => {
+      if (httpsServer) {
+        httpsServer.close(() => {
+          finalizeRestart();
+        });
+      } else {
+        finalizeRestart();
+      }
+    });
+  } catch (err) {
+    finalizeRestart();
+  }
+}
+
+function initAdminConsole() {
+  if (isAdminConsoleInitialized) return;
+  if (require.main !== module) return;
+  if (!process.stdin || !process.stdin.isTTY) return;
+
+  isAdminConsoleInitialized = true;
+  const readline = require('readline');
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: true
+  });
+  adminReadline = rl;
+
+  const showPrompt = () => {
+    isPromptingShutdown = true;
+    process.stdout.write('\nTerminate server or restart (y/n/r)? ');
+  };
+
+  process.on('SIGINT', () => {
+    if (isPromptingShutdown) {
+      console.log('\n[Server] Force terminating on second interrupt.');
+      process.exit(0);
+      return;
+    }
+    showPrompt();
+  });
+
+  process.on('SIGTERM', () => {
+    console.log('\n[Server] SIGTERM received. Shutting down cleanly.');
+    process.exit(0);
+  });
+
+  rl.on('line', (raw) => {
+    const input = (raw || '').trim().toLowerCase();
+
+    if (isPromptingShutdown) {
+      if (input === 'y' || input === 'yes') {
+        console.log('[Server] Terminating Lumiere Cinema Server. Goodbye.');
+        process.exit(0);
+      } else if (input === 'n' || input === 'no') {
+        console.log('[Server] Resumed. Lumiere Cinema Server is still running.');
+        isPromptingShutdown = false;
+      } else if (input === 'r' || input === 'restart') {
+        isPromptingShutdown = false;
+        restartLumiereServer();
+      } else {
+        process.stdout.write('Please enter y (terminate), n (keep running), or r (restart): ');
+      }
+    } else {
+      if (input === 'r' || input === 'restart') {
+        console.log('\n[Admin Console] Restart command received (r).');
+        restartLumiereServer();
+      } else if (input === 'y' || input === 'exit' || input === 'quit' || input === 'q') {
+        showPrompt();
+      } else if (input === 'help' || input === '?') {
+        console.log('\n================================================================');
+        console.log('              LUMIERE ADMIN CONSOLE SHORTCUTS                   ');
+        console.log('================================================================');
+        console.log('  r           - Restart server immediately');
+        console.log('  Ctrl+C / q  - Prompt shutdown options (y/n/r)');
+        console.log('  y           - Confirm terminate');
+        console.log('  n           - Cancel termination and keep running');
+        console.log('================================================================\n');
+      }
+    }
+  });
+}
+
 // Start Servers with auto-fallback if port is busy
 let isHttpsStarted = false;
 
@@ -1384,7 +1508,7 @@ function startHttp(port) {
   httpServer.listen(port, '0.0.0.0', () => {
     const ips = getNetworkIps();
     console.log('================================================================');
-    console.log('               🎬 LUMIÈRE PRIVATE CINEMA SERVER                 ');
+    console.log('               [CINEMA] LUMIERE PRIVATE CINEMA SERVER           ');
     console.log('================================================================');
     console.log('  [HTTP - Standard Browsing]');
     console.log(`  > Local Host PC:     http://localhost:${port}`);
@@ -1395,6 +1519,7 @@ function startHttp(port) {
       isHttpsStarted = true;
       startHttps(HTTPS_PORT);
     }
+    initAdminConsole();
   }).on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
       console.log(`[Notice] HTTP Port ${port} is busy, trying ${port + 1}...`);
@@ -1407,6 +1532,9 @@ function startHttp(port) {
 
 function startHttps(port) {
   if (!httpsServer) {
+    console.log('  [Admin Console Controls]');
+    console.log('  > Press "r" + Enter:  Restart server');
+    console.log('  > Press Ctrl+C:       Shutdown prompt (y/n/r)');
     console.log('================================================================');
     return;
   }
@@ -1416,6 +1544,10 @@ function startHttps(port) {
     console.log(`  > Local Host PC:     https://localhost:${port}`);
     if (ips.local !== 'localhost') console.log(`  > Local Wi-Fi:       https://${ips.local}:${port}`);
     if (ips.tailscale) console.log(`  > Tailscale:         https://${ips.tailscale}:${port}`);
+    console.log('----------------------------------------------------------------');
+    console.log('  [Admin Console Controls]');
+    console.log('  > Press "r" + Enter:  Restart server');
+    console.log('  > Press Ctrl+C:       Shutdown prompt (y/n/r)');
     console.log('================================================================');
   }).on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
