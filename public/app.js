@@ -5218,13 +5218,21 @@
     if (el.roomInput) el.roomInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') joinRoom(); });
 
     // About Page Navigation
-    const showAbout = () => {
+    const showAbout = (e) => {
+      if (e) e.preventDefault();
+      if (window.location.pathname !== '/about') {
+        try { window.history.pushState({}, '', '/about'); } catch (err) {}
+      }
       if (el.aboutPage) {
         el.aboutPage.classList.remove('hidden');
         el.aboutPage.scrollTop = 0;
       }
     };
-    const hideAbout = () => {
+    const hideAbout = (e) => {
+      if (e) e.preventDefault();
+      if (window.location.pathname === '/about') {
+        try { window.history.pushState({}, '', '/'); } catch (err) {}
+      }
       if (el.aboutPage) el.aboutPage.classList.add('hidden');
     };
 

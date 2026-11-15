@@ -81,8 +81,20 @@
   <link rel="stylesheet" href="/style.css">
 
   <style>
+    html, body, body.about-standalone-page {
+      height: auto !important;
+      min-height: 100% !important;
+      min-height: 100dvh !important;
+      width: 100% !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      user-select: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      overscroll-behavior-y: auto !important;
+    }
     .about-standalone-page {
       min-height: 100vh;
+      min-height: 100dvh;
       background-color: #08090d;
       background-image: 
         radial-gradient(circle at 50% 0%, rgba(255, 8, 68, 0.16) 0%, transparent 60%),

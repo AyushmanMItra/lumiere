@@ -61,6 +61,19 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+body.about-standalone-page,
+body.error-page-container {
+  height: auto !important;
+  min-height: 100% !important;
+  min-height: 100dvh !important;
+  width: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  user-select: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: auto !important;
+}
+
 .hidden {
   display: none !important;
 }
@@ -5583,10 +5596,18 @@ body:not(.has-participants) .cinema-stage-wrapper {
 .about-page-view {
   position: fixed;
   inset: 0;
-  background-color: #0b0c10;
+  background-color: #08090d;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(255, 8, 68, 0.16) 0%, transparent 60%),
+    radial-gradient(ellipse at 85% 18%, rgba(88, 101, 242, 0.14) 0%, transparent 60%),
+    radial-gradient(ellipse at 15% 85%, rgba(247, 37, 133, 0.10) 0%, transparent 65%),
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.35) 0%, transparent 100%);
   z-index: 1001;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow-y: scroll !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain;
+  user-select: text;
   color: #fff;
   padding-bottom: 80px;
 }
