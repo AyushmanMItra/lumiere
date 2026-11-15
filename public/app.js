@@ -122,6 +122,9 @@
     closeSupportBtn: document.getElementById('closeSupportBtn'),
     copyUpiBtn: document.getElementById('copyUpiBtn'),
 
+    navApkBtn: document.getElementById('navApkBtn') || document.querySelector('a[href*="lumiere.apk"]'),
+    androidTvApkCard: document.getElementById('androidTvApkCard'),
+
     appContainer: document.getElementById('appContainer'),
     topBar: document.getElementById('topBar'),
     roomTitleDisplay: document.getElementById('roomTitleDisplay'),
@@ -5400,6 +5403,13 @@
         }).catch(() => prompt('Verified UPI ID:', upiText));
       };
     }
+
+    // Android APK Downloads
+    const onApkDownloadClick = () => {
+      showToast('Starting Android APK download (v2.4.1)...');
+    };
+    if (el.navApkBtn) el.navApkBtn.addEventListener('click', onApkDownloadClick);
+    if (el.androidTvApkCard) el.androidTvApkCard.addEventListener('click', onApkDownloadClick);
 
     // Top Invite & Dock Invite
     const copyLink = () => {
