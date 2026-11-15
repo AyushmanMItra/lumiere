@@ -501,6 +501,7 @@
     } catch (e) {}
 
     el.joinModal.classList.add('hidden');
+    document.body.classList.add('in-room');
     if (el.aboutPage) el.aboutPage.classList.add('hidden');
     el.appContainer.classList.remove('hidden');
     el.roomTitleDisplay.innerText = `Lumière - ${roomId}`;

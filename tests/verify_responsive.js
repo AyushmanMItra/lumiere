@@ -98,7 +98,8 @@ class CDPClient {
       awaitPromise: true
     });
     if (res.exceptionDetails) {
-      throw new Error(res.exceptionDetails.text || 'Runtime.evaluate failed');
+      console.error('CDP EVAL EXCEPTION:', res.exceptionDetails.exception?.description || res.exceptionDetails.text);
+      throw new Error(res.exceptionDetails.exception?.description || res.exceptionDetails.text || 'Runtime.evaluate failed');
     }
     return res.result ? res.result.value : undefined;
   }

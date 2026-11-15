@@ -5092,21 +5092,45 @@ body:not(.has-participants) .cinema-stage-wrapper {
    ========================================================================== */
 
 .landing-page-wrapper {
-  position: fixed;
-  inset: 0;
-  background-color: #08090d;
-  background-image: 
-    radial-gradient(circle at 50% 0%, rgba(255, 8, 68, 0.16) 0%, transparent 60%),
-    radial-gradient(ellipse at 85% 18%, rgba(88, 101, 242, 0.14) 0%, transparent 60%),
-    radial-gradient(ellipse at 15% 85%, rgba(247, 37, 133, 0.10) 0%, transparent 65%),
-    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.35) 0%, transparent 100%);
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  background: transparent !important;
+  background-image: none !important;
   display: flex;
   flex-direction: column;
-  z-index: 999;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scroll-behavior: smooth;
+  z-index: 1;
+  overflow: visible !important;
   -webkit-font-smoothing: antialiased;
+}
+
+html {
+  overflow-x: hidden !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  scroll-behavior: smooth;
+}
+
+/* Landing page body state - Allows natural window scrolling and exact Stitch obsidian theme */
+body:not(.in-room) {
+  height: auto !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  overflow: visible !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  background-color: #07070a !important;
+  color: #f1f3f9 !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  user-select: auto !important;
+}
+
+body.in-room {
+  height: 100vh !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
 }
 
 /* Top Landing Navigation */
