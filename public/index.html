@@ -112,187 +112,415 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Google Fonts: Plus Jakarta Sans, JetBrains Mono & Caveat for Google Stitch Design -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Caveat:wght@500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS v3 & Configuration -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            obsidian: {
+              DEFAULT: '#09090b',
+              surface: '#0f1015',
+              card: '#12131a',
+              border: '#1e202c',
+              hover: '#262938'
+            },
+            coral: {
+              400: '#ff4d6d',
+              500: '#e63956',
+              600: '#c92a45'
+            }
+          },
+          boxShadow: {
+            'glow-coral': '0 0 35px -5px rgba(230, 57, 86, 0.45)',
+            'glow-card': '0 20px 50px rgba(0, 0, 0, 0.65)',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="atmospheric-lighting">
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: #07070a;
+      color: #f1f3f9;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+    }
+    
+    .radial-glow-crimson {
+      background: radial-gradient(circle at 65% 25%, rgba(186, 24, 71, 0.18) 0%, rgba(88, 28, 135, 0.12) 35%, rgba(7, 7, 10, 0) 70%);
+    }
+
+    .radial-glow-cyan {
+      background: radial-gradient(circle at 15% 75%, rgba(45, 212, 191, 0.04) 0%, transparent 50%);
+    }
+
+    .glass-card {
+      background: rgba(18, 19, 27, 0.72);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
+    }
+
+    /* Enhanced Card Hover Elevation & Crimson Rim Glow */
+    .interactive-card-hover {
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+      will-change: transform, box-shadow;
+    }
+    .interactive-card-hover:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 59, 83, 0.38) !important;
+      box-shadow: 0 14px 34px -10px rgba(255, 59, 83, 0.18), 0 0 0 1px rgba(255, 59, 83, 0.22) inset !important;
+    }
+
+    .glass-input {
+      background: rgba(9, 10, 14, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .glass-input:focus {
+      border-color: rgba(230, 57, 86, 0.65);
+      box-shadow: 0 0 0 3px rgba(230, 57, 86, 0.15);
+      outline: none;
+    }
+
+    .subtle-divider {
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+    }
+
+    /* Scroll progress bar */
+    #reading-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 2px;
+      width: 0%;
+      background: linear-gradient(90deg, #ff3b53, #ff6b81, #ff2a47);
+      box-shadow: 0 0 12px 1px rgba(255, 59, 83, 0.85), 0 0 4px rgba(255, 59, 83, 0.6);
+      z-index: 100;
+      transition: width 0.08s ease-out;
+      pointer-events: none;
+    }
+
+    /* Scroll reveal transitions */
+    .scroll-reveal {
+      opacity: 0;
+      transform: translateY(28px) scale(0.98);
+      transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+
+    .scroll-reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Staggered cascade transitions for card grids */
+    .reveal-stagger {
+      opacity: 0;
+      transform: translateY(28px) scale(0.98);
+      transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+
+    .reveal-stagger.is-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Terminal Inspector Typing Line Animation */
+    .code-line {
+      opacity: 0;
+      transform: translateX(-4px);
+      transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .terminal-active .code-line {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    @keyframes cursor-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .cursor-blink {
+      display: inline-block;
+      width: 7px;
+      height: 14px;
+      background-color: #ff4d6d;
+      vertical-align: text-bottom;
+      margin-left: 4px;
+      animation: cursor-blink 0.9s infinite;
+    }
+
+    /* Accessibility: Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      .scroll-reveal,
+      .reveal-stagger,
+      .code-line {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+      }
+      .interactive-card-hover:hover {
+        transform: none !important;
+      }
+      .cursor-blink {
+        animation: none !important;
+        opacity: 1 !important;
+      }
+      #reading-progress {
+        display: none !important;
+      }
+    }
+  </style>
   <link rel="stylesheet" href="/style.css?v=3.1">
 </head>
 <body class="discord-dark">
 
   <!-- ============================================================ -->
   <!-- 1. LANDING & JOIN SCREEN (Inspired by Image 2)               -->
+    <!-- ============================================================ -->
+  <!-- 1. LANDING & JOIN SCREEN (Google Stitch Obsidian Design)     -->
   <!-- ============================================================ -->
-  <div id="joinModal" class="landing-page-wrapper">
-
-    <!-- Top Landing Navigation -->
-    <header class="landing-nav">
-      <div class="landing-nav-brand">
-        <div class="brand-logo-mark">
-          <svg width="26" height="26" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="neonPulseGradNav" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#ff0844"/>
-                <stop offset="60%" stop-color="#ff4b2b"/>
-                <stop offset="100%" stop-color="#f72585"/>
-              </linearGradient>
-            </defs>
-            <rect width="100" height="100" rx="24" fill="#111218"/>
-            <rect width="98" height="98" x="1" y="1" rx="23" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
-            <rect x="20" y="20" width="60" height="60" rx="14" stroke="url(#neonPulseGradNav)" stroke-width="5" fill="rgba(255,8,68,0.12)"/>
-            <rect x="25" y="29" width="6" height="8" rx="2" fill="url(#neonPulseGradNav)"/>
-            <rect x="25" y="46" width="6" height="8" rx="2" fill="url(#neonPulseGradNav)"/>
-            <rect x="25" y="63" width="6" height="8" rx="2" fill="url(#neonPulseGradNav)"/>
-            <rect x="69" y="29" width="6" height="8" rx="2" fill="url(#neonPulseGradNav)"/>
-            <rect x="69" y="46" width="6" height="8" rx="2" fill="url(#neonPulseGradNav)"/>
-            <rect x="69" y="63" width="6" height="8" rx="2" fill="url(#neonPulseGradNav)"/>
-            <polygon points="46,38 64,50 46,62" fill="#ffffff"/>
-          </svg>
-        </div>
-        <span class="brand-name">Lumière</span>
-      </div>
-
-      <div class="landing-nav-actions">
-        <a href="/about" id="navAboutBtn" class="nav-link-btn" title="The Story Behind Lumière" style="text-decoration: none;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
+  <div id="joinModal" class="landing-page-wrapper relative min-h-screen text-slate-200">
+<div aria-hidden="true" id="reading-progress"></div>
+<!-- Atmospheric Glow Layers -->
+<div aria-hidden="true" class="fixed inset-0 radial-glow-crimson pointer-events-none z-0"></div>
+<div aria-hidden="true" class="fixed inset-0 radial-glow-cyan pointer-events-none z-0"></div>
+<!-- BEGIN: MainHeader -->
+<header class="relative z-10 w-full border-b border-white/[0.04] bg-obsidian/40 backdrop-blur-md sticky top-0">
+<div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+<!-- Brand Logo & Identity -->
+<a class="flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-lg p-1" data-purpose="site-brand" href="#">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-950/80 via-obsidian-surface to-rose-900/40 border border-white/10 flex items-center justify-center shadow-inner group-hover:border-rose-500/40 transition-colors">
+<svg class="w-5 h-5 text-rose-500 transform group-hover:scale-105 transition-transform" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<rect height="14" rx="2" width="20" x="2" y="3"></rect>
+<polygon fill="currentColor" points="10 7 15 10 10 13 10 7" stroke="none"></polygon>
+<line x1="2" x2="22" y1="21" y2="21"></line>
+</svg>
+</div>
+<span class="font-bold text-xl tracking-tight text-white flex items-center">
+          Lumière
+        </span>
+</a>
+<!-- Quick Action Navigation -->
+<nav class="flex items-center gap-2 sm:gap-3" data-purpose="header-navigation">
+        <a id="navAboutBtn" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-white rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] transition-all" href="#about" title="The Story Behind Lumière">
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
           <span>About the Maker</span>
         </a>
-
-        <button id="navFeedbackBtn" class="nav-link-btn" title="Give Feedback">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
+        <button id="navFeedbackBtn" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-white rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] transition-all" title="Give Feedback">
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
           <span>Give Feedback</span>
         </button>
-
-        <button id="navSupportBtn" class="nav-link-btn support-highlight" title="Support the Project">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-          </svg>
+        <button id="navSupportBtn" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-rose-300 hover:text-white rounded-lg border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 transition-all shadow-sm" title="Support the Project">
+          <svg class="w-3.5 h-3.5 text-rose-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
           <span>Support Me</span>
         </button>
-
-        <a href="/lumiere.apk" download="lumiere.apk" id="navApkBtn" class="nav-link-btn" title="Download Lumière Android App (APK)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="5" y="2" width="14" height="20" rx="3" ry="3"></rect>
-            <line x1="12" y1="18" x2="12.01" y2="18"></line>
-          </svg>
+        <a id="navApkBtn" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-200 hover:text-white rounded-lg border border-white/10 bg-white/[0.05] hover:bg-white/[0.1] transition-all shadow-sm" href="/lumiere.apk" download="lumiere.apk" title="Download Lumière Android App (APK)">
+          <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><rect height="20" rx="2" ry="2" width="14" x="5" y="2"></rect><line x1="12" x2="12.01" y1="18" y2="18"></line></svg>
           <span>Android App</span>
         </a>
+      </nav>
+</div>
+</header>
+<!-- END: MainHeader -->
+<!-- BEGIN: HeroAndInteractiveSection -->
+<main class="relative z-10 flex-grow flex items-center py-12 lg:py-20" data-purpose="hero-theater-hub">
+<div class="max-w-7xl mx-auto px-6 w-full">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+<!-- Left Column: Copy & Value Proposition -->
+<section class="lg:col-span-7 space-y-8 scroll-reveal is-visible" data-purpose="product-intro">
+<!-- Editorial Headline -->
+<div class="space-y-4">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose-500/20 bg-rose-500/10 text-rose-400 text-xs font-medium tracking-wide">
+<span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+              Version 2.4 Stable Release
+            </div>
+<h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.08]">
+              Watch together.<br/>
+<span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400">
+                Synchronized to the frame.
+              </span>
+</h1>
+</div>
+<!-- Product description -->
+<p class="text-base sm:text-lg text-slate-400 leading-relaxed max-w-xl font-normal">
+            Spin up a private cinema in seconds. Stream high-bitrate local movie rips directly from your machine with frame-perfect sync, low-latency voice, video, and theater chat baked right in. No cloud middleman.
+          </p><div class="flex items-center gap-2 text-rose-300/90 text-lg sm:text-xl font-medium pt-1" style="font-family: 'Caveat', cursive;"><svg class="w-5 h-5 text-rose-400 shrink-0 rotate-12" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg><span>“A private cinema built for real friends, not corporations.”</span></div>
+<!-- Core Feature Badges -->
+<!-- Visual and structural highlight badges mirroring product capabilities -->
+<div class="pt-2 flex flex-wrap items-center gap-5 sm:gap-7 text-xs font-semibold text-slate-300"><div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.03] text-slate-300 font-medium transition-all hover:border-rose-500/30 hover:bg-white/[0.06]"><svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg><span>Frame-perfect sync</span></div><div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.03] text-slate-300 font-medium transition-all hover:border-rose-500/30 hover:bg-white/[0.06]"><svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>Voice + video chat</span></div><div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.03] text-slate-300 font-medium transition-all hover:border-rose-500/30 hover:bg-white/[0.06]"><svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"></path><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"></path><circle cx="12" cy="12" r="2"></circle><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"></path><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"></path></svg><span>Direct LAN &amp; Tailscale ready</span></div></div>
+</section>
+<!-- Right Column: Interactive Theater Entry Card -->
+<section class="lg:col-span-5 scroll-reveal is-visible" data-purpose="theater-entry-interface"><div class="max-w-md mx-auto lg:ml-auto w-full mb-3 flex items-center justify-end gap-2 text-rose-300 font-medium text-sm sm:text-base select-none pr-3" style="font-family: 'Caveat', cursive;"><span>start a room or grab your popcorn right here!</span><svg class="w-5 h-5 text-rose-400 -rotate-12 translate-y-1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg></div>
+<div class="glass-card interactive-card-hover rounded-2xl p-7 sm:p-8 max-w-md mx-auto lg:ml-auto w-full">
+<!-- Card Header -->
+<div class="flex items-start gap-4 mb-7">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500/20 to-rose-900/40 border border-rose-500/30 flex items-center justify-center shrink-0 shadow-inner">
+<svg class="w-6 h-6 text-rose-500 translate-x-0.5" fill="currentColor" viewbox="0 0 24 24">
+<path d="M5 3l14 9-14 9V3z"></path>
+</svg>
+</div>
+<div>
+<h2 class="text-xl font-bold text-white tracking-tight leading-tight">Enter the theater</h2>
+<p class="text-xs text-slate-400 mt-1">Host or join an active screening room</p>
+</div>
+</div>
+<!-- Interactive Form Area -->
+<form class="space-y-5" data-purpose="session-form" onsubmit="event.preventDefault();">
+<!-- User Handle Input -->
+<div>
+<label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2" for="usernameInput">
+                  Your Display Name
+                </label>
+<div class="relative">
+<input type="text" id="usernameInput" name="username" placeholder="e.g. CinemaLover" maxlength="20" autocomplete="nickname" class="glass-input w-full px-4 py-3 rounded-xl text-sm font-medium text-white placeholder-slate-500 focus:text-white" style="background: linear-gradient(rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%); border: 1px solid rgba(255, 255, 255, 0.12); color: rgb(243, 244, 246); box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px inset;" />
+<span class="absolute right-3.5 top-3 text-xs text-slate-500 pointer-events-none font-mono">LAN ID</span>
+</div>
+</div>
+<!-- Primary Action: Host Room -->
+<button id="createRoomBtn" class="w-full py-3.5 px-6 rounded-xl bg-coral-500 hover:bg-coral-400 active:bg-coral-600 text-white font-bold text-sm tracking-wide shadow-glow-coral transition-all transform active:scale-[0.99] flex items-center justify-center gap-2 group cursor-pointer" data-purpose="create-screening-button" type="button">
+<span>Create Screening Room</span>
+<svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<line x1="5" x2="19" y1="12" y2="12"></line>
+<polyline points="12 5 19 12 12 19"></polyline>
+</svg>
+</button>
+<!-- Divider -->
+<div class="relative flex items-center justify-center my-6">
+<div class="subtle-divider h-px w-full absolute inset-0 m-auto"></div>
+<span class="relative px-3 bg-[#111218] text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                  or join existing room
+                </span>
+</div>
+<!-- Join Existing Room Code Input Group -->
+<div>
+<label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2" for="roomInput">
+                  Passcode or Room Key
+                </label>
+<div class="flex gap-2">
+<div class="relative flex-grow">
+<input type="text" id="roomInput" name="roomInput" maxlength="30" placeholder="ENTER CODE" class="glass-input font-mono uppercase tracking-widest text-sm w-full pl-4 pr-10 py-3 rounded-xl text-white placeholder-slate-600 font-semibold" style="background: linear-gradient(rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%); border: 1px solid rgba(255, 255, 255, 0.12); color: rgb(243, 244, 246); box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px inset;" />
+<!-- Randomize Code Action Button -->
+<button id="randomRoomBtn" class="absolute right-2 top-2.5 p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors" data-purpose="randomize-code-btn" title="Generate random code" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<rect height="18" rx="2" ry="2" width="18" x="3" y="3"></rect>
+<circle cx="8.5" cy="8.5" r="1.5"></circle>
+<circle cx="15.5" cy="8.5" r="1.5"></circle>
+<circle cx="15.5" cy="15.5" r="1.5"></circle>
+<circle cx="8.5" cy="15.5" r="1.5"></circle>
+</svg>
+</button>
+</div>
+<button id="joinRoomBtn" class="px-5 py-3 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-sm font-semibold border border-white/10 transition-all shrink-0 cursor-pointer" type="button">
+                    Join
+                  </button>
+</div>
+</div>
+<!-- Informative Room Protocol Notice -->
+<p class="text-[11px] leading-tight text-slate-400 pt-1 text-center font-normal">
+                First person in a room is designated host and controls the playback timeline.
+              </p>
+<!-- Hardware/IP Network Diagnostics Badge -->
+<div class="pt-3 border-t border-white/[0.05] flex items-center justify-center">
+<div class="inline-flex items-center gap-2 text-[11px] text-slate-400 font-mono">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+</span>
+<span><span id="networkBadge">Connecting to engine...</span></span>
+</div>
+</div>
+</form>
+</div>
+</section>
+</div>
+</div>
+</main><!-- BEGIN: Technical Architecture & Story Sections -->
+<div class="relative z-10 w-full space-y-24 py-16" id="technology-story"><section class="max-w-7xl mx-auto px-6" id="about"><div class="scroll-reveal glass-card interactive-card-hover rounded-2xl p-8 sm:p-12 border border-white/10 relative overflow-hidden"><div class="absolute -right-10 -bottom-10 w-64 h-64 bg-rose-500/10 rounded-full blur-3xl pointer-events-none"></div><div class="flex flex-col md:flex-row items-center md:items-start gap-8 relative z-10"><div class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-br from-rose-500 to-rose-900 flex items-center justify-center shrink-0 text-3xl sm:text-4xl font-extrabold text-white shadow-glow-coral border border-rose-400/30">AM</div><div class="space-y-4 text-center md:text-left flex-grow"><div class="flex flex-wrap items-center justify-center md:justify-start gap-3"><span class="px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-rose-500/10 border border-rose-500/20 text-rose-400 font-semibold">Creator &amp; Maintainer</span><span class="text-xs text-slate-400 font-mono">Independent Cinephile Open Source</span></div><h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Hi, I'm Ayushman Mitra.</h2><p class="text-slate-300 text-base sm:text-lg leading-relaxed max-w-3xl">A developer from India who kept getting locked out of movie nights with friends — so I built the movie night I wanted to be in.</p><p class="text-slate-400 text-sm leading-relaxed max-w-3xl">Commercial streaming apps enforce DRM region locks, Discord crushes 4K HDR down to 720p 30fps mud, and cloud watch-parties sell your viewing telemetry. Lumière treats cinema with respect: lossless frame-exact synchronization directly between machines.</p><div class="flex flex-wrap items-center justify-center md:justify-start gap-2.5 text-xs text-slate-300 pt-2"></div></div></div></div></section><section class="max-w-7xl mx-auto px-6"><div class="flex flex-col lg:flex-row gap-12 items-center"><div class="lg:w-1/2 space-y-5 scroll-reveal"><div class="flex items-center gap-3"><div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose-500/20 bg-rose-500/10 text-rose-400 text-xs font-mono"><span>01 // ENGINE ARCHITECTURE</span></div><span class="text-rose-300 text-base" style="font-family: Caveat, cursive;">why does my video stutter?</span></div><h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">Web browsers were never built to decode media containers.</h2><p class="text-slate-400 text-base leading-relaxed">Modern browsers natively support MP4 and WebM containers, but cinema enthusiasts hoard high-bitrate <span class="font-mono text-slate-200">.mkv</span> releases with Dolby Digital AC-3, E-AC-3, and DTS master audio tracks. Chrome and Safari choke on these codecs, forcing users into tedious pre-transcoding or painful re-renders.</p><p class="text-slate-400 text-base leading-relaxed">Lumière solves this client-side: video streams are passed verbatim without expensive re-encoding (<span class="font-mono text-rose-400">-c:v copy</span>), while incompatible spatial audio channels are split and converted in a WebAssembly worker on-the-fly.</p><div class="grid grid-cols-2 gap-4 pt-2 font-mono text-xs text-slate-300"><div class="reveal-stagger glass-card interactive-card-hover p-4 rounded-xl border border-white/5"><div class="text-rose-400 font-bold text-sm mb-1">0ms Video Delay</div><div class="text-slate-400">Direct H.264/HEVC stream-copy to fragmented MP4.</div></div><div class="reveal-stagger glass-card interactive-card-hover p-4 rounded-xl border border-white/5"><div class="text-emerald-400 font-bold text-sm mb-1">Wasm FFmpeg</div><div class="text-slate-400">AC-3 / DTS decoded in parallel Web Workers.</div></div></div></div><div class="lg:w-1/2 w-full scroll-reveal"><div class="glass-card interactive-card-hover rounded-2xl p-6 sm:p-7 border border-white/10 font-mono text-xs" id="terminal-inspector"><div class="flex items-center justify-between pb-4 mb-4 border-b border-white/5 text-slate-400"><div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span><span class="text-slate-200 font-semibold">pipeline.remuxer.ts</span></div><span class="text-rose-400 text-[11px] font-mono">TERMINAL DEMUX INSPECTOR</span></div><div class="space-y-2.5 text-slate-400 leading-relaxed" id="terminal-lines"><p class="text-slate-500 code-line">// Demux Matroska container into raw elementary tracks</p><p class="code-line"><span class="text-rose-400">const</span> demuxer = <span class="text-rose-400">new</span> <span class="text-white">MKVDemuxer</span>(localFileChunkStream);</p><p class="code-line"><span class="text-rose-400">const</span> { videoTrack, audioTrack } = <span class="text-rose-400">await</span> demuxer.probe();</p><p class="text-slate-500 pt-2 code-line">// Zero recompression video pass-through</p><p class="code-line"><span class="text-indigo-400">if</span> (videoTrack.codec === <span class="text-emerald-400">'avc1'</span> || videoTrack.codec === <span class="text-emerald-400">'hvc1'</span>) {</p><p class="pl-4 code-line">fmp4Muxer.pipeVideoVerbatim(videoTrack.packets); <span class="text-slate-500">// 0% CPU overhead</span></p><p class="code-line">}</p><p class="text-slate-500 pt-2 code-line">// Transcode multi-channel audio to AAC stereo/5.1</p><p class="code-line"><span class="text-indigo-400">if</span> (audioTrack.isProprietarySurround) {</p><p class="pl-4 code-line">audioWorker.postMessage({ type: <span class="text-emerald-400">'TRANSCODE_CHUNK'</span>, payload: audioTrack.chunk });<span class="cursor-blink"></span></p><p class="code-line">}</p></div><div class="pt-4 mt-4 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400"><span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Dolby / DTS Patents Bypassed</span><span class="text-rose-400 font-semibold">Wasm Simd Enabled</span></div></div></div></div></section><section class="max-w-7xl mx-auto px-6"><div class="text-center max-w-3xl mx-auto space-y-4 mb-12 scroll-reveal"><div class="flex items-center justify-center gap-3"><div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose-500/20 bg-rose-500/10 text-rose-400 text-xs font-mono"><span>02 // THE COMPROMISES</span></div><span class="text-rose-300 text-lg" style="font-family: Caveat, cursive;">we tried them all...</span></div><h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">Why existing watch party tools fall short</h2><p class="text-slate-400 text-base leading-relaxed">Every existing solution forces you to compromise on quality, privacy, or convenience.</p></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="compromises-grid"><div class="reveal-stagger glass-card interactive-card-hover rounded-2xl p-6 border border-white/5 space-y-4"><div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 font-mono font-bold text-sm">01</div><h3 class="text-lg font-bold text-white">Screen Sharing</h3><div class="text-xs text-rose-400 font-mono font-semibold">Discord • Zoom • Meet</div><p class="text-slate-400 text-xs leading-relaxed">Hard-capped at 720p/1080p 30fps. Aggressive chroma subsampling washes out dark scenes and causes severe macroblocking during action sequences.</p></div><div class="reveal-stagger glass-card interactive-card-hover rounded-2xl p-6 border border-white/5 space-y-4"><div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 font-mono font-bold text-sm">02</div><h3 class="text-lg font-bold text-white">Local Sync Tools</h3><div class="text-xs text-rose-400 font-mono font-semibold">Syncplay • MPV-Sync</div><p class="text-slate-400 text-xs leading-relaxed">Only syncs the timeline; does not stream data. Every friend must manually locate, download, and store the identical 45GB file beforehand.</p></div><div class="reveal-stagger glass-card interactive-card-hover rounded-2xl p-6 border border-white/5 space-y-4"><div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 font-mono font-bold text-sm">03</div><h3 class="text-lg font-bold text-white">Commercial Walled Gardens</h3><div class="text-xs text-rose-400 font-mono font-semibold">Teleparty • Scener</div><p class="text-slate-400 text-xs leading-relaxed">Requires active subscriptions across multiple paid streaming silos. Zero support for your personal 4K Blu-ray remuxes or indie festival cinema.</p></div><div class="reveal-stagger glass-card interactive-card-hover rounded-2xl p-6 border border-white/5 space-y-4"><div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 font-mono font-bold text-sm">04</div><h3 class="text-lg font-bold text-white">Dedicated Media Servers</h3><div class="text-xs text-rose-400 font-mono font-semibold">Plex • Jellyfin Watch Together</div><p class="text-slate-400 text-xs leading-relaxed">Demands port forwarding, static IP / reverse proxy configuration, and stresses your server CPU with simultaneous transcode sessions.</p></div></div></section><section class="max-w-7xl mx-auto px-6"><div class="scroll-reveal glass-card interactive-card-hover rounded-2xl p-8 sm:p-12 border border-white/10"><div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center"><div class="space-y-5"><div class="flex items-center gap-3"><div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose-500/20 bg-rose-500/10 text-rose-400 text-xs font-mono"><span>03 // NO CLOUD MIDDLEMAN</span></div><span class="text-rose-300 text-base" style="font-family: Caveat, cursive;">this is where the magic happens!</span></div><h2 class="text-3xl font-extrabold tracking-tight text-white">Host-side remuxing with zero-loss stream copy</h2><p class="text-slate-400 text-sm sm:text-base leading-relaxed">Lumière connects your group using peer-to-peer data transport over WebRTC or direct LAN sockets. Your media never passes through third-party servers. Your friend’s browser sends precise microsecond clock synchronization packets back to the host, ensuring everyone is reacting to the exact same movie frame.</p><div class="flex flex-wrap gap-3 pt-2 text-xs font-mono text-slate-300"><span class="px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/10 text-slate-300 font-mono text-xs hover:border-rose-500/30 transition-colors">LAN &amp; Tailscale Subnets</span><span class="px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/10 text-slate-300 font-mono text-xs hover:border-rose-500/30 transition-colors">End-to-End P2P Video</span><span class="px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/10 text-slate-300 font-mono text-xs hover:border-rose-500/30 transition-colors">Opus Low-Latency Voice</span></div></div><div class="space-y-4 font-mono text-xs"><div class="glass-card interactive-card-hover p-4 rounded-xl border border-white/5 flex items-start gap-3"><div class="w-2 h-2 rounded-full bg-rose-500 mt-1 shrink-0"></div><div><div class="text-white font-semibold">Adaptive Playback Rate Skewing</div><div class="text-slate-400 mt-0.5">Instead of jarring pauses or stuttering rewinds, playback rate subtly modulates by ±0.05% until peers lock into exact frame alignment.</div></div></div><div class="glass-card interactive-card-hover p-4 rounded-xl border border-white/5 flex items-start gap-3"><div class="w-2 h-2 rounded-full bg-rose-500 mt-1 shrink-0"></div><div><div class="text-white font-semibold">Built-in Theater Voice &amp; Chat</div><div class="text-slate-400 mt-0.5">Spatial audio ducking lowers cinema volume automatically when a friend speaks, so nobody misses a punchline or dialogue beat.</div></div></div><div class="glass-card interactive-card-hover p-4 rounded-xl border border-white/5 flex items-start gap-3"><div class="w-2 h-2 rounded-full bg-rose-500 mt-1 shrink-0"></div><div><div class="text-white font-semibold">AAC Stereo Downmix &lt; 2% CPU</div><div class="text-slate-400 mt-0.5">High-performance WebAssembly decodes 5.1/7.1 surround sound down to pristine stereo tracks with almost zero processor penalty.</div></div></div></div></div></div></section><section class="max-w-7xl mx-auto px-6"><div class="scroll-reveal glass-card interactive-card-hover rounded-2xl p-8 sm:p-12 border border-white/10"><div class="max-w-3xl mx-auto text-center space-y-5"><div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose-500/20 bg-rose-500/10 text-rose-400 text-xs font-mono"><span>04 // PRIVACY BY ARCHITECTURE</span></div><h2 class="text-3xl font-extrabold tracking-tight text-white">Self-hosted, private, and built for friends</h2><p class="text-slate-400 text-base leading-relaxed">Lumière has no telemetry, no tracking cookies, and no centralized databases. The room host’s browser serves encrypted fragmented segments directly out of temporary RAM to connected peers.</p><div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left pt-4 font-mono text-xs"><div class="p-4 rounded-xl bg-white/[0.02] border border-white/5 transition-all hover:border-rose-500/30 hover:bg-white/[0.04]"><div class="text-white font-semibold mb-1">Zero Telemetry</div><div class="text-slate-400">No watch logs, duration tracking, or file hash reporting.</div></div><div class="p-4 rounded-xl bg-white/[0.02] border border-white/5 transition-all hover:border-rose-500/30 hover:bg-white/[0.04]"><div class="text-white font-semibold mb-1">Ephemeral RAM Buffers</div><div class="text-slate-400">Stream chunks exist only in flight; nothing is permanently written.</div></div><div class="p-4 rounded-xl bg-white/[0.02] border border-white/5 transition-all hover:border-rose-500/30 hover:bg-white/[0.04]"><div class="text-white font-semibold mb-1">WireGuard / Tailscale</div><div class="text-slate-400">Seamless mesh networking across countries without port forward.</div></div></div><div class="pt-6 flex flex-wrap items-center justify-center gap-4"><a class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-coral-500 hover:bg-coral-400 text-white font-bold text-sm tracking-wide shadow-glow-coral transition-all active:scale-[0.98]" href="https://github.com/AyushmanMItra/lumiere" rel="noopener noreferrer" target="_blank"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>View on GitHub</a><a class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] text-white text-sm font-semibold border border-white/10 transition-all active:scale-[0.98]" href="/lumiere.apk" download="lumiere.apk"><svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>Join Network</a></div></div></div></section><section class="max-w-7xl mx-auto px-6" id="android"><div class="text-center max-w-2xl mx-auto space-y-3 mb-10 scroll-reveal"><h3 class="text-2xl font-bold text-white">Screening on every screen in your home</h3><p class="text-slate-400 text-sm">Native clients and web extensions designed for effortless local theater rooms.</p></div><div class="grid grid-cols-2 sm:grid-cols-4 gap-4"><div class="reveal-stagger glass-card interactive-card-hover p-5 rounded-xl border border-white/5 text-center space-y-2"><div class="text-xs font-mono text-rose-400 font-semibold tracking-wider">ANDROID TV</div><div class="text-sm font-bold text-white">Leanback APK</div><div class="text-[11px] text-slate-500 font-mono">v2.4.1 sideload ready</div></div><div class="reveal-stagger glass-card interactive-card-hover p-5 rounded-xl border border-white/5 text-center space-y-2"><div class="text-xs font-mono text-rose-400 font-semibold tracking-wider">CHROME EXTENSION</div><div class="text-sm font-bold text-white">Chromium Sync</div><div class="text-[11px] text-slate-500 font-mono">Brave, Edge &amp; Chrome</div></div><div class="reveal-stagger glass-card interactive-card-hover p-5 rounded-xl border border-white/5 text-center space-y-2"><div class="text-xs font-mono text-rose-400 font-semibold tracking-wider">DESKTOP HOST</div><div class="text-sm font-bold text-white">macOS &amp; Windows</div><div class="text-[11px] text-slate-500 font-mono">Hardware acceleration</div></div><div class="reveal-stagger glass-card interactive-card-hover p-5 rounded-xl border border-white/5 text-center space-y-2"><div class="text-xs font-mono text-rose-400 font-semibold tracking-wider">OPEN SOURCE</div><div class="text-sm font-bold text-white">Self-Host CLI</div><div class="text-[11px] text-slate-500 font-mono">Docker &amp; Linux build</div></div></div></section></div>
+<!-- END: Technical Architecture & Story Sections -->
+<!-- END: HeroAndInteractiveSection -->
+<!-- BEGIN: MainFooter -->
+<footer class="relative z-10 w-full border-t border-white/[0.04] py-6" data-purpose="site-footer"><div class="max-w-7xl mx-auto px-6 py-10">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 pb-10 border-b border-white/[0.05] text-xs">
+<div class="lg:col-span-2 space-y-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-rose-950 via-obsidian-surface to-rose-900 border border-white/10 flex items-center justify-center shadow-inner">
+<svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<rect height="14" rx="2" width="20" x="2" y="3"></rect>
+<polygon fill="currentColor" points="10 7 15 10 10 13 10 7" stroke="none"></polygon>
+</svg>
+</div>
+<span class="font-bold text-base tracking-tight text-white">Lumière Cinema</span>
+</div>
+<p class="text-slate-400 text-xs leading-relaxed max-w-sm">
+        Private synchronized cinema rooms with zero-cloud stream copying. Synchronized down to the microsecond for film lovers.
+      </p>
+<div class="text-[11px] text-slate-500 font-mono">
+        Release: v2.4.0 (Build 2024.11)
       </div>
-    </header>
-
-    <!-- Hero Section -->
-    <main class="landing-hero-container">
-      <!-- Left Column: Headline & Value Prop -->
-      <div class="landing-hero-content">
-        
-
-        <h1 class="landing-hero-headline">
-          Watch together.<br>
-          Synchronized to the frame.
-        </h1>
-
-        <p class="landing-hero-description">
-          Spin up a private cinema in seconds. Stream your local movie rips directly from your machine with frame-perfect sync, voice, video, and chat baked in.
-        </p>
-
-        <div class="hero-highlights-row">
-          <div class="highlight-item">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5865F2" stroke-width="2.2">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-            </svg>
-            <span>Frame-perfect sync</span>
-          </div>
-
-          <div class="highlight-item">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#57F287" stroke-width="2.2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-            </svg>
-            <span>Voice + video chat</span>
-          </div>
-
-          <div class="highlight-item">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EB459E" stroke-width="2.2">
-              <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"></path>
-              <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"></path>
-              <circle cx="12" cy="12" r="2"></circle>
-              <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"></path>
-              <path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"></path>
-            </svg>
-            <span>Direct LAN & Tailscale ready</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right Column: Join / Create Card -->
-      <div class="landing-hero-card-col">
-        <div class="enter-theater-card">
-          <div class="card-title-row">
-            <div class="card-play-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="6 3 20 12 6 21 6 3"></polygon>
-              </svg>
-            </div>
-            <div>
-              <h3>Enter the theater</h3>
-              <p>Host or join an active screening</p>
-            </div>
-          </div>
-
-          <div class="card-form-body">
-            <div class="card-input-group">
-              <label for="usernameInput">Your Name</label>
-              <input type="text" id="usernameInput" placeholder="Enter your name (e.g. Alex)" maxlength="20" autocomplete="nickname">
-            </div>
-
-            <button id="createRoomBtn" class="btn btn-coral btn-block btn-lg create-room-btn">
-              <span>Create Screening Room</span>
-            </button>
-
-            <div class="card-divider-line">
-              <span>or join existing room</span>
-            </div>
-
-            <div class="card-join-row">
-              <div class="join-input-wrap">
-                <input type="text" id="roomInput" placeholder="Room code (e.g. 1234)" maxlength="30">
-                <button id="randomRoomBtn" class="dice-btn" title="Random Room Code">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="2" y="2" width="20" height="20" rx="4"></rect>
-                    <circle cx="8" cy="8" r="1.5" fill="currentColor"></circle>
-                    <circle cx="16" cy="16" r="1.5" fill="currentColor"></circle>
-                    <circle cx="16" cy="8" r="1.5" fill="currentColor"></circle>
-                    <circle cx="8" cy="16" r="1.5" fill="currentColor"></circle>
-                  </svg>
-                </button>
-              </div>
-              <button id="joinRoomBtn" class="btn btn-secondary join-btn-submit">Join</button>
-            </div>
-
-            <p class="card-micro-hint">
-              First person in a room is the host and controls the video for everyone.
-            </p>
-
-            <div class="network-badge" id="networkBadge">
-              <span>Connecting to engine...</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <!-- Bottom Footer Bar -->
-    <footer class="landing-footer-bar">
-      <div class="footer-left">
-        <span>Lumière Cinema</span>
-      </div>
-      <div class="footer-center">
-        <span>Crafted by <strong>Ayushman Mitra</strong></span>
-      </div>
-    </footer>
+</div>
+<div class="space-y-2.5">
+<div class="font-bold uppercase tracking-wider text-slate-300 text-[11px]">Ecosystem</div>
+<ul class="space-y-2 text-slate-400">
+<li><a class="hover:text-white transition-colors cursor-pointer text-slate-400 text-xs" href="/lumiere.apk" download="lumiere.apk">Android TV APK</a></li>
+<li><a class="hover:text-white transition-colors" href="#technology-story">Wasm Remux Engine</a></li>
+<li><a class="hover:text-white transition-colors" href="#">Web Extension</a></li>
+<li><a class="hover:text-white transition-colors" href="#">Tailscale Guide</a></li>
+</ul>
+</div>
+<div class="space-y-2.5">
+<div class="font-bold uppercase tracking-wider text-slate-300 text-[11px]">Community</div>
+<ul class="space-y-2 text-slate-400">
+<li><a class="hover:text-white transition-colors" href="https://github.com/AyushmanMItra/lumiere" rel="noopener noreferrer" target="_blank">GitHub Repository</a></li>
+<li><button id="footerFeedbackBtn" class="hover:text-white transition-colors text-left bg-transparent border-0 p-0 cursor-pointer text-slate-400 text-xs">Feature Requests</button></li>
+<li><a class="hover:text-white transition-colors" href="#">Discord Server</a></li>
+<li><button id="footerSupportBtn" class="hover:text-white transition-colors text-left bg-transparent border-0 p-0 cursor-pointer text-slate-400 text-xs">Support the Project</button></li>
+</ul>
+</div>
+<div class="space-y-2.5">
+<div class="font-bold uppercase tracking-wider text-slate-300 text-[11px]">Creator</div>
+<ul class="space-y-2 text-slate-400">
+<li><a id="footerAboutBtn" class="hover:text-white transition-colors cursor-pointer text-slate-400 text-xs" href="#about">About Ayushman Mitra</a></li>
+<li><a class="hover:text-white transition-colors" href="https://github.com/AyushmanMItra/lumiere" rel="noopener noreferrer" target="_blank">Other Open Source Work</a></li>
+<li><button class="hover:text-white transition-colors text-left bg-transparent border-0 p-0 cursor-pointer text-slate-400 text-xs" onclick="document.getElementById(\'navFeedbackBtn\')?.click()">Send Direct Note</button></li>
+</ul>
+</div>
+</div>
+<div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+<div class="flex items-center gap-2">
+<span>Lumière Cinema</span>
+<span class="text-slate-700">•</span>
+<span>Zero-buffer local sync</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span>Crafted by</span>
+<a class="font-medium text-slate-300 hover:text-white transition-colors underline decoration-slate-700 hover:decoration-white underline-offset-4" href="https://github.com/AyushmanMItra/lumiere" rel="noopener noreferrer" target="_blank">
+        Ayushman Mitra
+      </a>
+</div>
+</div>
+</div></footer>
   </div>
 
   <!-- ============================================================ -->
@@ -1974,5 +2202,91 @@
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="/app.js?v=2.9"></script>
+  <!-- Google Stitch Landing Interactive Script -->
+  <script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Check reduced motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // 1. Sleek top reading progress indicator
+    const progressBar = document.getElementById('reading-progress');
+    window.addEventListener('scroll', () => {
+      const scrollTotal = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollTotal > 0 && progressBar) {
+        const scrolled = (window.scrollY / scrollTotal) * 100;
+        progressBar.style.width = scrolled + '%';
+      }
+    }, { passive: true });
+
+    if (prefersReducedMotion) {
+      document.querySelectorAll('.scroll-reveal, .reveal-stagger').forEach(el => el.classList.add('is-visible'));
+      const terminalInspector = document.getElementById('terminal-inspector');
+      if (terminalInspector) terminalInspector.classList.add('terminal-active');
+      return;
+    }
+
+    // 2. Observer for general content sections (.scroll-reveal)
+    const sectionObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      root: null,
+      rootMargin: '0px 0px -60px 0px',
+      threshold: 0.1
+    });
+
+    document.querySelectorAll('.scroll-reveal').forEach(el => sectionObserver.observe(el));
+
+    // 3. Staggered cascade for cards (.reveal-stagger) with 100ms sequential delay
+    const staggerGroups = [
+      document.querySelectorAll('#compromises-grid .reveal-stagger'),
+      document.querySelectorAll('#android .reveal-stagger'),
+      document.querySelectorAll('.grid-cols-2 .reveal-stagger')
+    ];
+
+    staggerGroups.forEach(group => {
+      if (!group || group.length === 0) return;
+      const parent = group[0].parentElement;
+      const groupObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            group.forEach((card, idx) => {
+              setTimeout(() => {
+                card.classList.add('is-visible');
+              }, idx * 100);
+            });
+            observer.unobserve(entry.target);
+          }
+        });
+      }, {
+        threshold: 0.15,
+        rootMargin: '0px 0px -40px 0px'
+      });
+      if (parent) groupObserver.observe(parent);
+    });
+
+    // 4. Code Inspector Terminal Staggered Line Demux Reveal
+    const terminal = document.getElementById('terminal-inspector');
+    if (terminal) {
+      const termObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            terminal.classList.add('terminal-active');
+            const lines = terminal.querySelectorAll('.code-line');
+            lines.forEach((line, index) => {
+              line.style.transitionDelay = `${index * 60}ms`;
+            });
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.2 });
+      termObserver.observe(terminal);
+    }
+  });
+  </script>
 </body>
 </html>

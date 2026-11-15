@@ -5220,6 +5220,11 @@
     // About Page Navigation
     const showAbout = (e) => {
       if (e) e.preventDefault();
+      const storyAbout = document.getElementById('about');
+      if (storyAbout && el.joinModal && !el.joinModal.classList.contains('hidden')) {
+        storyAbout.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
       if (window.location.pathname !== '/about') {
         try { window.history.pushState({}, '', '/about'); } catch (err) {}
       }
