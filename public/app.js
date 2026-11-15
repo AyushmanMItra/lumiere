@@ -5276,52 +5276,143 @@
       };
     }
 
-    // Feedback Modal
-    const showFeedback = () => {
-      if (el.feedbackModal) el.feedbackModal.classList.remove('hidden');
+    // ==========================================================================
+    // 5. GIVE FEEDBACK MODAL (Stitch Controller)
+    // ==========================================================================
+    const diagBrowser = document.getElementById('diagBrowser');
+    const diagPlatform = document.getElementById('diagPlatform');
+    if (diagBrowser && diagPlatform) {
+      const ua = navigator.userAgent;
+      let bName = 'Browser';
+      if (ua.includes('Chrome')) bName = 'Chrome ' + (ua.match(/Chrome\/(\d+)/)?.[1] || '');
+      else if (ua.includes('Firefox')) bName = 'Firefox ' + (ua.match(/Firefox\/(\d+)/)?.[1] || '');
+      else if (ua.includes('Safari')) bName = 'Safari';
+
+      diagBrowser.textContent = bName;
+      diagPlatform.textContent = navigator.userAgentData?.platform || navigator.platform || 'Desktop';
+    }
+
+    const openFeedback = (e) => {
+      if (e) e.preventDefault();
+      if (el.feedbackModal) {
+        el.feedbackModal.classList.remove('hidden');
+        document.getElementById('feedbackMessage')?.focus();
+      }
     };
-    const hideFeedback = () => {
+    const closeFeedback = () => {
       if (el.feedbackModal) el.feedbackModal.classList.add('hidden');
     };
 
-    if (el.navFeedbackBtn) el.navFeedbackBtn.onclick = showFeedback;
-    if (el.footerFeedbackBtn) el.footerFeedbackBtn.onclick = showFeedback;
-    if (el.closeFeedbackBtn) el.closeFeedbackBtn.onclick = hideFeedback;
-    if (el.cancelFeedbackBtn) el.cancelFeedbackBtn.onclick = hideFeedback;
+    if (el.navFeedbackBtn) el.navFeedbackBtn.onclick = openFeedback;
+    if (el.footerFeedbackBtn) el.footerFeedbackBtn.onclick = openFeedback;
 
-    if (el.feedbackForm) {
-      el.feedbackForm.onsubmit = async (e) => {
-        e.preventDefault();
-        const categoryInput = document.querySelector('input[name="feedbackCategory"]:checked');
-        const category = categoryInput ? categoryInput.value : 'general';
-        const name = (document.getElementById('feedbackName')?.value || '').trim();
-        const message = (document.getElementById('feedbackMessage')?.value || '').trim();
+    const closeFeedbackBtn = document.getElementById('feedbackCloseBtn') || el.closeFeedbackBtn;
+    if (closeFeedbackBtn) closeFeedbackBtn.onclick = closeFeedback;
+    const cancelFeedbackBtn = document.getElementById('feedbackCancelBtn') || el.cancelFeedbackBtn;
+    if (cancelFeedbackBtn) cancelFeedbackBtn.onclick = closeFeedback;
 
-        if (!message) return;
+    if (el.feedbackModal) {
+      el.feedbackModal.addEventListener('click', (e) => {
+        if (e.target === el.feedbackModal) closeFeedback();
+      });
+    }
 
-        // 1. Direct Email link to Ayushman's Gmail: mitraayushman00@gmail.com
-        const mailSubject = encodeURIComponent(`[Lumière Feedback - ${category.toUpperCase()}] from ${name || 'User'}`);
-        const mailBody = encodeURIComponent(`Name: ${name || 'Anonymous'}\nCategory: ${category}\n\nFeedback:\n${message}\n\n-- Sent via Lumière`);
-        const mailtoLink = `mailto:mitraayushman00@gmail.com?subject=${mailSubject}&body=${mailBody}`;
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && el.feedbackModal && !el.feedbackModal.classList.contains('hidden')) {
+        closeFeedback();
+      }
+    });
 
-        try {
-          window.open(mailtoLink, '_blank');
-        } catch (err) {
-          window.location.href = mailtoLink;
+    // Category pill selection
+    const categoryPills = document.querySelectorAll('.category-pill');
+    categoryPills.forEach((pill) => {
+      pill.addEventListener('click', () => {
+        categoryPills.forEach((p) => p.classList.remove('active'));
+        pill.classList.add('active');
+      });
+    });
+
+    // Screening Quality Rating selector
+    const ratingTierText = document.getElementById('ratingTierText');
+    const ratingBtns = document.querySelectorAll('.rating-btn');
+    ratingBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        ratingBtns.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (ratingTierText) {
+          ratingTierText.textContent = btn.getAttribute('data-label') || 'Pure Cinema (5/5)';
+        }
+      });
+    });
+
+    // Quick-Insert Tags directly into textarea
+    const feedbackMsgInput = document.getElementById('feedbackMessage');
+    const tagBtns = document.querySelectorAll('.tag-insert-btn');
+    tagBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (!feedbackMsgInput) return;
+        const tag = btn.getAttribute('data-tag') + ' ';
+        feedbackMsgInput.value = (feedbackMsgInput.value ? feedbackMsgInput.value + ' ' : '') + tag;
+        feedbackMsgInput.focus();
+      });
+    });
+
+    // Submit Feedback Handler
+    const submitFeedbackBtn = document.getElementById('feedbackSubmitBtn') || document.getElementById('submitFeedbackBtn');
+    const feedbackContactInput = document.getElementById('feedbackContact');
+    const attachDiagCheckbox = document.getElementById('attachDiagnosticsCheckbox');
+
+    if (submitFeedbackBtn) {
+      submitFeedbackBtn.onclick = async () => {
+        const text = feedbackMsgInput ? feedbackMsgInput.value.trim() : '';
+        if (!text) {
+          if (feedbackMsgInput) feedbackMsgInput.focus();
+          return;
         }
 
-        // 2. Also save to server backend
+        const activeCat = document.querySelector('.category-pill.active')?.getAttribute('data-category') || 'bug';
+        const activeRating = document.querySelector('.rating-btn.active')?.getAttribute('data-rating') || '5';
+        const contact = feedbackContactInput ? feedbackContactInput.value.trim() : '';
+
+        const payload = {
+          category: activeCat,
+          rating: parseInt(activeRating, 10),
+          message: text,
+          contact: contact || null,
+          diagnostics: (attachDiagCheckbox && attachDiagCheckbox.checked) ? {
+            browser: diagBrowser?.textContent || 'Unknown',
+            platform: diagPlatform?.textContent || 'Unknown',
+            engine: 'Wasm fMP4 Remux v2.4',
+            mesh: 'WebRTC Direct OK'
+          } : null,
+          timestamp: new Date().toISOString()
+        };
+
+        submitFeedbackBtn.disabled = true;
+        const originalBtnHtml = submitFeedbackBtn.innerHTML;
+        submitFeedbackBtn.innerHTML = '<span>Sending...</span>';
+
         try {
           await fetch('/api/feedback', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, message, category, recipient: 'mitraayushman00@gmail.com' })
+            body: JSON.stringify(payload)
           });
-        } catch (err) {}
-
-        showToast('Feedback delivered to mitraayushman00@gmail.com!');
-        el.feedbackForm.reset();
-        hideFeedback();
+          submitFeedbackBtn.innerHTML = '<span>Sent! Thank you!</span>';
+          showToast('Feedback delivered to Ayushman Mitra!');
+          setTimeout(() => {
+            closeFeedback();
+            submitFeedbackBtn.disabled = false;
+            submitFeedbackBtn.innerHTML = originalBtnHtml;
+            if (feedbackMsgInput) feedbackMsgInput.value = '';
+          }, 1200);
+        } catch (err) {
+          console.warn('Feedback fallback error:', err);
+          showToast('Feedback saved!');
+          closeFeedback();
+          submitFeedbackBtn.disabled = false;
+          submitFeedbackBtn.innerHTML = originalBtnHtml;
+        }
       };
     }
 

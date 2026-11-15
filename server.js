@@ -292,9 +292,9 @@ app.post('/api/upload', upload.single('movie'), (req, res) => {
 // 3.5 Feedback Collector
 app.post('/api/feedback', (req, res) => {
   try {
-    const { name, message, category, rating } = req.body || {};
+    const { name, contact, message, category, rating, diagnostics, timestamp } = req.body || {};
     if (!message || !message.trim()) {
-      return res.status(400).json({ success: false, error: 'Feedback message is required' });
+      return res.status(400).json({ success: false, ok: false, error: 'Feedback message is required' });
     }
 
     const feedbackFile = path.join(__dirname, 'feedback.json');
@@ -309,20 +309,25 @@ app.post('/api/feedback', (req, res) => {
 
     const item = {
       id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
-      name: (name && name.trim()) || 'Anonymous',
+      name: (name && name.trim()) || (contact && contact.trim()) || 'Anonymous Cinephile',
+      contact: (contact && contact.trim()) || null,
       message: message.trim(),
       category: category || 'general',
-      rating: rating || 5,
-      timestamp: new Date().toISOString()
+      rating: rating ? parseInt(rating, 10) : 5,
+      diagnostics: diagnostics || null,
+      timestamp: timestamp || new Date().toISOString()
     };
 
     feedbacks.push(item);
     fs.writeFileSync(feedbackFile, JSON.stringify(feedbacks, null, 2), 'utf8');
 
-    console.log(`[Feedback Received] From: ${item.name} (${item.category}): ${item.message}`);
-    res.json({ success: true, item });
+    console.log(`[LUMIÈRE FEEDBACK] [${item.category.toUpperCase()}] (${item.rating}/5) from ${item.name}: ${item.message}`);
+    if (item.contact) console.log(`  Contact: ${item.contact}`);
+    if (item.diagnostics) console.log(`  Diagnostics:`, item.diagnostics);
+
+    res.json({ success: true, ok: true, status: 'received', item });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, ok: false, error: err.message });
   }
 });
 

@@ -321,7 +321,7 @@
         </span>
 </a>
 <!-- Quick Action Navigation -->
-<nav class="flex items-center gap-2.5 sm:gap-3" data-purpose="header-navigation"><a class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-white rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] transition-all" href="#feedback"><svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>Give Feedback</a><a id="navApkBtn" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-200 hover:text-white rounded-lg border border-white/10 bg-white/[0.05] hover:bg-white/[0.1] transition-all shadow-sm cursor-pointer" href="/lumiere.apk" download="lumiere.apk" title="Download Lumière Android App (APK)"><svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><rect height="20" rx="2" ry="2" width="14" x="5" y="2"></rect><line x1="12" x2="12.01" y1="18" y2="18"></line></svg><span>Android App</span></a></nav>
+<nav class="flex items-center gap-2.5 sm:gap-3" data-purpose="header-navigation"><a id="navFeedbackBtn" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-white rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/[0.06] transition-all cursor-pointer" href="#feedback"><svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>Give Feedback</a><a id="navApkBtn" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-200 hover:text-white rounded-lg border border-white/10 bg-white/[0.05] hover:bg-white/[0.1] transition-all shadow-sm cursor-pointer" href="/lumiere.apk" download="lumiere.apk" title="Download Lumière Android App (APK)"><svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24"><rect height="20" rx="2" ry="2" width="14" x="5" y="2"></rect><line x1="12" x2="12.01" y1="18" y2="18"></line></svg><span>Android App</span></a></nav>
 </div>
 </header>
 <!-- END: MainHeader -->
@@ -1596,63 +1596,184 @@
   </div>
 
   <!-- ============================================================ -->
-  <!-- 5. GIVE FEEDBACK MODAL                                       -->
+  <!-- 5. GIVE FEEDBACK MODAL (Stitch Obsidian & Crimson Design)    -->
   <!-- ============================================================ -->
-  <div id="feedbackModal" class="modal-overlay hidden">
-    <div class="modal-card feedback-modal-card">
-      <div class="modal-header-row">
-        <h3>Give Feedback</h3>
-        <button id="closeFeedbackBtn" class="modal-x-btn" title="Close">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <div id="feedbackModal" class="feedback-modal-overlay hidden" aria-modal="true" role="dialog" aria-labelledby="feedbackTitle">
+    <div class="feedback-modal-card">
+      
+      <!-- Modal Header -->
+      <div class="feedback-header">
+        <div class="feedback-header-left">
+          <div class="feedback-header-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+          <div>
+            <h2 id="feedbackTitle" class="feedback-title">Send Feedback to the Creator</h2>
+            <p class="feedback-subtitle">Help shape decentralized, frame-accurate cinema. Direct channel to <strong>Ayushman Mitra</strong>.</p>
+          </div>
+        </div>
+        <button type="button" class="feedback-close-btn modal-x-btn" id="feedbackCloseBtn" aria-label="Close dialog">
+          <span class="esc-kbd">ESC</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
       </div>
 
-      <p class="modal-subtitle-text">
-        Help Ayushman improve Lumière. Tell us what you like or report any bug!
-      </p>
+      <!-- Category Selector -->
+      <div class="feedback-section">
+        <label class="feedback-field-label">Category</label>
+        <div class="feedback-category-grid" id="feedbackCategoryGrid">
+          <button type="button" class="category-pill active" data-category="bug">
+            <span class="category-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="8" height="14" x="8" y="6" rx="4"/>
+                <path d="m19 7-3 2"/><path d="m5 7 3 2"/><path d="m19 19-3-2"/><path d="m5 19 3-2"/>
+                <path d="M20 13h-4"/><path d="M4 13h4"/><path d="m10 4 1 2"/><path d="m14 4-1 2"/>
+              </svg>
+            </span>
+            <div class="category-text">
+              <strong>Bug Report</strong>
+              <small>Stutter, audio desync, crashes</small>
+            </div>
+          </button>
+          <button type="button" class="category-pill" data-category="feature">
+            <span class="category-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
+              </svg>
+            </span>
+            <div class="category-text">
+              <strong>Feature</strong>
+              <small>Codecs, subtitle styling</small>
+            </div>
+          </button>
+          <button type="button" class="category-pill" data-category="cinema">
+            <span class="category-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="20" x="2" y="2" rx="2.18"/>
+                <line x1="7" x2="7" y1="2" y2="22"/><line x1="17" x2="17" y1="2" y2="22"/>
+                <line x1="2" x2="22" y1="12" y2="12"/><line x1="2" x2="7" y1="7" y2="7"/>
+                <line x1="2" x2="7" y1="17" y2="17"/><line x1="17" x2="22" y1="17" y2="17"/>
+                <line x1="17" x2="22" y1="7" y2="7"/>
+              </svg>
+            </span>
+            <div class="category-text">
+              <strong>Cinema Exp.</strong>
+              <small>Color, mix, buffer sync</small>
+            </div>
+          </button>
+          <button type="button" class="category-pill" data-category="direct">
+            <span class="category-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>
+              </svg>
+            </span>
+            <div class="category-text">
+              <strong>Direct Note</strong>
+              <small>Film night tales & thoughts</small>
+            </div>
+          </button>
+        </div>
+      </div>
 
-      <form id="feedbackForm" class="feedback-form">
-        <div class="form-group">
-          <label>FEEDBACK TYPE</label>
-          <div class="category-pills-row">
-            <label class="category-pill-label">
-              <input type="radio" name="feedbackCategory" value="idea" checked>
-              <span>[Idea] Idea / Feature</span>
-            </label>
-            <label class="category-pill-label">
-              <input type="radio" name="feedbackCategory" value="bug">
-              <span>[Bug] Bug Report</span>
-            </label>
-            <label class="category-pill-label">
-              <input type="radio" name="feedbackCategory" value="general">
-              <span>⭐ General</span>
-            </label>
+      <!-- Screening Quality Rating (5 Tiers) -->
+      <div class="feedback-section">
+        <div class="feedback-label-row">
+          <label class="feedback-field-label">Screening Quality Rating</label>
+          <span class="rating-tier-badge" id="ratingTierText">Pure Cinema (5/5)</span>
+        </div>
+        <div class="feedback-rating-row" id="feedbackRatingRow">
+          <button type="button" class="rating-btn" data-rating="1" data-label="Dropped (1/5)">
+            <span class="rating-num">1</span>
+            <span>Dropped</span>
+          </button>
+          <button type="button" class="rating-btn" data-rating="2" data-label="Jitter (2/5)">
+            <span class="rating-num">2</span>
+            <span>Jitter</span>
+          </button>
+          <button type="button" class="rating-btn" data-rating="3" data-label="Good (3/5)">
+            <span class="rating-num">3</span>
+            <span>Good</span>
+          </button>
+          <button type="button" class="rating-btn" data-rating="4" data-label="Aligned (4/5)">
+            <span class="rating-num">4</span>
+            <span>Aligned</span>
+          </button>
+          <button type="button" class="rating-btn active" data-rating="5" data-label="Pure Cinema (5/5)">
+            <span class="rating-num">5</span>
+            <span>Cinema</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Message Textarea & Quick Insert Tags -->
+      <div class="feedback-section">
+        <label class="feedback-field-label" for="feedbackMessage">What happened or what's on your mind?</label>
+        <div class="textarea-wrapper">
+          <textarea id="feedbackMessage" rows="4" placeholder="Describe the issue, device specs, or feature idea... If reporting playback stutter, mention your browser and movie container (.mkv, .mp4)."></textarea>
+        </div>
+        <div class="feedback-quick-tags">
+          <span class="tags-hint">Insert tag:</span>
+          <button type="button" class="tag-insert-btn" data-tag="[MKV / DTS Audio]">+ [MKV / DTS Audio]</button>
+          <button type="button" class="tag-insert-btn" data-tag="[WebRTC Mesh]">+ [WebRTC Mesh]</button>
+          <button type="button" class="tag-insert-btn" data-tag="[Android TV]">+ [Android TV]</button>
+          <button type="button" class="tag-insert-btn" data-tag="[Chromium Extension]">+ [Chromium Extension]</button>
+        </div>
+      </div>
+
+      <!-- Contact Details -->
+      <div class="feedback-section">
+        <label class="feedback-field-label" for="feedbackContact">Your Email or Discord Tag <span class="label-muted">(Optional — for replies)</span></label>
+        <div class="input-with-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+          <input type="text" id="feedbackContact" placeholder="e.g. alex@cinephile.org or @alex_film" />
+        </div>
+      </div>
+
+      <!-- Privacy Telemetry Accordion & Preview -->
+      <div class="feedback-diagnostics-box">
+        <div class="diagnostics-toggle-row">
+          <label class="diagnostics-checkbox-label">
+            <input type="checkbox" id="attachDiagnosticsCheckbox" checked />
+            <span>Attach anonymous playback diagnostics</span>
+          </label>
+          <span class="safe-badge">ZERO LOGS / SAFE</span>
+        </div>
+
+        <div class="diagnostics-preview-box" id="diagnosticsPreview">
+          <div class="diagnostic-grid">
+            <div><span class="diag-key">Browser:</span> <span class="diag-val" id="diagBrowser">Detecting...</span></div>
+            <div><span class="diag-key">Platform:</span> <span class="diag-val" id="diagPlatform">Detecting...</span></div>
+            <div><span class="diag-key">Engine:</span> <span class="diag-val">Wasm fMP4 Remux v2.4</span></div>
+            <div><span class="diag-key">Mesh:</span> <span class="diag-val">WebRTC Direct OK</span></div>
           </div>
+          <p class="diag-disclaimer">No viewing history or filenames are ever sent. Only client rendering capability.</p>
         </div>
+      </div>
 
-        <div class="form-group">
-          <label for="feedbackName">YOUR NAME (OPTIONAL)</label>
-          <input type="text" id="feedbackName" placeholder="e.g. Alex or Sam">
-        </div>
+      <!-- Actions & Footer -->
+      <div class="feedback-modal-footer">
+        <button type="button" class="btn btn-ghost" id="feedbackCancelBtn">Cancel</button>
+        <button type="button" class="btn btn-primary-crimson" id="feedbackSubmitBtn">
+          <span>Send Feedback</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
 
-        <div class="form-group">
-          <label for="feedbackMessage">MESSAGE</label>
-          <textarea id="feedbackMessage" rows="4" placeholder="What's working great? What feels awkward? Tell us everything..." required></textarea>
-        </div>
+      <div class="feedback-legal-note">
+        Lumière is non-commercial open source. Direct channel to <a href="mailto:mitraayushman00@gmail.com" class="underline decoration-rose-500/40 text-slate-300 hover:text-white">mitraayushman00@gmail.com</a>.
+      </div>
 
-        <div class="feedback-email-notice">
-          <span>Delivered directly to:</span>
-          <a href="mailto:mitraayushman00@gmail.com" class="feedback-gmail-link">mitraayushman00@gmail.com</a>
-        </div>
-
-        <div class="modal-actions-row">
-          <button type="button" id="cancelFeedbackBtn" class="btn btn-secondary">Cancel</button>
-          <button type="submit" id="submitFeedbackBtn" class="btn btn-coral">Send Feedback</button>
-        </div>
-      </form>
     </div>
   </div>
 
