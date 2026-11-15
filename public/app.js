@@ -95,29 +95,29 @@
   // DOM Elements
   const el = {
     joinModal: document.getElementById('joinModal'),
-    usernameInput: document.getElementById('usernameInput'),
-    roomInput: document.getElementById('roomInput'),
-    randomRoomBtn: document.getElementById('randomRoomBtn'),
-    joinRoomBtn: document.getElementById('joinRoomBtn'),
-    createRoomBtn: document.getElementById('createRoomBtn'),
-    networkBadge: document.getElementById('networkBadge'),
+    usernameInput: document.getElementById('username') || document.getElementById('usernameInput'),
+    roomInput: document.getElementById('room-code') || document.getElementById('roomInput'),
+    randomRoomBtn: document.querySelector('[data-purpose="randomize-code-btn"]') || document.getElementById('randomRoomBtn'),
+    joinRoomBtn: document.querySelector('form[data-purpose="session-form"] button[type="submit"]') || document.getElementById('joinRoomBtn'),
+    createRoomBtn: document.querySelector('[data-purpose="create-screening-button"]') || document.getElementById('createRoomBtn'),
+    networkBadge: document.querySelector('form[data-purpose="session-form"] strong') || document.getElementById('networkBadge'),
 
     aboutPage: document.getElementById('aboutPage'),
-    navAboutBtn: document.getElementById('navAboutBtn'),
-    footerAboutBtn: document.getElementById('footerAboutBtn'),
+    navAboutBtn: document.getElementById('navAboutBtn') || document.querySelector('a[href="#about"]'),
+    footerAboutBtn: document.getElementById('footerAboutBtn') || document.querySelector('footer a[href="#about"]'),
     aboutBackBtn: document.getElementById('aboutBackBtn'),
     aboutLaunchBtn: document.getElementById('aboutLaunchBtn'),
 
     feedbackModal: document.getElementById('feedbackModal'),
-    navFeedbackBtn: document.getElementById('navFeedbackBtn'),
-    footerFeedbackBtn: document.getElementById('footerFeedbackBtn'),
+    navFeedbackBtn: document.getElementById('navFeedbackBtn') || document.querySelector('a[href="#feedback"]'),
+    footerFeedbackBtn: document.getElementById('footerFeedbackBtn') || document.querySelector('footer a[href="#feedback"]'),
     closeFeedbackBtn: document.getElementById('closeFeedbackBtn'),
     cancelFeedbackBtn: document.getElementById('cancelFeedbackBtn'),
     feedbackForm: document.getElementById('feedbackForm'),
 
     supportModal: document.getElementById('supportModal'),
-    navSupportBtn: document.getElementById('navSupportBtn'),
-    footerSupportBtn: document.getElementById('footerSupportBtn'),
+    navSupportBtn: document.getElementById('navSupportBtn') || document.querySelector('a[href="#support"]'),
+    footerSupportBtn: document.getElementById('footerSupportBtn') || document.querySelector('footer a[href="#support"]'),
     aboutSupportBtn: document.getElementById('aboutSupportBtn'),
     closeSupportBtn: document.getElementById('closeSupportBtn'),
     copyUpiBtn: document.getElementById('copyUpiBtn'),
@@ -396,10 +396,22 @@
       const res = await fetch('/api/info');
       const data = await res.json();
       const ip = data.tailscaleIp || data.localIp;
-      el.networkBadge.innerText = ip ? `Connected: ${ip}` : 'Engine Ready';
+      if (el.networkBadge) {
+        if (el.networkBadge.tagName === 'STRONG') {
+          el.networkBadge.innerText = ip || 'Ready';
+        } else {
+          el.networkBadge.innerText = ip ? `Connected: ${ip}` : 'Engine Ready';
+        }
+      }
       el.folderHint.innerText = `Folder: ${data.moviesDir}`;
     } catch (e) {
-      el.networkBadge.innerText = 'Connected';
+      if (el.networkBadge) {
+        if (el.networkBadge.tagName === 'STRONG') {
+          el.networkBadge.innerText = 'Ready';
+        } else {
+          el.networkBadge.innerText = 'Connected';
+        }
+      }
     }
 
     try {
@@ -5216,6 +5228,13 @@
     if (el.joinRoomBtn) el.joinRoomBtn.onclick = joinRoom;
     if (el.usernameInput) el.usernameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') joinRoom(); });
     if (el.roomInput) el.roomInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') joinRoom(); });
+    const sessionForm = document.querySelector('form[data-purpose="session-form"]');
+    if (sessionForm) {
+      sessionForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        joinRoom();
+      });
+    }
 
     // About Page Navigation
     const showAbout = (e) => {
