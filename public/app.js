@@ -258,27 +258,6 @@
     extensionModal: document.getElementById('extensionModal'),
     closeExtensionBtn: document.getElementById('closeExtensionBtn'),
     dismissExtensionBtn: document.getElementById('dismissExtensionBtn'),
-
-    // Figma Lounge Elements (Nodes 8:2 & 11:2)
-    loungeVoiceArena: document.getElementById('loungeVoiceArena'),
-    loungeParticipantCard: document.getElementById('loungeParticipantCard'),
-    loungeAvatarBox: document.getElementById('loungeAvatarBox'),
-    loungeAvatarImg: document.getElementById('loungeAvatarImg'),
-    loungeParticipantVideo: document.getElementById('loungeParticipantVideo'),
-    loungeMicMutedIcon: document.getElementById('loungeMicMutedIcon'),
-    loungeMicActiveIcon: document.getElementById('loungeMicActiveIcon'),
-    loungeUsername: document.getElementById('loungeUsername'),
-    loungeHostBadge: document.getElementById('loungeHostBadge'),
-    loungeActivitiesCard: document.getElementById('loungeActivitiesCard'),
-    loungeInviteBtn: document.getElementById('loungeInviteBtn'),
-    loungeChooseActivityBtn: document.getElementById('loungeChooseActivityBtn'),
-    streamHeaderInfo: document.getElementById('streamHeaderInfo'),
-    streamHeaderAvatar: document.getElementById('streamHeaderAvatar'),
-    streamHeaderTitle: document.getElementById('streamHeaderTitle'),
-    streamQualityBadge: document.getElementById('streamQualityBadge'),
-    streamQualityText: document.getElementById('streamQualityText'),
-    screenshareIconDefault: document.getElementById('screenshareIconDefault'),
-    screenshareIconActive: document.getElementById('screenshareIconActive'),
     extModalRoomCode: document.getElementById('extModalRoomCode'),
     copyExtRoomCodeBtn: document.getElementById('copyExtRoomCodeBtn'),
     downloadExtZipBtn: document.getElementById('downloadExtZipBtn'),
@@ -502,39 +481,6 @@
   }
 
   // ==========================================================================
-
-  // ==========================================================================
-  // FIGMA LOUNGE MEDIA & VOICE STATE ENGINE (Nodes 8:2 & 11:2)
-  // ==========================================================================
-
-  function updateLoungeMediaState(isActive, options = {}) {
-    if (!el.loungeVoiceArena || !el.stageCinemaGroup) return;
-
-    if (isActive) {
-      el.loungeVoiceArena.classList.add('hidden');
-      el.stageCinemaGroup.classList.remove('hidden');
-      if (el.streamHeaderInfo) el.streamHeaderInfo.classList.remove('hidden');
-      if (el.streamQualityBadge) el.streamQualityBadge.classList.remove('hidden');
-      if (options.title && el.streamHeaderTitle) {
-        el.streamHeaderTitle.textContent = options.title;
-      }
-      if (options.quality && el.streamQualityText) {
-        el.streamQualityText.textContent = options.quality;
-      }
-      if (options.isScreenShare) {
-        if (el.screenshareIconDefault) el.screenshareIconDefault.classList.add('hidden');
-        if (el.screenshareIconActive) el.screenshareIconActive.classList.remove('hidden');
-      }
-    } else {
-      el.stageCinemaGroup.classList.add('hidden');
-      el.loungeVoiceArena.classList.remove('hidden');
-      if (el.streamHeaderInfo) el.streamHeaderInfo.classList.add('hidden');
-      if (el.streamQualityBadge) el.streamQualityBadge.classList.add('hidden');
-      if (el.screenshareIconDefault) el.screenshareIconDefault.classList.remove('hidden');
-      if (el.screenshareIconActive) el.screenshareIconActive.classList.add('hidden');
-    }
-  }
-
   // JOIN ROOM & SOCKET.IO SETUP
   // ==========================================================================
 
@@ -562,9 +508,6 @@
     if (el.aboutPage) el.aboutPage.classList.add('hidden');
     el.appContainer.classList.remove('hidden');
     el.roomTitleDisplay.innerText = `Lumière - ${roomId}`;
-    if (el.loungeUsername) el.loungeUsername.textContent = username;
-    if (el.loungeHostBadge) el.loungeHostBadge.textContent = state.isHost ? 'HOST' : 'GUEST';
-    updateLoungeMediaState(false);
     el.stageUsername.innerText = username;
 
     // 1. Start in clean media playback mode (no eager mic capture holding phone in Call/Earpiece mode)
@@ -600,8 +543,6 @@
 
       updateHostStatusUI();
       renderParticipantStrip();
-      if (el.loungeUsername) el.loungeUsername.textContent = state.username;
-      if (el.loungeHostBadge) el.loungeHostBadge.textContent = state.isHost ? 'HOST' : 'GUEST';
 
       if (data.screenShare) {
         state.screenSharer = data.screenShare;
@@ -777,11 +718,6 @@
           handleRemoteScreenTrack(new MediaStream([screenReceiver.track]), sharer.sharerId);
         }
       }
-      updateLoungeMediaState(true, {
-        title: `${sharer.sharerName}’s Screen`,
-        quality: '720p 30FPS',
-        isScreenShare: true
-      });
       showToast(`${sharer.sharerName} is sharing their screen`);
     });
 
@@ -806,9 +742,6 @@
       if (el.stageUsername) el.stageUsername.textContent = 'Stream';
       if (state.isSharingScreen) {
         stopScreenShare(false);
-      }
-      if (!state.currentMovie) {
-        updateLoungeMediaState(false);
       }
       showToast('Screen sharing ended');
     });
@@ -1566,12 +1499,6 @@
           }
         }
 
-        if (el.loungeParticipantVideo && el.loungeAvatarBox) {
-          el.loungeParticipantVideo.srcObject = new MediaStream([videoTrack]);
-          el.loungeParticipantVideo.classList.remove('hidden');
-          el.loungeAvatarBox.classList.add('hidden');
-          el.loungeParticipantVideo.play().catch(() => {});
-        }
         el.toggleCameraBtn.classList.remove('pill-btn-off');
         el.camOnIcon.classList.remove('hidden');
         el.camOffIcon.classList.add('hidden');
@@ -1656,16 +1583,6 @@
       el.toggleMicBtn.classList.remove('pill-btn-muted');
       el.micOnIcon.classList.remove('hidden');
       el.micOffIcon.classList.add('hidden');
-    }
-
-    if (el.loungeMicMutedIcon && el.loungeMicActiveIcon) {
-      if (state.isMicMuted) {
-        el.loungeMicMutedIcon.classList.remove('hidden');
-        el.loungeMicActiveIcon.classList.add('hidden');
-      } else {
-        el.loungeMicMutedIcon.classList.add('hidden');
-        el.loungeMicActiveIcon.classList.remove('hidden');
-      }
     }
 
     // Update self tile badge
@@ -1786,11 +1703,6 @@
         }
       }
 
-      updateLoungeMediaState(true, {
-        title: `${state.username}’s Screen`,
-        quality: '720p 30FPS',
-        isScreenShare: true
-      });
       showToast('Screen sharing started');
     } catch (err) {
       if (err.name !== 'NotAllowedError') {
@@ -2169,10 +2081,6 @@
   }
 
   function loadStreamingInTheater(platform, title, url, startTime = 0, isPlaying = true) {
-    updateLoungeMediaState(true, {
-      title: `${title || 'Streaming'} (${platform || 'Stream'})`,
-      quality: '1080p SYNC'
-    });
     const platformKey = (platform || 'netflix').toLowerCase();
     const platInfo = STREAMING_PLATFORMS[platformKey] || { name: platformKey.toUpperCase(), color: '#E50914', defaultUrl: '' };
     const movieTitle = title || `${platInfo.name} Party`;
@@ -4139,7 +4047,6 @@
   }
 
   function stopMovieInTheater() {
-    updateLoungeMediaState(false);
     state.currentMovie = null;
     state.streamStartTime = 0;
     state.movieDuration = 0;
@@ -5800,14 +5707,6 @@
       }).catch(() => prompt('Room Link:', url));
     };
     el.dockInviteBtn.onclick = copyLink;
-    if (el.loungeInviteBtn) {
-      el.loungeInviteBtn.onclick = copyLink;
-    }
-    if (el.loungeChooseActivityBtn) {
-      el.loungeChooseActivityBtn.onclick = () => {
-        openMovieModal();
-      };
-    }
 
     // Chat Toggles
     el.topChatBtn.onclick = toggleChat;
