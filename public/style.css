@@ -9132,3 +9132,485 @@ body.window-dragging-active {
 .mini-control-btn.exit-mini-btn:hover {
   background: rgba(0, 229, 255, 0.4);
 }
+
+/* ==========================================================================
+   PLAN B: DOUBLE-TAP SEEK OVERLAY & TIMELINE TOOLTIP
+   ========================================================================== */
+.double-tap-seek-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 15;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
+}
+
+.seek-ripple-container {
+  width: 40%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.seek-ripple-circle {
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transform: scale(0.6);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.seek-ripple-left .seek-ripple-circle {
+  border-top-right-radius: 50%;
+  border-bottom-right-radius: 50%;
+  margin-left: 20px;
+}
+
+.seek-ripple-right .seek-ripple-circle {
+  border-top-left-radius: 50%;
+  border-bottom-left-radius: 50%;
+  margin-right: 20px;
+}
+
+.seek-ripple-badge {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+}
+
+.seek-ripple-container.active-ripple {
+  opacity: 1;
+}
+
+.seek-ripple-container.active-ripple .seek-ripple-circle {
+  transform: scale(1.1);
+  animation: seekRipplePulse 0.55s ease forwards;
+}
+
+@keyframes seekRipplePulse {
+  0% { transform: scale(0.7); opacity: 0.4; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1.0); opacity: 0; }
+}
+
+/* Timeline Hover Tooltip with Remaining Time */
+.hud-hover-tooltip {
+  position: absolute;
+  bottom: 24px;
+  transform: translateX(-50%);
+  background: rgba(14, 16, 24, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 30;
+  display: none;
+  gap: 4px;
+  align-items: center;
+  transition: opacity 0.12s ease;
+}
+
+.hud-hover-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(14, 16, 24, 0.94) transparent transparent transparent;
+}
+
+.hover-time-text {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.hover-time-slash {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 10px;
+}
+
+.hover-time-rem {
+  color: #00e5ff;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+}
+
+/* Cinema Lights-Dimming Focus Mode */
+.cinema-focus-mode #topBar {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-10px) !important;
+  transition: opacity 0.4s ease, transform 0.4s ease !important;
+}
+
+.cinema-focus-mode .floating-pill-dock {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translate(-50%, 20px) !important;
+  transition: opacity 0.4s ease, transform 0.4s ease !important;
+}
+
+.cinema-focus-mode #cinemaControls {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.cinema-focus-mode .participants-tile-area {
+  opacity: 0.16 !important;
+  transition: opacity 0.5s ease !important;
+}
+
+.cinema-focus-mode .participants-tile-area:hover {
+  opacity: 1 !important;
+}
+
+.cinema-focus-mode .cinema-stage-wrapper {
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* ==========================================================================
+   PLAN A: PARTICIPANT QUICK CONTROLS, NETWORK QUALITY & INVITE TILE
+   ========================================================================== */
+
+/* Network Quality Signal Indicator */
+.tile-network-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+  padding: 3px 5px;
+  border-radius: 6px;
+  background: rgba(10, 12, 18, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 10;
+  font-size: 9px;
+  font-weight: 700;
+  color: #949ba4;
+  cursor: default;
+  transition: opacity 0.15s ease;
+}
+
+.tile-network-badge .net-bar {
+  width: 3px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.25);
+  transition: background-color 0.2s ease, height 0.2s ease;
+}
+
+.tile-network-badge .net-bar-1 { height: 4px; }
+.tile-network-badge .net-bar-2 { height: 8px; }
+.tile-network-badge .net-bar-3 { height: 12px; }
+
+.tile-network-badge.net-good .net-bar-1,
+.tile-network-badge.net-good .net-bar-2,
+.tile-network-badge.net-good .net-bar-3 {
+  background: #23a55a;
+}
+
+.tile-network-badge.net-fair .net-bar-1,
+.tile-network-badge.net-fair .net-bar-2 {
+  background: #f59e0b;
+}
+
+.tile-network-badge.net-poor .net-bar-1 {
+  background: #f23f43;
+}
+
+.tile-network-badge .net-latency-text {
+  margin-left: 3px;
+  font-size: 8.5px;
+  color: #dbdee1;
+}
+
+/* Participant Quick Action Popover */
+.participant-quick-menu {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  z-index: 12;
+  opacity: 0;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.participant-tile:hover .participant-quick-menu,
+.participant-tile:focus-within .participant-quick-menu,
+.participant-tile.menu-open .participant-quick-menu {
+  opacity: 1;
+}
+
+.quick-action-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: rgba(20, 24, 34, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #dbdee1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background 0.14s ease, color 0.14s ease, transform 0.14s ease;
+}
+
+.quick-action-btn:hover {
+  background: rgba(88, 101, 242, 0.9);
+  color: #fff;
+  transform: scale(1.08);
+}
+
+.quick-action-btn.active-action {
+  background: #5865F2;
+  color: #fff;
+  border-color: #7983f5;
+}
+
+.quick-action-btn.danger-action:hover {
+  background: #f23f43;
+  border-color: #f23f43;
+}
+
+/* Spotlighted Participant Tile */
+.participant-tile.is-spotlighted {
+  border: 2px solid #f59e0b !important;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.5), 0 4px 18px rgba(0, 0, 0, 0.6) !important;
+  transform: scale(1.03);
+  z-index: 8;
+}
+
+/* "+ Invite Friend" Dashed Placeholder Tile */
+.participant-tile-invite {
+  border: 2px dashed rgba(255, 255, 255, 0.22) !important;
+  background: rgba(20, 24, 34, 0.4) !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease !important;
+}
+
+.participant-tile-invite:hover {
+  border-color: rgba(88, 101, 242, 0.75) !important;
+  background: rgba(88, 101, 242, 0.08) !important;
+  transform: translateY(-2px);
+}
+
+.participant-tile-invite:active {
+  transform: translateY(0);
+}
+
+.invite-tile-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #949ba4;
+  transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.participant-tile-invite:hover .invite-tile-icon-box {
+  color: #fff;
+  background: #5865F2;
+  transform: scale(1.08);
+}
+
+.invite-tile-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #949ba4;
+  letter-spacing: 0.02em;
+}
+
+.participant-tile-invite:hover .invite-tile-label {
+  color: #dbdee1;
+}
+
+.invite-tile-copied-pill {
+  position: absolute;
+  top: 12px;
+  background: #23a55a;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(35, 165, 90, 0.5);
+  animation: copiedFadeInOut 1.8s ease forwards;
+}
+
+@keyframes copiedFadeInOut {
+  0% { opacity: 0; transform: translateY(-4px); }
+  15% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-4px); }
+}
+
+/* ==========================================================================
+   UNIVERSAL MOBILE & TABLET ZERO-OVERLAP RESPONSIVE OPTIMIZATION
+   ========================================================================== */
+
+/* Dynamic viewport height scaling */
+html, body, .app-container {
+  min-height: 100dvh;
+}
+
+/* Mobile Portrait Safety & Zero Overlap */
+@media (max-width: 768px) and (orientation: portrait) {
+  .participants-bottom-area {
+    padding-bottom: 84px !important;
+    margin-bottom: 0 !important;
+  }
+  
+  .floating-pill-dock {
+    max-width: calc(100vw - 20px) !important;
+    gap: 6px !important;
+    padding: 6px 10px !important;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  
+  .floating-pill-dock .pill-btn {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+  }
+  
+  .participant-tile {
+    width: min(320px, calc(100vw - 28px)) !important;
+    max-width: 320px !important;
+    height: 154px !important;
+  }
+
+  .chat-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100dvh !important;
+    z-index: 500 !important;
+  }
+}
+
+/* Mobile & Tablet Landscape Safety (Short Viewports) */
+@media (orientation: landscape) and (max-height: 600px) {
+  .stage-section {
+    padding: 4px 8px !important;
+    gap: 4px !important;
+  }
+
+  .cinema-stage-wrapper {
+    max-height: calc(100dvh - 96px) !important;
+  }
+
+  .floating-pill-dock {
+    bottom: 6px !important;
+    padding: 4px 10px !important;
+    border-radius: 18px !important;
+    gap: 8px !important;
+    background: rgba(14, 16, 24, 0.92) !important;
+  }
+
+  .floating-pill-dock .pill-btn {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+  }
+
+  .floating-pill-dock .pill-btn svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  .participants-bottom-area {
+    padding-bottom: 50px !important;
+    margin-top: 4px !important;
+  }
+
+  .participant-tile {
+    width: 180px !important;
+    height: 98px !important;
+    min-width: 140px !important;
+  }
+
+  .participant-tile .tile-avatar-center {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 16px !important;
+  }
+
+  .hud-timeline-container {
+    padding: 6px 0 !important;
+  }
+
+  .hud-row {
+    padding: 2px 8px !important;
+  }
+
+  .participant-quick-menu {
+    top: 4px !important;
+    right: 4px !important;
+  }
+  
+  .quick-action-btn {
+    width: 22px !important;
+    height: 22px !important;
+  }
+}
+
+/* Tablet Portrait & Landscape Scaling (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .participants-bottom-area {
+    padding-bottom: 76px !important;
+  }
+
+  .floating-pill-dock {
+    bottom: 16px !important;
+    gap: 10px !important;
+  }
+
+  .floating-pill-dock .pill-btn {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+  }
+
+  .participant-tile {
+    min-height: 140px !important;
+  }
+}

@@ -1046,6 +1046,27 @@
 
           <!-- Main Cinema Frame (Image 1 Center) -->
           <div class="cinema-box" id="cinemaBox">
+          <!-- Double-Tap / Gesture Seek Ripple Overlay -->
+          <div id="doubleTapSeekOverlay" class="double-tap-seek-overlay" aria-hidden="true">
+            <div id="seekRippleLeft" class="seek-ripple-container seek-ripple-left">
+              <div class="seek-ripple-circle">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="11 19 2 12 11 5 11 19"></polygon>
+                  <polygon points="22 19 13 12 22 5 22 19"></polygon>
+                </svg>
+                <span class="seek-ripple-badge">-10s</span>
+              </div>
+            </div>
+            <div id="seekRippleRight" class="seek-ripple-container seek-ripple-right">
+              <div class="seek-ripple-circle">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="13 19 22 12 13 5 13 19"></polygon>
+                  <polygon points="2 19 11 12 2 5 2 19"></polygon>
+                </svg>
+                <span class="seek-ripple-badge">+10s</span>
+              </div>
+            </div>
+          </div>
           <video id="moviePlayer" preload="auto" playsinline crossorigin="anonymous"></video>
           <video id="screenSharePlayer" class="screen-share-player hidden" autoplay playsinline></video>
           <div id="youtubePlayerBox" class="youtube-player-box hidden">
@@ -1262,7 +1283,11 @@
                 <div class="hud-progress" id="timelineProgress"></div>
                 <div class="hud-thumb" id="timelineThumb"></div>
               </div>
-              <div class="hud-hover-time" id="timelineHoverTime">00:00</div>
+              <div class="hud-hover-time hud-hover-tooltip" id="timelineHoverTime" aria-live="polite">
+                <span class="hover-time-text" id="hoverTimeText">00:00</span>
+                <span class="hover-time-slash">/</span>
+                <span class="hover-time-rem" id="hoverRemainingText">-00:00</span>
+              </div>
             </div>
 
             <div class="hud-row">

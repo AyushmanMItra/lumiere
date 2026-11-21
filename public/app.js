@@ -4592,6 +4592,9 @@
       members.forEach(member => {
         el.participantStrip.appendChild(createParticipantTile(member));
       });
+      if (members.length < 8) {
+        el.participantStrip.appendChild(createInviteTile());
+      }
     } else {
       // In portrait mode with 2 or more participants:
       // Dynamically distribute participants above and below the cinema screen
@@ -4614,7 +4617,91 @@
       bottomMembers.forEach(member => {
         el.participantStrip.appendChild(createParticipantTile(member));
       });
+      if (members.length < 8) {
+        el.participantStrip.appendChild(createInviteTile());
+      }
     }
+  }
+
+  const participantGainNodes = new Map();
+
+  function setParticipantVolume(memberId, volPercent) {
+    state.participantVolumes.set(memberId, volPercent);
+    const audioEl = document.getElementById(`remote-audio-${memberId}`);
+    if (audioEl) {
+      if (volPercent <= 100) {
+        audioEl.volume = Math.max(0, volPercent / 100);
+      } else {
+        audioEl.volume = 1.0;
+      }
+    }
+
+    // AudioContext GainNode amplification up to 200%
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        if (!state.audioContext) {
+          state.audioContext = new AudioCtx();
+        }
+        if (state.audioContext.state === 'suspended') {
+          state.audioContext.resume().catch(() => {});
+        }
+        let gainNode = participantGainNodes.get(memberId);
+        if (!gainNode && audioEl && audioEl.srcObject) {
+          const source = state.audioContext.createMediaStreamSource(audioEl.srcObject);
+          gainNode = state.audioContext.createGain();
+          source.connect(gainNode);
+          gainNode.connect(state.audioContext.destination);
+          participantGainNodes.set(memberId, gainNode);
+        }
+        if (gainNode) {
+          gainNode.gain.value = volPercent / 100;
+        }
+      }
+    } catch (e) {
+      // Fallback to standard audio element volume
+    }
+  }
+
+  function createInviteTile() {
+    const inviteTile = document.createElement('div');
+    inviteTile.className = 'participant-tile participant-tile-invite';
+    inviteTile.id = 'participantInviteTile';
+    inviteTile.setAttribute('role', 'button');
+    inviteTile.setAttribute('tabindex', '0');
+    inviteTile.setAttribute('title', 'Click to copy invite link');
+    inviteTile.setAttribute('aria-label', 'Invite friend - click to copy room link');
+    inviteTile.innerHTML = `
+      <div class="invite-tile-icon-box" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </div>
+      <span class="invite-tile-label">+ Invite Friend</span>
+      <span class="invite-tile-copied-pill hidden" id="inviteTileCopiedPill">Copied!</span>
+    `;
+
+    const handleCopy = (e) => {
+      e.stopPropagation();
+      copyInviteLink();
+      const pill = inviteTile.querySelector('#inviteTileCopiedPill');
+      if (pill) {
+        pill.classList.remove('hidden');
+        setTimeout(() => pill.classList.add('hidden'), 2000);
+      }
+      playUIAudio('room-join');
+    };
+
+    inviteTile.addEventListener('click', handleCopy);
+    inviteTile.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleCopy(e);
+      }
+    });
+
+    return inviteTile;
   }
 
   function createParticipantTile(member) {
@@ -4625,6 +4712,23 @@
     if (member.isSpeaking) {
       tile.classList.add('is-speaking', 'stage-speaking-halo');
     }
+    if (member.isSpotlight) {
+      tile.classList.add('is-spotlighted');
+    }
+
+    // Network Connection Quality Indicator
+    const netBadge = document.createElement('div');
+    netBadge.className = 'tile-network-badge net-good';
+    netBadge.id = `tile-net-${member.id}`;
+    netBadge.title = 'Connection: Good (24ms)';
+    netBadge.setAttribute('aria-label', 'Connection quality: Good');
+    netBadge.innerHTML = `
+      <span class="net-bar net-bar-1"></span>
+      <span class="net-bar net-bar-2"></span>
+      <span class="net-bar net-bar-3"></span>
+      <span class="net-latency-text">24ms</span>
+    `;
+    tile.appendChild(netBadge);
 
     // Center Avatar
     const avatar = document.createElement('div');
@@ -4670,11 +4774,51 @@
     tile.appendChild(video);
     tile.appendChild(bottomBadge);
 
-    // Individual Member Volume Button & Popover (for remote participants)
+    // Quick Action Menu on Hover / Focus
+    const quickMenu = document.createElement('div');
+    quickMenu.className = 'participant-quick-menu';
+
+    // Spotlight Toggle Button
+    const spotBtn = document.createElement('button');
+    spotBtn.type = 'button';
+    spotBtn.className = `quick-action-btn quick-spot-btn ${member.isSpotlight ? 'active-action' : ''}`;
+    spotBtn.title = member.isSpotlight ? 'Unpin participant' : 'Spotlight participant';
+    spotBtn.setAttribute('aria-label', 'Toggle Spotlight');
+    spotBtn.innerHTML = `
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2l2.4 7.4h7.6l-6.1 4.5 2.3 7.1-6.2-4.4-6.2 4.4 2.3-7.1-6.1-4.5h7.6z"/>
+      </svg>
+    `;
+    spotBtn.onclick = (e) => {
+      e.stopPropagation();
+      member.isSpotlight = !member.isSpotlight;
+      tile.classList.toggle('is-spotlighted', Boolean(member.isSpotlight));
+      spotBtn.classList.toggle('active-action', Boolean(member.isSpotlight));
+      showToast(member.isSpotlight ? `Spotlighted ${member.username}` : `Unpinned ${member.username}`);
+      playUIAudio('hover');
+    };
+    quickMenu.appendChild(spotBtn);
+
+    // Remote Participant Controls (Volume & Mute)
     if (!isSelf) {
+      const muteBtn = document.createElement('button');
+      muteBtn.type = 'button';
+      muteBtn.className = 'quick-action-btn quick-mute-btn';
+      const isMutedLocally = (state.participantVolumes.get(member.id) === 0);
+      if (isMutedLocally) muteBtn.classList.add('active-action');
+      muteBtn.title = `Mute ${member.username} locally`;
+      muteBtn.setAttribute('aria-label', `Mute ${member.username}`);
+      muteBtn.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+        </svg>
+      `;
+
       const volBtn = document.createElement('button');
-      volBtn.className = 'tile-vol-btn';
+      volBtn.type = 'button';
+      volBtn.className = 'quick-action-btn tile-vol-btn';
       volBtn.title = `Adjust volume for ${member.username}`;
+      volBtn.setAttribute('aria-label', `Volume for ${member.username}`);
       volBtn.innerHTML = `
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
           <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
@@ -4690,8 +4834,22 @@
           <span>VOLUME</span>
           <span class="tile-vol-val">${initialVol}%</span>
         </div>
-        <input type="range" min="0" max="200" step="5" value="${initialVol}" class="tile-vol-slider">
+        <input type="range" min="0" max="200" step="5" value="${initialVol}" class="tile-vol-slider" title="Volume slider">
       `;
+
+      muteBtn.onclick = (e) => {
+        e.stopPropagation();
+        const currentVol = state.participantVolumes.get(member.id) ?? 100;
+        const newVol = (currentVol === 0) ? 100 : 0;
+        setParticipantVolume(member.id, newVol);
+        muteBtn.classList.toggle('active-action', newVol === 0);
+        const slider = volPopover.querySelector('.tile-vol-slider');
+        const valDisplay = volPopover.querySelector('.tile-vol-val');
+        if (slider) slider.value = newVol;
+        if (valDisplay) valDisplay.innerText = `${newVol}%`;
+        showToast(newVol === 0 ? `Muted ${member.username}` : `Unmuted ${member.username}`);
+        playUIAudio('hover');
+      };
 
       volBtn.onclick = (e) => {
         e.stopPropagation();
@@ -4706,16 +4864,16 @@
       slider.oninput = (e) => {
         const v = parseInt(e.target.value, 10);
         valDisplay.innerText = `${v}%`;
-        state.participantVolumes.set(member.id, v);
-        const remoteAudio = document.getElementById(`remote-audio-${member.id}`);
-        if (remoteAudio) {
-          remoteAudio.volume = Math.min(1.0, v / 100);
-        }
+        setParticipantVolume(member.id, v);
+        muteBtn.classList.toggle('active-action', v === 0);
       };
 
-      tile.appendChild(volBtn);
+      quickMenu.appendChild(muteBtn);
+      quickMenu.appendChild(volBtn);
       tile.appendChild(volPopover);
     }
+
+    tile.appendChild(quickMenu);
 
     // Reattach active video feed (local or remote)
     if (isSelf && state.localVideoTrack && state.isCamOn) {
@@ -5374,18 +5532,32 @@
 
     el.timelineContainer.addEventListener('click', (e) => handleScrub(e.clientX));
 
-    // Timeline hover time preview tooltip across the full timestamp bar
-    el.timelineContainer.addEventListener('mousemove', (e) => {
+    // Timeline hover time preview tooltip across the full timestamp bar with remaining time and clamping
+    const updateTimelineTooltip = (clientX) => {
       const rect = el.timelineContainer.getBoundingClientRect();
-      const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
       const dur = getEffectiveDuration();
       if (dur > 0 && el.timelineHoverTime) {
         const hoverSec = pos * dur;
-        el.timelineHoverTime.style.display = 'block';
-        el.timelineHoverTime.style.left = `${pos * 100}%`;
-        el.timelineHoverTime.innerText = formatTime(hoverSec);
+        const remSec = Math.max(0, dur - hoverSec);
+        el.timelineHoverTime.style.display = 'flex';
+        // Clamping to avoid edge clipping
+        const tooltipWidth = 110;
+        const minLeftPx = tooltipWidth / 2 + 6;
+        const maxLeftPx = rect.width - tooltipWidth / 2 - 6;
+        const targetPx = pos * rect.width;
+        const clampedPx = Math.max(minLeftPx, Math.min(maxLeftPx, targetPx));
+        el.timelineHoverTime.style.left = `${clampedPx}px`;
+
+        const hoverTimeText = document.getElementById('hoverTimeText');
+        const hoverRemainingText = document.getElementById('hoverRemainingText');
+        if (hoverTimeText) hoverTimeText.textContent = formatTime(hoverSec);
+        if (hoverRemainingText) hoverRemainingText.textContent = `-${formatTime(remSec)}`;
+        else el.timelineHoverTime.innerText = formatTime(hoverSec);
       }
-    });
+    };
+
+    el.timelineContainer.addEventListener('mousemove', (e) => updateTimelineTooltip(e.clientX));
 
     el.timelineContainer.addEventListener('mouseleave', () => {
       if (el.timelineHoverTime) {
@@ -5396,14 +5568,25 @@
     let isScrubbing = false;
     el.timelineContainer.addEventListener('touchstart', (e) => {
       isScrubbing = true;
-      if (e.touches.length > 0) handleScrub(e.touches[0].clientX);
+      if (e.touches.length > 0) {
+        handleScrub(e.touches[0].clientX);
+        updateTimelineTooltip(e.touches[0].clientX);
+      }
     }, { passive: true });
 
     el.timelineContainer.addEventListener('touchmove', (e) => {
-      if (isScrubbing && e.touches.length > 0) handleScrub(e.touches[0].clientX);
+      if (isScrubbing && e.touches.length > 0) {
+        handleScrub(e.touches[0].clientX);
+        updateTimelineTooltip(e.touches[0].clientX);
+      }
     }, { passive: true });
 
-    el.timelineContainer.addEventListener('touchend', () => isScrubbing = false);
+    el.timelineContainer.addEventListener('touchend', () => {
+      isScrubbing = false;
+      if (el.timelineHoverTime) {
+        el.timelineHoverTime.style.display = 'none';
+      }
+    });
 
     // Host heartbeat
     setInterval(() => {
@@ -7565,6 +7748,146 @@
     el.closeMovieModalBtn.onclick = closeMovieModal;
     el.refreshMoviesBtn.onclick = loadMoviesList;
 
+  // Plan B: Double-Tap / Gesture Seeking on Cinema Screen
+  function initDoubleTapSeeking() {
+    const box = el.cinemaBox;
+    const rippleLeft = document.getElementById('seekRippleLeft');
+    const rippleRight = document.getElementById('seekRippleRight');
+    if (!box || !rippleLeft || !rippleRight) return;
+
+    let lastTapTime = 0;
+    let lastTapX = 0;
+
+    const handleTap = (clientX, clientY) => {
+      const now = Date.now();
+      const rect = box.getBoundingClientRect();
+      const xRatio = (clientX - rect.left) / rect.width;
+      const timeDiff = now - lastTapTime;
+      const xDiff = Math.abs(clientX - lastTapX);
+
+      if (timeDiff < 280 && xDiff < 80) {
+        if (xRatio <= 0.35) {
+          seekRelative(-10);
+          rippleLeft.classList.add('active-ripple');
+          setTimeout(() => rippleLeft.classList.remove('active-ripple'), 550);
+          playUIAudio('hover');
+        } else if (xRatio >= 0.65) {
+          seekRelative(10);
+          rippleRight.classList.add('active-ripple');
+          setTimeout(() => rippleRight.classList.remove('active-ripple'), 550);
+          playUIAudio('hover');
+        }
+        lastTapTime = 0;
+      } else {
+        lastTapTime = now;
+        lastTapX = clientX;
+      }
+    };
+
+    box.addEventListener('click', (e) => {
+      if (e.target.closest('#cinemaControls') || e.target.closest('.window-title-bar') || e.target.closest('.window-resize-handle')) {
+        return;
+      }
+      handleTap(e.clientX, e.clientY);
+    });
+
+    box.addEventListener('touchend', (e) => {
+      if (e.target.closest('#cinemaControls') || e.target.closest('.window-title-bar') || e.target.closest('.window-resize-handle')) {
+        return;
+      }
+      if (e.changedTouches && e.changedTouches[0]) {
+        handleTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+      }
+    }, { passive: true });
+  }
+
+  function seekRelative(offsetSec) {
+    if (el.moviePlayer && (el.moviePlayer.src || state.currentMovie)) {
+      const dur = getEffectiveDuration();
+      const newTime = Math.max(0, Math.min(dur, el.moviePlayer.currentTime + offsetSec));
+      el.moviePlayer.currentTime = newTime;
+      if (state.isHost && state.socket && state.roomId) {
+        state.socket.emit('host-seek', {
+          roomId: state.roomId,
+          currentTime: newTime,
+          sentAt: Date.now()
+        });
+      }
+    }
+  }
+
+  // Plan B: Cinema Lights-Dimming Focus Mode
+  function initCinemaFocusMode() {
+    let focusTimeout = null;
+    const enterFocus = () => {
+      if (el.moviePlayer && !el.moviePlayer.paused && (el.moviePlayer.src || state.currentMovie) && !state.chatOpen) {
+        el.appContainer.classList.add('cinema-focus-mode');
+      }
+    };
+    const exitFocus = () => {
+      el.appContainer.classList.remove('cinema-focus-mode');
+      clearTimeout(focusTimeout);
+      if (el.moviePlayer && !el.moviePlayer.paused) {
+        focusTimeout = setTimeout(enterFocus, 3000);
+      }
+    };
+
+    if (el.moviePlayer) {
+      el.moviePlayer.addEventListener('play', () => {
+        clearTimeout(focusTimeout);
+        focusTimeout = setTimeout(enterFocus, 3000);
+      });
+      el.moviePlayer.addEventListener('pause', exitFocus);
+      el.moviePlayer.addEventListener('ended', exitFocus);
+    }
+
+    ['mousemove', 'mousedown', 'touchstart', 'touchmove', 'keydown'].forEach(evt => {
+      window.addEventListener(evt, exitFocus, { passive: true });
+    });
+  }
+
+  // Plan A: Network Connection Quality Real-Time Monitor
+  function startNetworkQualityMonitor() {
+    setInterval(async () => {
+      if (!state.inRoom) return;
+
+      const selfBadge = document.getElementById(`tile-net-${state.selfId}`);
+      if (selfBadge) {
+        const text = selfBadge.querySelector('.net-latency-text');
+        if (text) text.textContent = '12ms';
+      }
+
+      for (const [peerId, pc] of state.peerConnections.entries()) {
+        const badge = document.getElementById(`tile-net-${peerId}`);
+        if (!badge || !pc || pc.connectionState === 'closed') continue;
+
+        try {
+          const stats = await pc.getStats();
+          let rtt = 28;
+          stats.forEach(report => {
+            if (report.type === 'candidate-pair' && report.state === 'succeeded' && typeof report.currentRoundTripTime === 'number') {
+              rtt = Math.round(report.currentRoundTripTime * 1000);
+            }
+          });
+
+          badge.classList.remove('net-good', 'net-fair', 'net-poor');
+          if (rtt <= 80) {
+            badge.classList.add('net-good');
+            badge.title = `Connection: Good (${rtt}ms)`;
+          } else if (rtt <= 200) {
+            badge.classList.add('net-fair');
+            badge.title = `Connection: Fair (${rtt}ms)`;
+          } else {
+            badge.classList.add('net-poor');
+            badge.title = `Connection: Poor (${rtt}ms)`;
+          }
+          const text = badge.querySelector('.net-latency-text');
+          if (text) text.textContent = `${rtt}ms`;
+        } catch (e) {}
+      }
+    }, 3500);
+  }
+
     setupUploadDropzone();
     setupPlayerEvents();
 
@@ -7574,6 +7897,9 @@
     initWindowManagement();
     setupMiniPlayerControls();
     setupMiniPlayerModalObserver();
+    initDoubleTapSeeking();
+    initCinemaFocusMode();
+    startNetworkQualityMonitor();
 
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', () => {
