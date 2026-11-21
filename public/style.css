@@ -9410,79 +9410,7 @@ body.window-dragging-active {
   z-index: 8;
 }
 
-/* "+ Invite Friend" Dashed Placeholder Tile */
-.participant-tile-invite {
-  border: 2px dashed rgba(255, 255, 255, 0.22) !important;
-  background: rgba(20, 24, 34, 0.4) !important;
-  box-shadow: none !important;
-  cursor: pointer;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease !important;
-}
 
-.participant-tile-invite:hover {
-  border-color: rgba(88, 101, 242, 0.75) !important;
-  background: rgba(88, 101, 242, 0.08) !important;
-  transform: translateY(-2px);
-}
-
-.participant-tile-invite:active {
-  transform: translateY(0);
-}
-
-.invite-tile-icon-box {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #949ba4;
-  transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
-}
-
-.participant-tile-invite:hover .invite-tile-icon-box {
-  color: #fff;
-  background: #5865F2;
-  transform: scale(1.08);
-}
-
-.invite-tile-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #949ba4;
-  letter-spacing: 0.02em;
-}
-
-.participant-tile-invite:hover .invite-tile-label {
-  color: #dbdee1;
-}
-
-.invite-tile-copied-pill {
-  position: absolute;
-  top: 12px;
-  background: #23a55a;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(35, 165, 90, 0.5);
-  animation: copiedFadeInOut 1.8s ease forwards;
-}
-
-@keyframes copiedFadeInOut {
-  0% { opacity: 0; transform: translateY(-4px); }
-  15% { opacity: 1; transform: translateY(0); }
-  80% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-4px); }
-}
 
 /* ==========================================================================
    UNIVERSAL MOBILE & TABLET ZERO-OVERLAP RESPONSIVE OPTIMIZATION

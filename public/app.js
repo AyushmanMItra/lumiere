@@ -4592,9 +4592,6 @@
       members.forEach(member => {
         el.participantStrip.appendChild(createParticipantTile(member));
       });
-      if (members.length < 8) {
-        el.participantStrip.appendChild(createInviteTile());
-      }
     } else {
       // In portrait mode with 2 or more participants:
       // Dynamically distribute participants above and below the cinema screen
@@ -4617,9 +4614,6 @@
       bottomMembers.forEach(member => {
         el.participantStrip.appendChild(createParticipantTile(member));
       });
-      if (members.length < 8) {
-        el.participantStrip.appendChild(createInviteTile());
-      }
     }
   }
 
@@ -4661,47 +4655,6 @@
     } catch (e) {
       // Fallback to standard audio element volume
     }
-  }
-
-  function createInviteTile() {
-    const inviteTile = document.createElement('div');
-    inviteTile.className = 'participant-tile participant-tile-invite';
-    inviteTile.id = 'participantInviteTile';
-    inviteTile.setAttribute('role', 'button');
-    inviteTile.setAttribute('tabindex', '0');
-    inviteTile.setAttribute('title', 'Click to copy invite link');
-    inviteTile.setAttribute('aria-label', 'Invite friend - click to copy room link');
-    inviteTile.innerHTML = `
-      <div class="invite-tile-icon-box" aria-hidden="true">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-      </div>
-      <span class="invite-tile-label">+ Invite Friend</span>
-      <span class="invite-tile-copied-pill hidden" id="inviteTileCopiedPill">Copied!</span>
-    `;
-
-    const handleCopy = (e) => {
-      e.stopPropagation();
-      copyInviteLink();
-      const pill = inviteTile.querySelector('#inviteTileCopiedPill');
-      if (pill) {
-        pill.classList.remove('hidden');
-        setTimeout(() => pill.classList.add('hidden'), 2000);
-      }
-      playUIAudio('room-join');
-    };
-
-    inviteTile.addEventListener('click', handleCopy);
-    inviteTile.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        handleCopy(e);
-      }
-    });
-
-    return inviteTile;
   }
 
   function createParticipantTile(member) {

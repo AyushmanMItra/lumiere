@@ -91,17 +91,15 @@ test('app.js and style.css implement .participant-quick-menu with spotlight and 
   assert(css.includes('.participant-tile.is-spotlighted'), 'style.css must define spotlighted tile styling');
 });
 
-test('app.js implements createInviteTile rendering dashed + Invite Friend card', () => {
-  assert(app.includes('function createInviteTile'), 'app.js must declare createInviteTile');
-  assert(app.includes('participant-tile-invite'), 'Invite card must have .participant-tile-invite class');
-  assert(app.includes('+ Invite Friend') || app.includes('Invite Friend'), 'Invite card must have descriptive label');
-  assert(app.includes('inviteTileCopiedPill'), 'Invite card must have confirmation copied badge');
+test('participant strip does not inject placeholder invite tiles', () => {
+  assert(!app.includes('createInviteTile'), 'app.js must not create synthetic invite cards in participant strip');
+  assert(!css.includes('.participant-tile-invite'), 'style.css must not style .participant-tile-invite');
 });
 
-test('style.css defines dashed styling and hover animations for .participant-tile-invite', () => {
-  assert(css.includes('.participant-tile-invite'), 'style.css must style .participant-tile-invite');
-  assert(css.includes('dashed'), 'style.css must specify dashed border for invite tile');
-  assert(css.includes('.invite-tile-copied-pill'), 'style.css must style copied badge');
+test('index.html and app.js maintain dedicated corner/dock invite button', () => {
+  assert(html.includes('id="dockInviteBtn"'), 'index.html must maintain #dockInviteBtn');
+  assert(app.includes('dockInviteBtn'), 'app.js must handle #dockInviteBtn click');
+  assert(app.includes('copyInviteLink') || app.includes('copyLink'), 'app.js must copy invite link');
 });
 
 // ============================================================================
