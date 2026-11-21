@@ -928,6 +928,12 @@ body.error-page-container {
   transform: translateY(0);
 }
 
+.cinema-box:has(#stagePlaceholder:not(.hidden)) .cinema-controls-hud {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 /* Timeline Scrubber Container */
 .hud-timeline-container {
   width: 100%;
@@ -9169,6 +9175,8 @@ body.window-dragging-active {
 #cinemaStageWrapper.mini-player-active .cinema-controls-hud,
 .mini-player-active #cinemaStageWrapper #cinemaControls,
 #cinemaStageWrapper.mini-player-active #cinemaControls,
+.mini-player-active #cinemaStageWrapper #cinemaVolumeMeter,
+#cinemaStageWrapper.mini-player-active #cinemaVolumeMeter,
 .mini-player-active #cinemaStageWrapper .cinema-controls,
 #cinemaStageWrapper.mini-player-active .cinema-controls,
 .mini-player-active #cinemaStageWrapper .window-title-bar,

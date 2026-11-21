@@ -75,6 +75,7 @@
     idleTimeout: null,
     controlsTimeout: null,
     isDraggingTimeline: false,
+    isPlaying: false,
     lastSyncSeekTime: 0,
     movieDuration: 0,
     streamStartTime: 0,
@@ -663,6 +664,7 @@
     // Synchronized Movie Playback Engine
     s.on('sync-play', ({ time }) => {
       if (state.currentMovie?.type === 'streaming' || state.currentMovie?.type === 'youtube') return;
+      state.isPlaying = true;
       if (Math.abs(getEffectiveCurrentTime() - time) > 2.0) {
         seekMovie(time);
       }
@@ -675,6 +677,7 @@
 
     s.on('sync-pause', ({ time }) => {
       if (state.currentMovie?.type === 'streaming' || state.currentMovie?.type === 'youtube') return;
+      state.isPlaying = false;
       el.moviePlayer.pause();
       el.moviePlayer.playbackRate = 1.0;
       updatePlayPauseIcons(false);
@@ -863,6 +866,7 @@
     // Smooth Dynamic Rate Steering & Heartbeat
     s.on('sync-heartbeat', ({ time, isPlaying }) => {
       if (state.isHost) return;
+      state.isPlaying = !!isPlaying;
 
       // 1. If currently in seek cooldown, don't interrupt buffering
       if (Date.now() - state.lastSyncSeekTime < 3500) {
@@ -959,6 +963,7 @@
         seekMovie(currentTime);
       }
 
+      state.isPlaying = !!isPlaying;
       if (isPlaying && el.moviePlayer.paused) {
         el.moviePlayer.play().catch(() => {
           el.unmuteMovieBanner.classList.remove('hidden');
@@ -2077,9 +2082,14 @@
   }
 
   function loadYouTubeInTheater(videoId, startTime = 0, autoPlay = true) {
+    clearAmbientGlowCanvas();
+    if (el.cinemaBox) {
+      el.cinemaBox.classList.add('has-movie');
+    }
     state.currentMovie = { type: 'youtube', videoId, filename: 'YouTube Video' };
     state.movieDuration = 0;
     state.isLiveStream = false;
+    state.isPlaying = !!autoPlay;
 
     if (el.moviePlayer) {
       el.moviePlayer.pause();
@@ -2620,6 +2630,22 @@
   }
 
   function toggleMute() {
+    if (state.currentMovie?.type === 'youtube' && state.ytPlayer) {
+      try {
+        const isMuted = state.ytPlayer.isMuted ? state.ytPlayer.isMuted() : false;
+        if (isMuted) {
+          state.ytPlayer.unMute();
+          const restorePct = lastVolumePct > 0 ? lastVolumePct : 100;
+          if (el.volumeSlider) el.volumeSlider.value = restorePct;
+          updateVolumeUI(restorePct, false, !state.isMiniPlayer);
+        } else {
+          state.ytPlayer.mute();
+          if (el.volumeSlider) el.volumeSlider.value = 0;
+          updateVolumeUI(0, true, !state.isMiniPlayer);
+        }
+      } catch (e) {}
+      return;
+    }
     if (!el.moviePlayer) return;
     const isMuting = !el.moviePlayer.muted;
     el.moviePlayer.muted = isMuting;
@@ -2629,10 +2655,10 @@
       if (el.volumeSlider) {
         el.volumeSlider.value = 0;
       }
-      updateVolumeUI(0, true, true);
+      updateVolumeUI(0, true, !state.isMiniPlayer);
     } else {
       const restorePct = lastVolumePct > 0 ? lastVolumePct : 50;
-      setVolume(restorePct, true, true);
+      setVolume(restorePct, true, !state.isMiniPlayer);
     }
   }
 
@@ -5178,9 +5204,13 @@
     state.streamStartTime = 0;
     state.movieDuration = 0;
     state.isLiveStream = false;
+    state.isPlaying = false;
     clearAmbientGlowCanvas();
     if (el.cinemaBox) {
       el.cinemaBox.classList.remove('has-movie');
+    }
+    if (el.cinemaControls) {
+      el.cinemaControls.classList.remove('active');
     }
 
     if (el.moviePlayer) {
@@ -5261,6 +5291,7 @@
     if (el.cinemaBox) {
       el.cinemaBox.classList.add('has-movie');
     }
+    state.isPlaying = !!autoPlay;
 
     // 0. Streaming Platform Party (Netflix, Prime Video, JioHotstar, Zee5, etc.)
     if (movie.type === 'streaming') {
@@ -5693,6 +5724,10 @@
       }
 
       if (state.currentMovie?.type === 'streaming') {
+        updateStreamingPlaybackState(state.streamingIsPlaying, seekTime);
+        if (state.socket) {
+          state.socket.emit('host-streaming-sync', { roomId: state.roomId, action: 'seek', time: seekTime });
+        }
         return;
       }
 
@@ -7762,9 +7797,15 @@
     // Video Play/Pause & Movie Library
     if (el.moviePlayer) {
       el.moviePlayer.addEventListener('play', () => {
+        state.isPlaying = true;
         initMovieAudioEngine(el.moviePlayer);
         if (state.movieAudioContext && state.movieAudioContext.state === 'suspended') {
           state.movieAudioContext.resume().catch(() => {});
+        }
+      });
+      el.moviePlayer.addEventListener('pause', () => {
+        if (!el.moviePlayer.seeking) {
+          state.isPlaying = false;
         }
       });
     }
@@ -7776,23 +7817,6 @@
         loadMoviesList();
       };
     }
-    el.moviePlayer.onclick = (e) => {
-      // On mobile / touch devices, tapping the screen toggles HUD controls; desktop clicks toggle play/pause
-      if (window.matchMedia('(pointer: coarse)').matches) return;
-      if (typeof windowManager !== 'undefined' && windowManager.suppressClick) {
-        windowManager.suppressClick = false;
-        return;
-      }
-      if (moviePlayerClickTimeout) {
-        clearTimeout(moviePlayerClickTimeout);
-        moviePlayerClickTimeout = null;
-        return;
-      }
-      moviePlayerClickTimeout = setTimeout(() => {
-        moviePlayerClickTimeout = null;
-        handlePlayPauseToggle();
-      }, 260);
-    };
     // Do not open movie library when tapping the stage background/placeholder
     el.openMovieLibraryBtn.onclick = (e) => {
       if (e) e.stopPropagation();
@@ -7803,10 +7827,11 @@
     // Track selections
     el.audioTrackSelect.onchange = () => {
       if (!state.isHost) return;
+      state.selectedAudio = parseInt(el.audioTrackSelect.value, 10);
       const curTime = getEffectiveCurrentTime();
       state.socket.emit('host-set-tracks', {
         roomId: state.roomId,
-        audioTrack: parseInt(el.audioTrackSelect.value, 10),
+        audioTrack: state.selectedAudio,
         subtitleTrack: state.selectedSubtitle,
         currentTime: curTime
       });
@@ -7816,11 +7841,12 @@
       if (!state.isHost) return;
       const sub = el.subtitleTrackSelect.value;
       if (sub === 'custom') return;
+      state.selectedSubtitle = sub === 'off' ? 'off' : parseInt(sub, 10);
       const curTime = getEffectiveCurrentTime();
       state.socket.emit('host-set-tracks', {
         roomId: state.roomId,
         audioTrack: state.selectedAudio,
-        subtitleTrack: sub === 'off' ? 'off' : parseInt(sub, 10),
+        subtitleTrack: state.selectedSubtitle,
         currentTime: curTime
       });
     };
@@ -7847,6 +7873,7 @@
     let lastTapTime = 0;
     let lastTapX = 0;
     let singleTapTimeout = null;
+    let desktopClickTimeout = null;
     let hudHideTimeout = null;
 
     const handleTap = (clientX, clientY, isTouch = false) => {
@@ -7860,6 +7887,10 @@
         if (singleTapTimeout) {
           clearTimeout(singleTapTimeout);
           singleTapTimeout = null;
+        }
+        if (desktopClickTimeout) {
+          clearTimeout(desktopClickTimeout);
+          desktopClickTimeout = null;
         }
         if (moviePlayerClickTimeout) {
           clearTimeout(moviePlayerClickTimeout);
@@ -7890,6 +7921,10 @@
           clearTimeout(singleTapTimeout);
           singleTapTimeout = null;
         }
+        if (desktopClickTimeout) {
+          clearTimeout(desktopClickTimeout);
+          desktopClickTimeout = null;
+        }
 
         if (isTouch || window.matchMedia('(pointer: coarse)').matches) {
           singleTapTimeout = setTimeout(() => {
@@ -7909,6 +7944,13 @@
                   }
                 }, 4500);
               }
+            }
+          }, 280);
+        } else {
+          desktopClickTimeout = setTimeout(() => {
+            desktopClickTimeout = null;
+            if (state.currentMovie) {
+              handlePlayPauseToggle();
             }
           }, 280);
         }

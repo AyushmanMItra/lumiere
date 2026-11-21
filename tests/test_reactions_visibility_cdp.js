@@ -190,7 +190,12 @@ async function runTests() {
     await cdp.send('Page.enable');
     await cdp.send('DOM.enable');
     await cdp.send('Runtime.enable');
-    await sleep(800);
+    for (let i = 0; i < 50; i++) {
+      const ready = await cdp.eval('document.readyState === "complete"');
+      if (ready) break;
+      await sleep(100);
+    }
+    await sleep(200);
 
     // 1. Enter room UI cleanly (simulating room join)
     await cdp.eval(`(() => {
