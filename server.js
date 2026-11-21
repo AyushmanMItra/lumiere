@@ -913,16 +913,18 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('host-seek', ({ roomId, time }) => {
+  socket.on('host-seek', ({ roomId, time, currentTime } = {}) => {
     const room = rooms.get(roomId);
     if (!room || !room.members.has(socket.id)) return;
 
-    room.currentTime = time;
+    const rawTime = (time !== undefined && time !== null) ? time : currentTime;
+    const actualTime = (typeof rawTime === 'number' && !isNaN(rawTime) && isFinite(rawTime)) ? Math.max(0, rawTime) : 0;
+    room.currentTime = actualTime;
     room.lastUpdate = Date.now();
 
-    socket.to(roomId).emit('sync-seek', { time });
+    socket.to(roomId).emit('sync-seek', { time: actualTime });
     if (room.currentMovie?.type === 'streaming') {
-      socket.to(roomId).emit('sync-streaming-action', { action: 'seek', time });
+      socket.to(roomId).emit('sync-streaming-action', { action: 'seek', time: actualTime });
     }
   });
 

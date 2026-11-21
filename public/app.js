@@ -2144,6 +2144,7 @@
   function onYouTubeStateChange(event) {
     if (state.isYtSyncing) return;
     if (!state.ytPlayer || !state.socket) return;
+    if (!state.isHost) return;
 
     try {
       const curTime = state.ytPlayer.getCurrentTime ? state.ytPlayer.getCurrentTime() : 0;
@@ -2153,6 +2154,9 @@
       } else if (event.data === YT.PlayerState.PAUSED) {
         updatePlayPauseIcons(false);
         state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'pause', time: curTime });
+      } else if (event.data === YT.PlayerState.ENDED) {
+        updatePlayPauseIcons(false);
+        clearAmbientGlowCanvas();
       }
     } catch (e) {}
   }
@@ -2341,6 +2345,10 @@
   }
 
   function loadStreamingInTheater(platform, title, url, startTime = 0, isPlaying = true) {
+    clearAmbientGlowCanvas();
+    if (el.cinemaBox) {
+      el.cinemaBox.classList.add('has-movie');
+    }
     const platformKey = (platform || 'netflix').toLowerCase();
     const platInfo = STREAMING_PLATFORMS[platformKey] || { name: platformKey.toUpperCase(), color: '#E50914', defaultUrl: '' };
     const movieTitle = title || `${platInfo.name} Party`;
@@ -2436,6 +2444,15 @@
     }
   }
 
+  function clearAmbientGlowCanvas() {
+    if (el.ambientGlowCanvas) {
+      const ctx = el.ambientGlowCanvas.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, el.ambientGlowCanvas.width, el.ambientGlowCanvas.height);
+      }
+    }
+  }
+
   function initAmbientGlow() {
     const canvas = el.ambientGlowCanvas;
     if (!canvas) return;
@@ -2459,6 +2476,8 @@
         try {
           ctx.drawImage(el.screenSharePlayer, 0, 0, canvas.width, canvas.height);
         } catch (e) {}
+      } else if (!state.currentMovie && !state.screenShareActive) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
     };
 
@@ -2472,6 +2491,9 @@
       localStorage.setItem('lumiere_ambient', state.isAmbientOn ? '1' : '0');
     } catch (e) {}
     updateAmbientGlowUI();
+    if (!state.isAmbientOn) {
+      clearAmbientGlowCanvas();
+    }
     showToast(state.isAmbientOn ? 'Ambient Lighting: ON' : 'Ambient Lighting: OFF');
   }
 
@@ -2502,68 +2524,186 @@
     showToast(`Playback speed: ${speed}x`);
   }
 
+  // ==========================================================================
+  // CINEMA VOLUME & MUTE CONTROLLER (Synchronized HUD & Top-Right Meter)
+  // ==========================================================================
+  let volumeMeterTimeout = null;
+  let lastVolumePct = 100;
+  let moviePlayerClickTimeout = null;
+
+  function showCinemaVolumeMeter(pct, isMuted) {
+    if (!el.cinemaVolumeMeter) return;
+    if (isMuted || pct === 0) {
+      el.meterVolHighIcon?.classList.add('hidden');
+      el.meterVolMuteIcon?.classList.remove('hidden');
+      if (el.meterValueText) el.meterValueText.innerText = 'Muted';
+      if (el.meterBarFill) el.meterBarFill.style.width = '0%';
+    } else {
+      el.meterVolHighIcon?.classList.remove('hidden');
+      el.meterVolMuteIcon?.classList.add('hidden');
+      if (el.meterValueText) el.meterValueText.innerText = `${pct}%`;
+      if (el.meterBarFill) el.meterBarFill.style.width = `${pct}%`;
+    }
+
+    el.cinemaVolumeMeter.classList.remove('hidden');
+    el.cinemaVolumeMeter.classList.remove('fade-out');
+
+    clearTimeout(volumeMeterTimeout);
+    volumeMeterTimeout = setTimeout(() => {
+      if (el.cinemaVolumeMeter) {
+        el.cinemaVolumeMeter.classList.add('fade-out');
+        setTimeout(() => {
+          if (el.cinemaVolumeMeter && el.cinemaVolumeMeter.classList.contains('fade-out')) {
+            el.cinemaVolumeMeter.classList.add('hidden');
+            el.cinemaVolumeMeter.classList.remove('fade-out');
+          }
+        }, 250);
+      }
+    }, 1300);
+  }
+
+  function updateVolumeUI(pct, isMuted, showHUD = true) {
+    const isEffectivelyMuted = isMuted || pct === 0;
+    if (el.volumeSlider) {
+      el.volumeSlider.style.setProperty('--vol-fill', (isEffectivelyMuted ? 0 : pct) + '%');
+    }
+    if (isEffectivelyMuted) {
+      el.volHighIcon?.classList.add('hidden');
+      el.volMuteIcon?.classList.remove('hidden');
+      if (el.miniPlayerMuteBtn) {
+        el.miniPlayerMuteBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        `;
+        el.miniPlayerMuteBtn.title = 'Unmute';
+        el.miniPlayerMuteBtn.setAttribute('aria-label', 'Unmute');
+      }
+    } else {
+      el.volHighIcon?.classList.remove('hidden');
+      el.volMuteIcon?.classList.add('hidden');
+      if (el.miniPlayerMuteBtn) {
+        el.miniPlayerMuteBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        `;
+        el.miniPlayerMuteBtn.title = 'Mute';
+        el.miniPlayerMuteBtn.setAttribute('aria-label', 'Mute');
+      }
+    }
+    if (showHUD) {
+      showCinemaVolumeMeter(pct, isEffectivelyMuted);
+    }
+  }
+
+  function setVolume(pct, updateSlider = true, showHUD = true) {
+    if (!el.moviePlayer) return;
+    pct = Math.max(0, Math.min(100, Math.round(pct)));
+    if (pct > 0) {
+      lastVolumePct = pct;
+      el.moviePlayer.muted = false;
+      el.moviePlayer.volume = pct / 100;
+    } else {
+      el.moviePlayer.muted = true;
+      el.moviePlayer.volume = 0;
+    }
+
+    if (updateSlider && el.volumeSlider) {
+      el.volumeSlider.value = pct;
+    }
+    updateVolumeUI(pct, el.moviePlayer.muted, showHUD);
+  }
+
+  function toggleMute() {
+    if (!el.moviePlayer) return;
+    const isMuting = !el.moviePlayer.muted;
+    el.moviePlayer.muted = isMuting;
+    if (isMuting) {
+      const cur = parseInt(el.volumeSlider?.value, 10);
+      if (!isNaN(cur) && cur > 0) lastVolumePct = cur;
+      if (el.volumeSlider) {
+        el.volumeSlider.value = 0;
+      }
+      updateVolumeUI(0, true, true);
+    } else {
+      const restorePct = lastVolumePct > 0 ? lastVolumePct : 50;
+      setVolume(restorePct, true, true);
+    }
+  }
+
+  // Rewind / Forward 10 Seconds Helpers
+  function rewind10Seconds() {
+    if (state.currentMovie?.type === 'youtube' && state.ytPlayer) {
+      try {
+        const t = Math.max(0, state.ytPlayer.getCurrentTime() - 10);
+        state.ytPlayer.seekTo(t, true);
+        if (state.socket) {
+          state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'seek', time: t });
+        }
+        showToast('Rewound 10s');
+      } catch (e) {}
+      return;
+    }
+    if (state.currentMovie?.type === 'streaming') {
+      const cur = state.streamingCurrentTime || 0;
+      const newTime = Math.max(0, cur - 10);
+      updateStreamingPlaybackState(state.streamingIsPlaying, newTime);
+      if (state.socket) {
+        state.socket.emit('host-streaming-sync', { roomId: state.roomId, action: 'rewind10', time: newTime });
+      }
+      showToast('Rewound 10s');
+      return;
+    }
+    const cur = getEffectiveCurrentTime();
+    const newTime = Math.max(0, cur - 10);
+    seekMovie(newTime);
+    if (state.socket) {
+      state.socket.emit('host-seek', { roomId: state.roomId, time: newTime });
+    }
+    showToast('Rewound 10s');
+  }
+
+  function forward10Seconds() {
+    if (state.currentMovie?.type === 'youtube' && state.ytPlayer) {
+      try {
+        const dur = state.ytPlayer.getDuration ? state.ytPlayer.getDuration() : 999999;
+        const t = Math.min(dur, state.ytPlayer.getCurrentTime() + 10);
+        state.ytPlayer.seekTo(t, true);
+        if (state.socket) {
+          state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'seek', time: t });
+        }
+        showToast('Forwarded 10s');
+      } catch (e) {}
+      return;
+    }
+    if (state.currentMovie?.type === 'streaming') {
+      const cur = state.streamingCurrentTime || 0;
+      const newTime = cur + 10;
+      updateStreamingPlaybackState(state.streamingIsPlaying, newTime);
+      if (state.socket) {
+        state.socket.emit('host-streaming-sync', { roomId: state.roomId, action: 'forward10', time: newTime });
+      }
+      showToast('Forwarded 10s');
+      return;
+    }
+    const cur = getEffectiveCurrentTime();
+    const dur = getEffectiveDuration();
+    const newTime = dur > 0 ? Math.min(dur, cur + 10) : cur + 10;
+    seekMovie(newTime);
+    if (state.socket) {
+      state.socket.emit('host-seek', { roomId: state.roomId, time: newTime });
+    }
+    showToast('Forwarded 10s');
+  }
+
   function initMobileGestures() {
     if (!el.cinemaBox) return;
-    let lastTapTime = 0;
-    let lastTapX = 0;
     let hudHideTimeout = null;
-
-    el.cinemaBox.addEventListener('touchend', (e) => {
-      // If user tapped a button, select, or scrubber inside the cinema box, let it interact normally
-      if (e.target.closest('button, select, input, a, .hud-timeline-container, .device-menu, .active-poll-widget, .window-title-bar, .window-resize-handle')) {
-        return;
-      }
-
-      const currentTime = Date.now();
-      const tapLength = currentTime - lastTapTime;
-      const touch = e.changedTouches[0];
-      if (typeof windowManager !== 'undefined' && windowManager.suppressClick) {
-        windowManager.suppressClick = false;
-        return;
-      }
-      if (!touch) return;
-      const rect = el.cinemaBox.getBoundingClientRect();
-      const tapX = touch.clientX - rect.left;
-
-      if (tapLength < 380 && Math.abs(tapX - lastTapX) < 90) {
-        // Double-Tap Detected!
-        e.preventDefault();
-        const boxWidth = rect.width;
-        if (tapX < boxWidth / 3) {
-          // Rewind 10s
-          rewind10Seconds();
-          triggerGestureIndicator('left');
-        } else if (tapX > (2 * boxWidth) / 3) {
-          // Forward 10s
-          forward10Seconds();
-          triggerGestureIndicator('right');
-        }
-      } else {
-        // Single Tap Detected on Cinema Screen (Mobile / Touch Devices)
-        if (state.resetIdleTimer) state.resetIdleTimer();
-        e.preventDefault(); // Prevents synthetic click from opening modals or accidental pause
-
-        // Toggle the Cinema HUD visibility so mobile users can easily access and tap all controls
-        if (el.cinemaControls && state.currentMovie) {
-          const isCurrentlyActive = el.cinemaControls.classList.contains('active');
-          if (isCurrentlyActive) {
-            el.cinemaControls.classList.remove('active');
-            clearTimeout(hudHideTimeout);
-          } else {
-            el.cinemaControls.classList.add('active');
-            clearTimeout(hudHideTimeout);
-            hudHideTimeout = setTimeout(() => {
-              if (el.cinemaControls && !el.cinemaControls.contains(document.activeElement)) {
-                el.cinemaControls.classList.remove('active');
-              }
-            }, 4500);
-          }
-        }
-      }
-
-      lastTapTime = currentTime;
-      lastTapX = tapX;
-    }, { passive: false });
 
     // Keep HUD open while user is touching, scrolling or interacting with HUD buttons/selects
     if (el.cinemaControls) {
@@ -3133,8 +3273,8 @@
       `;
     }
 
-    const wasPlaying = (el.cinemaVideo && !el.cinemaVideo.paused);
-    const currTime = el.cinemaVideo ? el.cinemaVideo.currentTime : 0;
+    const wasPlaying = (el.moviePlayer && !el.moviePlayer.paused);
+    const currTime = el.moviePlayer ? el.moviePlayer.currentTime : 0;
 
     if (stage.parentNode && stage.parentNode !== document.body) {
       stage.parentNode.insertBefore(placeholder, stage);
@@ -3150,12 +3290,12 @@
     // Reparent directly to document.body so containing block is 100% the viewport
     document.body.appendChild(stage);
 
-    if (el.cinemaVideo) {
-      if (currTime && Math.abs(el.cinemaVideo.currentTime - currTime) > 0.5) {
-        el.cinemaVideo.currentTime = currTime;
+    if (el.moviePlayer) {
+      if (currTime && Math.abs(el.moviePlayer.currentTime - currTime) > 0.5) {
+        el.moviePlayer.currentTime = currTime;
       }
       if (wasPlaying) {
-        el.cinemaVideo.play().catch(() => {});
+        el.moviePlayer.play().catch(() => {});
       }
     }
 
@@ -3197,8 +3337,8 @@
     stage.style.height = '';
     stage.style.zIndex = '';
 
-    const wasPlaying = (el.cinemaVideo && !el.cinemaVideo.paused);
-    const currTime = el.cinemaVideo ? el.cinemaVideo.currentTime : 0;
+    const wasPlaying = (el.moviePlayer && !el.moviePlayer.paused);
+    const currTime = el.moviePlayer ? el.moviePlayer.currentTime : 0;
 
     const placeholder = document.getElementById('movieStagePlaceholder');
     if (placeholder && placeholder.parentNode) {
@@ -3208,12 +3348,12 @@
       el.stageCinemaGroup.insertBefore(stage, el.stageCinemaGroup.firstChild);
     }
 
-    if (el.cinemaVideo) {
-      if (currTime && Math.abs(el.cinemaVideo.currentTime - currTime) > 0.5) {
-        el.cinemaVideo.currentTime = currTime;
+    if (el.moviePlayer) {
+      if (currTime && Math.abs(el.moviePlayer.currentTime - currTime) > 0.5) {
+        el.moviePlayer.currentTime = currTime;
       }
       if (wasPlaying) {
-        el.cinemaVideo.play().catch(() => {});
+        el.moviePlayer.play().catch(() => {});
       }
     }
 
@@ -3936,6 +4076,8 @@
     }
 
     showToast('Mini-Player Mode Activated');
+    updatePlayPauseIcons(wasPlaying);
+    updateVolumeUI(parseInt(el.volumeSlider?.value, 10) || lastVolumePct, el.moviePlayer.muted, false);
 
     if (wasPlaying && el.moviePlayer.paused) {
       el.moviePlayer.play().catch(() => {});
@@ -3975,19 +4117,14 @@
     if (el.miniPlayerPlayPauseBtn) {
       el.miniPlayerPlayPauseBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (!el.moviePlayer) return;
-        if (el.moviePlayer.paused) {
-          el.moviePlayer.play().catch(() => {});
-        } else {
-          el.moviePlayer.pause();
-        }
+        handlePlayPauseToggle();
       });
     }
     if (el.miniPlayerMuteBtn) {
       el.miniPlayerMuteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (!el.moviePlayer) return;
-        el.moviePlayer.muted = !el.moviePlayer.muted;
+        toggleMute();
         showToast(el.moviePlayer.muted ? 'Mini-Player Muted' : 'Mini-Player Unmuted');
       });
     }
@@ -5041,6 +5178,10 @@
     state.streamStartTime = 0;
     state.movieDuration = 0;
     state.isLiveStream = false;
+    clearAmbientGlowCanvas();
+    if (el.cinemaBox) {
+      el.cinemaBox.classList.remove('has-movie');
+    }
 
     if (el.moviePlayer) {
       el.moviePlayer.pause();
@@ -5116,6 +5257,10 @@
 
   async function loadMovieInTheater(movie, audioTrack = 0, subtitleTrack = 'off', startTime = 0, autoPlay = false) {
     if (!movie) return;
+    clearAmbientGlowCanvas();
+    if (el.cinemaBox) {
+      el.cinemaBox.classList.add('has-movie');
+    }
 
     // 0. Streaming Platform Party (Netflix, Prime Video, JioHotstar, Zee5, etc.)
     if (movie.type === 'streaming') {
@@ -5144,6 +5289,7 @@
       if (el.screenSharePlayer) el.screenSharePlayer.classList.add('hidden');
       if (el.moviePlayer) {
         el.moviePlayer.classList.remove('hidden');
+        el.moviePlayer.removeAttribute('crossorigin');
         initMovieAudioEngine(el.moviePlayer);
       }
 
@@ -5152,6 +5298,7 @@
       if (el.audioPickerGroup) el.audioPickerGroup.classList.add('hidden');
       if (el.subtitlePickerGroup) el.subtitlePickerGroup.classList.add('hidden');
 
+      el.moviePlayer.removeAttribute('crossorigin');
       el.moviePlayer.setAttribute('data-stream-file', movie.url);
       el.moviePlayer.setAttribute('data-stream-src', movie.url);
       if (typeof el.moviePlayer.setSinkId === 'function') {
@@ -5398,11 +5545,30 @@
 
   function updatePlayPauseIcons(isPlaying) {
     if (isPlaying) {
-      el.playIcon.classList.add('hidden');
-      el.pauseIcon.classList.remove('hidden');
+      el.playIcon?.classList.add('hidden');
+      el.pauseIcon?.classList.remove('hidden');
+      if (el.miniPlayerPlayPauseBtn) {
+        el.miniPlayerPlayPauseBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+        `;
+        el.miniPlayerPlayPauseBtn.title = 'Pause';
+        el.miniPlayerPlayPauseBtn.setAttribute('aria-label', 'Pause');
+      }
     } else {
-      el.playIcon.classList.remove('hidden');
-      el.pauseIcon.classList.add('hidden');
+      el.playIcon?.classList.remove('hidden');
+      el.pauseIcon?.classList.add('hidden');
+      if (el.miniPlayerPlayPauseBtn) {
+        el.miniPlayerPlayPauseBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+        `;
+        el.miniPlayerPlayPauseBtn.title = 'Play';
+        el.miniPlayerPlayPauseBtn.setAttribute('aria-label', 'Play');
+      }
     }
   }
 
@@ -5452,40 +5618,16 @@
       }
     });
 
-    const handleScrub = (clientX) => {
-      if (state.currentMovie?.type === 'youtube' && state.ytPlayer) {
-        try {
-          const rect = el.timelineContainer.getBoundingClientRect();
-          const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-          const dur = state.ytPlayer.getDuration ? state.ytPlayer.getDuration() : 0;
-          if (dur > 0) {
-            const seekTime = pos * dur;
-            state.ytPlayer.seekTo(seekTime, true);
-            if (state.socket) {
-              state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'seek', time: seekTime });
-            }
-          }
-        } catch (e) {}
-        return;
-      }
+    player.addEventListener('ended', () => {
+      clearAmbientGlowCanvas();
+    });
 
-      if (state.currentMovie?.type === 'streaming') {
-        return;
+    player.addEventListener('error', () => {
+      if (player.hasAttribute('crossorigin')) {
+        player.removeAttribute('crossorigin');
+        player.load();
       }
-
-      const rect = el.timelineContainer.getBoundingClientRect();
-      const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      const dur = getEffectiveDuration();
-      if (dur > 0) {
-        const seekTime = pos * dur;
-        seekMovie(seekTime);
-        if (state.socket) {
-          state.socket.emit('host-seek', { roomId: state.roomId, time: seekTime });
-        }
-      }
-    };
-
-    el.timelineContainer.addEventListener('click', (e) => handleScrub(e.clientX));
+    });
 
     // Timeline hover time preview tooltip across the full timestamp bar with remaining time and clamping
     const updateTimelineTooltip = (clientX) => {
@@ -5512,32 +5654,128 @@
       }
     };
 
-    el.timelineContainer.addEventListener('mousemove', (e) => updateTimelineTooltip(e.clientX));
+    let pendingSeekTime = null;
+
+    const updateScrubberVisual = (clientX) => {
+      if (!el.timelineContainer) return null;
+      const rect = el.timelineContainer.getBoundingClientRect();
+      const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const dur = (state.currentMovie?.type === 'youtube' && state.ytPlayer?.getDuration)
+        ? (state.ytPlayer.getDuration() || 0)
+        : getEffectiveDuration();
+      const seekTime = pos * dur;
+      const pct = pos * 100;
+
+      if (el.timelineProgress) el.timelineProgress.style.width = `${pct}%`;
+      if (el.timelineThumb) el.timelineThumb.style.left = `${pct}%`;
+      if (el.currentTimeDisplay) el.currentTimeDisplay.innerText = formatTime(seekTime);
+      updateTimelineTooltip(clientX);
+      return seekTime;
+    };
+
+    let lastCommitTime = 0;
+    let justScrubbed = false;
+
+    const commitScrub = (seekTime) => {
+      if (seekTime === null || isNaN(seekTime)) return;
+      const now = Date.now();
+      if (now - lastCommitTime < 60) return;
+      lastCommitTime = now;
+
+      if (state.currentMovie?.type === 'youtube' && state.ytPlayer) {
+        try {
+          state.ytPlayer.seekTo(seekTime, true);
+          if (state.socket) {
+            state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'seek', time: seekTime });
+          }
+        } catch (e) {}
+        return;
+      }
+
+      if (state.currentMovie?.type === 'streaming') {
+        return;
+      }
+
+      seekMovie(seekTime);
+      if (state.socket) {
+        state.socket.emit('host-seek', { roomId: state.roomId, time: seekTime });
+      }
+    };
+
+    el.timelineContainer.addEventListener('mousedown', (e) => {
+      state.isDraggingTimeline = true;
+      pendingSeekTime = updateScrubberVisual(e.clientX);
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!state.isDraggingTimeline) {
+        if (el.timelineContainer && el.timelineContainer.contains(e.target)) {
+          updateTimelineTooltip(e.clientX);
+        }
+        return;
+      }
+      pendingSeekTime = updateScrubberVisual(e.clientX);
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (state.isDraggingTimeline) {
+        state.isDraggingTimeline = false;
+        justScrubbed = true;
+        setTimeout(() => { justScrubbed = false; }, 60);
+        if (pendingSeekTime !== null) {
+          commitScrub(pendingSeekTime);
+          pendingSeekTime = null;
+        }
+      }
+    });
+
+    el.timelineContainer.addEventListener('click', (e) => {
+      if (!state.isDraggingTimeline && !justScrubbed) {
+        const seekTime = updateScrubberVisual(e.clientX);
+        commitScrub(seekTime);
+      }
+    });
 
     el.timelineContainer.addEventListener('mouseleave', () => {
-      if (el.timelineHoverTime) {
+      if (!state.isDraggingTimeline && el.timelineHoverTime) {
         el.timelineHoverTime.style.display = 'none';
       }
     });
 
-    let isScrubbing = false;
     el.timelineContainer.addEventListener('touchstart', (e) => {
-      isScrubbing = true;
       if (e.touches.length > 0) {
-        handleScrub(e.touches[0].clientX);
-        updateTimelineTooltip(e.touches[0].clientX);
+        state.isDraggingTimeline = true;
+        pendingSeekTime = updateScrubberVisual(e.touches[0].clientX);
       }
     }, { passive: true });
 
-    el.timelineContainer.addEventListener('touchmove', (e) => {
-      if (isScrubbing && e.touches.length > 0) {
-        handleScrub(e.touches[0].clientX);
-        updateTimelineTooltip(e.touches[0].clientX);
+    window.addEventListener('touchmove', (e) => {
+      if (state.isDraggingTimeline && e.touches.length > 0) {
+        pendingSeekTime = updateScrubberVisual(e.touches[0].clientX);
       }
     }, { passive: true });
 
-    el.timelineContainer.addEventListener('touchend', () => {
-      isScrubbing = false;
+    const handleTouchEnd = () => {
+      if (state.isDraggingTimeline) {
+        state.isDraggingTimeline = false;
+        justScrubbed = true;
+        setTimeout(() => { justScrubbed = false; }, 60);
+        if (pendingSeekTime !== null) {
+          commitScrub(pendingSeekTime);
+          pendingSeekTime = null;
+        }
+      }
+      if (el.timelineHoverTime) {
+        el.timelineHoverTime.style.display = 'none';
+      }
+    };
+
+    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('touchcancel', () => {
+      if (state.isDraggingTimeline) {
+        state.isDraggingTimeline = false;
+        pendingSeekTime = null;
+      }
       if (el.timelineHoverTime) {
         el.timelineHoverTime.style.display = 'none';
       }
@@ -7391,158 +7629,7 @@
     // ==========================================================================
     // CINEMA VOLUME & MUTE CONTROLLER (Synchronized HUD & Top-Right Meter)
     // ==========================================================================
-    let volumeMeterTimeout = null;
-    let lastVolumePct = 100;
-
-    function showCinemaVolumeMeter(pct, isMuted) {
-      if (!el.cinemaVolumeMeter) return;
-      if (isMuted || pct === 0) {
-        el.meterVolHighIcon?.classList.add('hidden');
-        el.meterVolMuteIcon?.classList.remove('hidden');
-        if (el.meterValueText) el.meterValueText.innerText = 'Muted';
-        if (el.meterBarFill) el.meterBarFill.style.width = '0%';
-      } else {
-        el.meterVolHighIcon?.classList.remove('hidden');
-        el.meterVolMuteIcon?.classList.add('hidden');
-        if (el.meterValueText) el.meterValueText.innerText = `${pct}%`;
-        if (el.meterBarFill) el.meterBarFill.style.width = `${pct}%`;
-      }
-
-      el.cinemaVolumeMeter.classList.remove('hidden');
-      el.cinemaVolumeMeter.classList.remove('fade-out');
-
-      clearTimeout(volumeMeterTimeout);
-      volumeMeterTimeout = setTimeout(() => {
-        if (el.cinemaVolumeMeter) {
-          el.cinemaVolumeMeter.classList.add('fade-out');
-          setTimeout(() => {
-            if (el.cinemaVolumeMeter && el.cinemaVolumeMeter.classList.contains('fade-out')) {
-              el.cinemaVolumeMeter.classList.add('hidden');
-              el.cinemaVolumeMeter.classList.remove('fade-out');
-            }
-          }, 250);
-        }
-      }, 1300);
-    }
-
-    function updateVolumeUI(pct, isMuted, showHUD = true) {
-      const isEffectivelyMuted = isMuted || pct === 0;
-      if (el.volumeSlider) {
-        el.volumeSlider.style.setProperty('--vol-fill', (isEffectivelyMuted ? 0 : pct) + '%');
-      }
-      if (isEffectivelyMuted) {
-        el.volHighIcon?.classList.add('hidden');
-        el.volMuteIcon?.classList.remove('hidden');
-      } else {
-        el.volHighIcon?.classList.remove('hidden');
-        el.volMuteIcon?.classList.add('hidden');
-      }
-      if (showHUD) {
-        showCinemaVolumeMeter(pct, isEffectivelyMuted);
-      }
-    }
-
-    function setVolume(pct, updateSlider = true, showHUD = true) {
-      if (!el.moviePlayer) return;
-      pct = Math.max(0, Math.min(100, Math.round(pct)));
-      if (pct > 0) {
-        lastVolumePct = pct;
-        el.moviePlayer.muted = false;
-        el.moviePlayer.volume = pct / 100;
-      } else {
-        el.moviePlayer.muted = true;
-        el.moviePlayer.volume = 0;
-      }
-
-      if (updateSlider && el.volumeSlider) {
-        el.volumeSlider.value = pct;
-      }
-      updateVolumeUI(pct, el.moviePlayer.muted, showHUD);
-    }
-
-    const toggleMute = () => {
-      if (!el.moviePlayer) return;
-      const isMuting = !el.moviePlayer.muted;
-      el.moviePlayer.muted = isMuting;
-      if (isMuting) {
-        const cur = parseInt(el.volumeSlider?.value, 10);
-        if (!isNaN(cur) && cur > 0) lastVolumePct = cur;
-        if (el.volumeSlider) {
-          el.volumeSlider.value = 0;
-        }
-        updateVolumeUI(0, true, true);
-      } else {
-        const restorePct = lastVolumePct > 0 ? lastVolumePct : 50;
-        setVolume(restorePct, true, true);
-      }
-    };
     if (el.volumeToggleBtn) el.volumeToggleBtn.onclick = toggleMute;
-
-    // Rewind / Forward 10 Seconds Helpers
-    const rewind10Seconds = () => {
-      if (state.currentMovie?.type === 'youtube' && state.ytPlayer) {
-        try {
-          const t = Math.max(0, state.ytPlayer.getCurrentTime() - 10);
-          state.ytPlayer.seekTo(t, true);
-          if (state.socket) {
-            state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'seek', time: t });
-          }
-          showToast('Rewound 10s');
-        } catch (e) {}
-        return;
-      }
-      if (state.currentMovie?.type === 'streaming') {
-        const cur = state.streamingCurrentTime || 0;
-        const newTime = Math.max(0, cur - 10);
-        updateStreamingPlaybackState(state.streamingIsPlaying, newTime);
-        if (state.socket) {
-          state.socket.emit('host-streaming-sync', { roomId: state.roomId, action: 'rewind10', time: newTime });
-        }
-        showToast('Rewound 10s');
-        return;
-      }
-      const cur = getEffectiveCurrentTime();
-      const newTime = Math.max(0, cur - 10);
-      seekMovie(newTime);
-      if (state.socket) {
-        state.socket.emit('host-seek', { roomId: state.roomId, time: newTime });
-      }
-      showToast('Rewound 10s');
-    };
-
-    const forward10Seconds = () => {
-      if (state.currentMovie?.type === 'youtube' && state.ytPlayer) {
-        try {
-          const dur = state.ytPlayer.getDuration ? state.ytPlayer.getDuration() : 999999;
-          const t = Math.min(dur, state.ytPlayer.getCurrentTime() + 10);
-          state.ytPlayer.seekTo(t, true);
-          if (state.socket) {
-            state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'seek', time: t });
-          }
-          showToast('Forwarded 10s');
-        } catch (e) {}
-        return;
-      }
-      if (state.currentMovie?.type === 'streaming') {
-        const cur = state.streamingCurrentTime || 0;
-        const newTime = cur + 10;
-        updateStreamingPlaybackState(state.streamingIsPlaying, newTime);
-        if (state.socket) {
-          state.socket.emit('host-streaming-sync', { roomId: state.roomId, action: 'forward10', time: newTime });
-        }
-        showToast('Forwarded 10s');
-        return;
-      }
-      const cur = getEffectiveCurrentTime();
-      const dur = getEffectiveDuration();
-      const newTime = dur > 0 ? Math.min(dur, cur + 10) : cur + 10;
-      seekMovie(newTime);
-      if (state.socket) {
-        state.socket.emit('host-seek', { roomId: state.roomId, time: newTime });
-      }
-      showToast('Forwarded 10s');
-    };
-
     if (el.rewind10Btn) el.rewind10Btn.onclick = rewind10Seconds;
     if (el.forward10Btn) el.forward10Btn.onclick = forward10Seconds;
 
@@ -7661,7 +7748,7 @@
         let curPct = parseInt(el.volumeSlider?.value, 10);
         if (isNaN(curPct) || curPct === 0) curPct = lastVolumePct || 100;
         setVolume(curPct, true, false);
-        if (el.moviePlayer.paused && state.currentMovie) {
+        if (el.moviePlayer.paused && state.currentMovie && state.isPlaying) {
           el.moviePlayer.play().catch(() => {});
         }
       }
@@ -7696,7 +7783,15 @@
         windowManager.suppressClick = false;
         return;
       }
-      handlePlayPauseToggle();
+      if (moviePlayerClickTimeout) {
+        clearTimeout(moviePlayerClickTimeout);
+        moviePlayerClickTimeout = null;
+        return;
+      }
+      moviePlayerClickTimeout = setTimeout(() => {
+        moviePlayerClickTimeout = null;
+        handlePlayPauseToggle();
+      }, 260);
     };
     // Do not open movie library when tapping the stage background/placeholder
     el.openMovieLibraryBtn.onclick = (e) => {
@@ -7720,6 +7815,7 @@
     el.subtitleTrackSelect.onchange = () => {
       if (!state.isHost) return;
       const sub = el.subtitleTrackSelect.value;
+      if (sub === 'custom') return;
       const curTime = getEffectiveCurrentTime();
       state.socket.emit('host-set-tracks', {
         roomId: state.roomId,
@@ -7750,51 +7846,109 @@
 
     let lastTapTime = 0;
     let lastTapX = 0;
+    let singleTapTimeout = null;
+    let hudHideTimeout = null;
 
-    const handleTap = (clientX, clientY) => {
+    const handleTap = (clientX, clientY, isTouch = false) => {
       const now = Date.now();
       const rect = box.getBoundingClientRect();
       const xRatio = (clientX - rect.left) / rect.width;
       const timeDiff = now - lastTapTime;
       const xDiff = Math.abs(clientX - lastTapX);
 
-      if (timeDiff < 280 && xDiff < 80) {
+      if (timeDiff < 280 && xDiff < 90) {
+        if (singleTapTimeout) {
+          clearTimeout(singleTapTimeout);
+          singleTapTimeout = null;
+        }
+        if (moviePlayerClickTimeout) {
+          clearTimeout(moviePlayerClickTimeout);
+          moviePlayerClickTimeout = null;
+        }
+        lastTapTime = 0;
+
         if (xRatio <= 0.35) {
           seekRelative(-10);
           rippleLeft.classList.add('active-ripple');
           setTimeout(() => rippleLeft.classList.remove('active-ripple'), 550);
+          triggerGestureIndicator('left');
           playUIAudio('hover');
         } else if (xRatio >= 0.65) {
           seekRelative(10);
           rippleRight.classList.add('active-ripple');
           setTimeout(() => rippleRight.classList.remove('active-ripple'), 550);
+          triggerGestureIndicator('right');
           playUIAudio('hover');
+        } else {
+          toggleCinemaFullscreen();
         }
-        lastTapTime = 0;
       } else {
         lastTapTime = now;
         lastTapX = clientX;
+
+        if (singleTapTimeout) {
+          clearTimeout(singleTapTimeout);
+          singleTapTimeout = null;
+        }
+
+        if (isTouch || window.matchMedia('(pointer: coarse)').matches) {
+          singleTapTimeout = setTimeout(() => {
+            singleTapTimeout = null;
+            if (state.resetIdleTimer) state.resetIdleTimer();
+            if (el.cinemaControls && (state.currentMovie || box.classList.contains('has-movie'))) {
+              const isCurrentlyActive = el.cinemaControls.classList.contains('active');
+              if (isCurrentlyActive) {
+                el.cinemaControls.classList.remove('active');
+                clearTimeout(hudHideTimeout);
+              } else {
+                el.cinemaControls.classList.add('active');
+                clearTimeout(hudHideTimeout);
+                hudHideTimeout = setTimeout(() => {
+                  if (el.cinemaControls && !el.cinemaControls.contains(document.activeElement)) {
+                    el.cinemaControls.classList.remove('active');
+                  }
+                }, 4500);
+              }
+            }
+          }, 280);
+        }
       }
     };
 
     box.addEventListener('click', (e) => {
-      if (e.target.closest('#cinemaControls') || e.target.closest('.window-title-bar') || e.target.closest('.window-resize-handle')) {
+      if (e.target.closest('#cinemaControls') || e.target.closest('.window-title-bar') || e.target.closest('.window-resize-handle') || e.target.closest('button, select, input, a, .hud-timeline-container, .device-menu, .active-poll-widget')) {
         return;
       }
-      handleTap(e.clientX, e.clientY);
+      if (typeof windowManager !== 'undefined' && windowManager.suppressClick) {
+        windowManager.suppressClick = false;
+        return;
+      }
+      handleTap(e.clientX, e.clientY, false);
     });
 
     box.addEventListener('touchend', (e) => {
-      if (e.target.closest('#cinemaControls') || e.target.closest('.window-title-bar') || e.target.closest('.window-resize-handle')) {
+      if (e.target.closest('#cinemaControls') || e.target.closest('.window-title-bar') || e.target.closest('.window-resize-handle') || e.target.closest('button, select, input, a, .hud-timeline-container, .device-menu, .active-poll-widget')) {
+        return;
+      }
+      if (typeof windowManager !== 'undefined' && windowManager.suppressClick) {
+        windowManager.suppressClick = false;
         return;
       }
       if (e.changedTouches && e.changedTouches[0]) {
-        handleTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+        e.preventDefault();
+        handleTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY, true);
       }
-    }, { passive: true });
+    }, { passive: false });
   }
 
   function seekRelative(offsetSec) {
+    if (offsetSec < 0) {
+      rewind10Seconds();
+      return;
+    } else if (offsetSec > 0) {
+      forward10Seconds();
+      return;
+    }
     if (el.moviePlayer && (el.moviePlayer.src || state.currentMovie)) {
       const dur = getEffectiveDuration();
       const newTime = Math.max(0, Math.min(dur, el.moviePlayer.currentTime + offsetSec));
@@ -7802,7 +7956,7 @@
       if (state.isHost && state.socket && state.roomId) {
         state.socket.emit('host-seek', {
           roomId: state.roomId,
-          currentTime: newTime,
+          time: newTime,
           sentAt: Date.now()
         });
       }

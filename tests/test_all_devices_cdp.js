@@ -100,7 +100,7 @@ function getPageWSUrl() {
       res.on('end', () => {
         try {
           const list = JSON.parse(body);
-          const page = list.find(t => t.type === 'page');
+          const page = list.find(t => t.type === 'page' && t.url && t.url.includes(String(PORT))) || list.find(t => t.type === 'page');
           if (page && page.webSocketDebuggerUrl) {
             resolve(page.webSocketDebuggerUrl);
           } else {
