@@ -6912,7 +6912,7 @@
 
     // Outside tap listener to dismiss dropdowns & bottom sheets
     const handleOutsideMenuTap = (e) => {
-      if (e && e.target && e.target.closest && e.target.closest('.device-menu, .split-dock-btn, .pill-btn, .pill-chevron-btn')) {
+      if (e && e.target && e.target.closest && e.target.closest('.device-menu, .dock-reactions-menu, .split-dock-btn, .pill-btn, .pill-chevron-btn')) {
         return;
       }
       closeAllDeviceMenus(true);

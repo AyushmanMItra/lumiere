@@ -1710,24 +1710,52 @@ body:not(.has-participants) .cinema-stage-wrapper {
 }
 
 /* Dock Reactions Floating Menu Tray */
-.dock-reactions-menu {
-  bottom: 56px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(14, 16, 24, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 24px;
-  padding: 6px 10px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
-  z-index: 100;
+.dock-reactions-menu,
+.device-menu.dock-reactions-menu {
+  position: absolute !important;
+  bottom: calc(100% + 14px) !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  width: max-content !important;
+  min-width: min-content !important;
+  max-width: min(440px, calc(100vw - 20px)) !important;
+  background: rgba(14, 16, 24, 0.94) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 28px !important;
+  padding: 6px 12px !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+  z-index: 2500 !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  max-height: none !important;
+  overflow: visible !important;
+  margin: 0 !important;
+  top: auto !important;
+  will-change: transform, opacity;
+  animation: popoverFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+.dock-reactions-menu::before,
+.device-menu.dock-reactions-menu::before {
+  display: none !important;
+  content: none !important;
+}
+
 .dock-reactions-items {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: 100% !important;
+  flex-wrap: nowrap !important;
 }
+
 .dock-reaction-item {
   background: transparent;
   border: none;
@@ -1737,11 +1765,19 @@ body:not(.has-participants) .cinema-stage-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
+
 .dock-reaction-item:hover {
   background: rgba(255, 255, 255, 0.14);
   transform: scale(1.22);
+}
+
+.dock-reaction-item:active {
+  transform: scale(0.92);
 }
 
 /* Split Button with Chevron (Image 1 Mic & Cam) */
@@ -3472,15 +3508,24 @@ body:not(.has-participants) .cinema-stage-wrapper {
   display: flex;
   align-items: center;
   gap: 6px;
+  max-width: calc(100% - 24px);
+  width: max-content;
   background: rgba(20, 21, 26, 0.96);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(229, 169, 60, 0.4);
   border-radius: 40px;
-  padding: 6px 12px;
+  padding: 6px 10px;
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.7), 0 0 18px rgba(229, 169, 60, 0.2);
   z-index: 100;
+  box-sizing: border-box;
   animation: pickerFadeUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chat-reactions-tray::-webkit-scrollbar {
+  display: none;
 }
 
 .reactions-tray-label {
@@ -3491,17 +3536,19 @@ body:not(.has-participants) .cinema-stage-wrapper {
   padding-right: 6px;
   border-right: 1px solid rgba(255, 255, 255, 0.12);
   user-select: none;
+  flex-shrink: 0;
 }
 
 .reaction-tray-buttons {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
+  flex-shrink: 0;
 }
 
 .reaction-item-btn {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: none;
   background: transparent;
@@ -3509,13 +3556,15 @@ body:not(.has-participants) .cinema-stage-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   transition: transform 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.18s;
   user-select: none;
+  touch-action: manipulation;
 }
 
 .reaction-item-btn svg {
-  width: 22px;
-  height: 22px;
+  width: 19px;
+  height: 19px;
   transition: transform 0.18s ease;
 }
 
@@ -9678,6 +9727,32 @@ html, body, .app-container {
     width: 16px;
     height: 16px;
   }
+
+  /* Live Reactions Dock Tray Mobile Portrait Optimization */
+  .dock-reactions-menu,
+  .device-menu.dock-reactions-menu {
+    position: fixed !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    bottom: calc(64px + env(safe-area-inset-bottom, 12px)) !important;
+    padding: 5px 8px !important;
+    border-radius: 22px !important;
+    max-width: calc(100vw - 16px) !important;
+  }
+
+  .dock-reactions-items {
+    gap: 4px !important;
+  }
+
+  .dock-reaction-item {
+    padding: 4px !important;
+  }
+
+  .dock-reaction-item svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
 }
 
 /* Mobile & Tablet Landscape Safety (Short Viewports) */
@@ -9689,6 +9764,28 @@ html, body, .app-container {
 
   .cinema-stage-wrapper {
     max-height: calc(100dvh - 96px) !important;
+  }
+
+  /* Live Reactions Dock Tray Mobile Landscape Optimization */
+  .dock-reactions-menu,
+  .device-menu.dock-reactions-menu {
+    bottom: calc(100% + 8px) !important;
+    padding: 4px 8px !important;
+    border-radius: 20px !important;
+    max-width: calc(100vw - 16px) !important;
+  }
+
+  .dock-reactions-items {
+    gap: 4px !important;
+  }
+
+  .dock-reaction-item {
+    padding: 4px !important;
+  }
+
+  .dock-reaction-item svg {
+    width: 17px !important;
+    height: 17px !important;
   }
 
   /* Cinema Stage Lounge Mobile Landscape Optimization */
