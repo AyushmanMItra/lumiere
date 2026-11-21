@@ -139,6 +139,10 @@
     moviePlayer: document.getElementById('moviePlayer'),
     stagePlaceholder: document.getElementById('stagePlaceholder'),
     stageAvatarImg: document.getElementById('stageAvatarImg'),
+    stageCenterAvatar: document.getElementById('stageCenterAvatar'),
+    stageAvatarMicBadge: document.getElementById('stageAvatarMicBadge'),
+    stageStatusPill: document.getElementById('stageStatusPill'),
+    stageVoiceStatusText: document.getElementById('stageVoiceStatusText'),
     openMovieLibraryBtn: document.getElementById('openMovieLibraryBtn'),
     stageBottomTag: document.getElementById('stageBottomTag'),
     stageUsername: document.getElementById('stageUsername'),
@@ -424,6 +428,7 @@
       }
     } catch (e) {}
     updateAmbientGlowUI();
+    updateStageMicVisuals();
 
     attachEventListeners();
     setupIdleDetection(); // 3-second auto-hide feature (Image 2)
@@ -514,6 +519,7 @@
     state.isMicMuted = true;
     state.localAudioTrack = null;
     state.localStream = null;
+    updateStageMicVisuals();
     enumerateMediaDevices().catch(() => {});
 
     // 2. Connect Socket.io
@@ -1596,11 +1602,34 @@
       el.stageMicIcon.classList.toggle('muted', state.isMicMuted);
     }
 
+    // Update Stage Center Avatar halo and mic badge
+    updateStageMicVisuals();
+
     if (state.socket) {
       state.socket.emit('update-mic-status', { roomId: state.roomId, isMuted: state.isMicMuted });
     }
 
     showToast(state.isMicMuted ? 'Microphone Muted (Media Speaker Active)' : 'Microphone Active');
+  }
+
+  function updateStageMicVisuals() {
+    const isMuted = !!state.isMicMuted;
+    if (el.stageCenterAvatar) {
+      el.stageCenterAvatar.classList.toggle('mic-muted', isMuted);
+      el.stageCenterAvatar.classList.toggle('mic-open', !isMuted);
+    }
+    if (el.stageAvatarMicBadge) {
+      el.stageAvatarMicBadge.setAttribute('title', isMuted ? 'Microphone Muted - Click to Unmute' : 'Microphone Active - Click to Mute');
+    }
+    if (el.stageStatusPill) {
+      el.stageStatusPill.classList.toggle('is-muted', isMuted);
+    }
+    if (el.stageVoiceStatusText) {
+      el.stageVoiceStatusText.textContent = isMuted ? 'STAGE VOICE CHANNEL • MUTED' : 'STAGE VOICE CHANNEL • MIC ACTIVE';
+    }
+    if (el.stageMicIcon) {
+      el.stageMicIcon.classList.toggle('muted', isMuted);
+    }
   }
 
   // ==========================================================================
@@ -2425,15 +2454,20 @@
       h.addEventListener('touchstart', (e) => handleResizeStart(e, stage, dir), { passive: false });
     });
 
-    // Hold on cinemaBox (1000ms) to pop out into floating window.
-    // Visual progress ring is delayed by 200ms so quick taps to reveal controls never trigger or flicker.
+    // Hold on cinemaBox (1000ms) to pop out when docked, or drag anywhere to reposition when floating.
     let movieHoldTimer = null;
     let movieIndicatorTimer = null;
     let movieHoldStartX = 0;
     let movieHoldStartY = 0;
+    let isFloatingDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let dragGrabOffsetX = 0;
+    let dragGrabOffsetY = 0;
 
     const onBoxDown = (e) => {
-      if (e.target.closest('button, select, input, a, .hud-timeline-container, .device-menu, .active-poll-widget, .window-title-bar, .window-resize-handle')) {
+      // Ignore interactive controls, buttons, scrubbers, inputs
+      if (e.target.closest('button, select, input, a, .hud-timeline-container, .device-menu, .active-poll-widget, .window-title-bar, .window-resize-handle, .cinema-controls')) {
         return;
       }
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -2441,13 +2475,27 @@
       movieHoldStartX = clientX;
       movieHoldStartY = clientY;
 
+      const isFloating = stage.classList.contains('is-floating-window');
+
+      if (isFloating) {
+        // Dragging anywhere on the floating movie screen
+        bringWindowToFront(stage);
+        const rect = stage.getBoundingClientRect();
+        dragGrabOffsetX = clientX - rect.left;
+        dragGrabOffsetY = clientY - rect.top;
+        dragStartX = clientX;
+        dragStartY = clientY;
+        isFloatingDragging = false;
+        return;
+      }
+
+      // When docked: Long press (1000ms) pops out into floating screen
       clearTimeout(movieHoldTimer);
       clearTimeout(movieIndicatorTimer);
 
       movieIndicatorTimer = setTimeout(() => {
         movieIndicatorTimer = null;
-        const label = stage.classList.contains('is-floating-window') ? 'Hold to Dock Screen' : 'Hold for Floating Screen';
-        showHoldIndicator(clientX, clientY, label, WINDOW_HOLD_DURATION_MS - HOLD_INDICATOR_DELAY_MS);
+        showHoldIndicator(clientX, clientY, 'Hold for Floating Screen', WINDOW_HOLD_DURATION_MS - HOLD_INDICATOR_DELAY_MS);
       }, HOLD_INDICATOR_DELAY_MS);
 
       movieHoldTimer = setTimeout(() => {
@@ -2459,19 +2507,50 @@
         pulseHoldIndicatorSuccess();
         setTimeout(() => {
           hideHoldIndicator();
-          if (stage.classList.contains('is-floating-window')) {
-            dockMovieWindow();
-          } else {
-            popOutMovieWindow();
-          }
+          popOutMovieWindow();
         }, 220);
       }, WINDOW_HOLD_DURATION_MS);
     };
 
     const onBoxMove = (e) => {
-      if (!movieHoldTimer && !movieIndicatorTimer) return;
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      if (stage.classList.contains('is-floating-window')) {
+        if (!dragStartX && !dragStartY) return;
+        const dist = Math.hypot(clientX - dragStartX, clientY - dragStartY);
+        if (!isFloatingDragging && dist > 3) {
+          isFloatingDragging = true;
+          windowManager.suppressClick = true;
+          stage.classList.add('is-dragging-window');
+          document.body.classList.add('window-dragging-active');
+        }
+
+        if (isFloatingDragging) {
+          if (e.cancelable) e.preventDefault();
+          const winW = window.innerWidth;
+          const winH = window.innerHeight;
+          const wWidth = stage.offsetWidth;
+          const wHeight = stage.offsetHeight;
+
+          let desiredLeft = clientX - dragGrabOffsetX;
+          let desiredTop = clientY - dragGrabOffsetY;
+
+          const minLeft = 10;
+          const maxLeft = Math.max(minLeft, winW - wWidth - 10);
+          const minTop = 10;
+          const maxTop = Math.max(minTop, winH - 60);
+
+          const boundedLeft = Math.max(minLeft, Math.min(maxLeft, desiredLeft));
+          const boundedTop = Math.max(minTop, Math.min(maxTop, desiredTop));
+
+          stage.style.left = `${Math.round(boundedLeft)}px`;
+          stage.style.top = `${Math.round(boundedTop)}px`;
+        }
+        return;
+      }
+
+      if (!movieHoldTimer && !movieIndicatorTimer) return;
       if (Math.hypot(clientX - movieHoldStartX, clientY - movieHoldStartY) > 12) {
         clearTimeout(movieHoldTimer);
         clearTimeout(movieIndicatorTimer);
@@ -2482,6 +2561,18 @@
     };
 
     const onBoxUp = () => {
+      if (isFloatingDragging) {
+        isFloatingDragging = false;
+        stage.classList.remove('is-dragging-window');
+        document.body.classList.remove('window-dragging-active');
+        saveMovieWindowLayout();
+        setTimeout(() => {
+          windowManager.suppressClick = false;
+        }, 80);
+      }
+      dragStartX = 0;
+      dragStartY = 0;
+
       if (movieIndicatorTimer) {
         clearTimeout(movieIndicatorTimer);
         movieIndicatorTimer = null;
@@ -2992,21 +3083,40 @@
     let tileIndicatorTimer = null;
     let tileHoldStartX = 0;
     let tileHoldStartY = 0;
+    let isFloatingDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let dragGrabOffsetX = 0;
+    let dragGrabOffsetY = 0;
 
     const onDown = (e) => {
-      if (e.target.closest('button, select, input, a, .window-title-bar, .window-resize-handle')) return;
+      if (e.target.closest('button, select, input, a, .window-title-bar, .window-resize-handle, .tile-vol-btn, .tile-volume-popover')) return;
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       tileHoldStartX = clientX;
       tileHoldStartY = clientY;
 
+      const isFloating = tile.classList.contains('is-floating-window');
+
+      if (isFloating) {
+        // Dragging anywhere on the floating webcam video tile
+        bringWindowToFront(tile);
+        const rect = tile.getBoundingClientRect();
+        dragGrabOffsetX = clientX - rect.left;
+        dragGrabOffsetY = clientY - rect.top;
+        dragStartX = clientX;
+        dragStartY = clientY;
+        isFloatingDragging = false;
+        return;
+      }
+
+      // When docked: Long press (1000ms) pops out into floating webcam tile
       clearTimeout(tileHoldTimer);
       clearTimeout(tileIndicatorTimer);
 
       tileIndicatorTimer = setTimeout(() => {
         tileIndicatorTimer = null;
-        const label = tile.classList.contains('is-floating-window') ? 'Hold to Dock Cam' : 'Hold for Floating Cam';
-        showHoldIndicator(clientX, clientY, label, WINDOW_HOLD_DURATION_MS - HOLD_INDICATOR_DELAY_MS);
+        showHoldIndicator(clientX, clientY, 'Hold for Floating Cam', WINDOW_HOLD_DURATION_MS - HOLD_INDICATOR_DELAY_MS);
       }, HOLD_INDICATOR_DELAY_MS);
 
       tileHoldTimer = setTimeout(() => {
@@ -3018,19 +3128,50 @@
         pulseHoldIndicatorSuccess();
         setTimeout(() => {
           hideHoldIndicator();
-          if (tile.classList.contains('is-floating-window')) {
-            dockParticipantWindow(tile);
-          } else {
-            popOutParticipantWindow(tile);
-          }
+          popOutParticipantWindow(tile);
         }, 220);
       }, WINDOW_HOLD_DURATION_MS);
     };
 
     const onMove = (e) => {
-      if (!tileHoldTimer && !tileIndicatorTimer) return;
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      if (tile.classList.contains('is-floating-window')) {
+        if (!dragStartX && !dragStartY) return;
+        const dist = Math.hypot(clientX - dragStartX, clientY - dragStartY);
+        if (!isFloatingDragging && dist > 3) {
+          isFloatingDragging = true;
+          windowManager.suppressClick = true;
+          tile.classList.add('is-dragging-window');
+          document.body.classList.add('window-dragging-active');
+        }
+
+        if (isFloatingDragging) {
+          if (e.cancelable) e.preventDefault();
+          const winW = window.innerWidth;
+          const winH = window.innerHeight;
+          const tWidth = tile.offsetWidth;
+          const tHeight = tile.offsetHeight;
+
+          let desiredLeft = clientX - dragGrabOffsetX;
+          let desiredTop = clientY - dragGrabOffsetY;
+
+          const minLeft = 10;
+          const maxLeft = Math.max(minLeft, winW - tWidth - 10);
+          const minTop = 10;
+          const maxTop = Math.max(minTop, winH - 60);
+
+          const boundedLeft = Math.max(minLeft, Math.min(maxLeft, desiredLeft));
+          const boundedTop = Math.max(minTop, Math.min(maxTop, desiredTop));
+
+          tile.style.left = `${Math.round(boundedLeft)}px`;
+          tile.style.top = `${Math.round(boundedTop)}px`;
+        }
+        return;
+      }
+
+      if (!tileHoldTimer && !tileIndicatorTimer) return;
       if (Math.hypot(clientX - tileHoldStartX, clientY - tileHoldStartY) > 12) {
         clearTimeout(tileHoldTimer);
         clearTimeout(tileIndicatorTimer);
@@ -3041,6 +3182,17 @@
     };
 
     const onUp = () => {
+      if (isFloatingDragging) {
+        isFloatingDragging = false;
+        tile.classList.remove('is-dragging-window');
+        document.body.classList.remove('window-dragging-active');
+        setTimeout(() => {
+          windowManager.suppressClick = false;
+        }, 80);
+      }
+      dragStartX = 0;
+      dragStartY = 0;
+
       if (tileIndicatorTimer) {
         clearTimeout(tileIndicatorTimer);
         tileIndicatorTimer = null;
@@ -3742,18 +3894,6 @@
     tile.className = 'participant-tile';
     tile.id = `participant-tile-${member.id}`;
 
-    // Top chevron + users pill (Image 1: chevron + group)
-    const topPill = document.createElement('div');
-    topPill.className = 'tile-top-pill';
-    topPill.innerHTML = `
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-        <polyline points="6 9 12 15 18 9"></polyline>
-      </svg>
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-      </svg>
-    `;
-
     // Center Avatar
     const avatar = document.createElement('div');
     avatar.className = 'tile-avatar-center';
@@ -3794,7 +3934,6 @@
     bottomBadge.appendChild(micIcon);
     bottomBadge.appendChild(nameSpan);
 
-    tile.appendChild(topPill);
     tile.appendChild(avatar);
     tile.appendChild(video);
     tile.appendChild(bottomBadge);
@@ -5723,6 +5862,9 @@
     // Mic & Camera
     el.toggleMicBtn.onclick = toggleMicrophone;
     el.toggleCameraBtn.onclick = toggleCamera;
+    if (el.stageAvatarMicBadge) {
+      el.stageAvatarMicBadge.onclick = toggleMicrophone;
+    }
     // Helper to bind both click and touchend cleanly without double-triggering
     const bindTap = (button, callback) => {
       if (!button) return;
@@ -6098,10 +6240,10 @@
       };
     }
 
-    // Fullscreen (Cinema Box ONLY - hides participant bar and docks)
+    // 1. Cinema Fullscreen (Red arrow: Cinema Box ONLY - movie theater view)
     const toggleCinemaFullscreen = () => {
-      const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
-      if (!isFull) {
+      const isCinemaFull = (document.fullscreenElement === el.cinemaBox);
+      if (!isCinemaFull) {
         const box = el.cinemaBox || document.documentElement;
         if (box.requestFullscreen) {
           box.requestFullscreen().catch(() => {});
@@ -6121,14 +6263,59 @@
       }
     };
 
-    if (el.theaterFullscreenBtn) el.theaterFullscreenBtn.onclick = toggleCinemaFullscreen;
+    // 2. Website Fullscreen (Green arrow: Whole page / F11 mode)
+    const toggleWebsiteFullscreen = () => {
+      const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+      if (!isFull) {
+        const root = document.documentElement;
+        if (root.requestFullscreen) {
+          root.requestFullscreen().catch(() => {});
+        } else if (root.webkitRequestFullscreen) {
+          root.webkitRequestFullscreen();
+        } else if (root.msRequestFullscreen) {
+          root.msRequestFullscreen();
+        }
+      } else {
+        if (document.fullscreenElement === document.documentElement) {
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+        } else {
+          // If cinema box or another sub-element was fullscreen, promote to website fullscreen
+          if (document.exitFullscreen) {
+            document.exitFullscreen().then(() => {
+              if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+              }
+            }).catch(() => {});
+          }
+        }
+      }
+    };
+
+    // Red arrow: Movie controls HUD fullscreen button
     if (el.hudFullscreenBtn) el.hudFullscreenBtn.onclick = toggleCinemaFullscreen;
+    // Green arrow: Bottom right corner website fullscreen button
+    if (el.theaterFullscreenBtn) el.theaterFullscreenBtn.onclick = toggleWebsiteFullscreen;
 
     document.addEventListener('fullscreenchange', () => {
-      const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      const isCinemaFull = (document.fullscreenElement === el.cinemaBox);
+      const isDocFull = (document.fullscreenElement === document.documentElement);
+
       if (el.hudFullscreenExpand && el.hudFullscreenCompress) {
-        el.hudFullscreenExpand.classList.toggle('hidden', isFull);
-        el.hudFullscreenCompress.classList.toggle('hidden', !isFull);
+        el.hudFullscreenExpand.classList.toggle('hidden', isCinemaFull);
+        el.hudFullscreenCompress.classList.toggle('hidden', !isCinemaFull);
+      }
+
+      const theaterExpand = document.getElementById('theaterFullscreenExpand');
+      const theaterCompress = document.getElementById('theaterFullscreenCompress');
+      if (theaterExpand && theaterCompress) {
+        theaterExpand.classList.toggle('hidden', isDocFull);
+        theaterCompress.classList.toggle('hidden', !isDocFull);
       }
     });
 

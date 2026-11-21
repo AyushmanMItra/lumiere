@@ -1505,7 +1505,18 @@ function initAdminConsole() {
 let isHttpsStarted = false;
 
 function startHttp(port) {
-  httpServer.listen(port, '0.0.0.0', () => {
+  const onError = (err) => {
+    httpServer.removeListener('listening', onListening);
+    if (err.code === 'EADDRINUSE') {
+      console.log(`[Notice] HTTP Port ${port} is busy, trying ${port + 1}...`);
+      startHttp(port + 1);
+    } else {
+      console.error('[HTTP Error]', err.message);
+    }
+  };
+
+  const onListening = () => {
+    httpServer.removeListener('error', onError);
     const ips = getNetworkIps();
     console.log('================================================================');
     console.log('               [CINEMA] LUMIERE PRIVATE CINEMA SERVER           ');
@@ -1520,14 +1531,11 @@ function startHttp(port) {
       startHttps(HTTPS_PORT);
     }
     initAdminConsole();
-  }).on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-      console.log(`[Notice] HTTP Port ${port} is busy, trying ${port + 1}...`);
-      startHttp(port + 1);
-    } else {
-      console.error('[HTTP Error]', err.message);
-    }
-  });
+  };
+
+  httpServer.once('error', onError);
+  httpServer.once('listening', onListening);
+  httpServer.listen(port, '0.0.0.0');
 }
 
 function startHttps(port) {
@@ -1538,7 +1546,19 @@ function startHttps(port) {
     console.log('================================================================');
     return;
   }
-  httpsServer.listen(port, '0.0.0.0', () => {
+
+  const onError = (err) => {
+    httpsServer.removeListener('listening', onListening);
+    if (err.code === 'EADDRINUSE') {
+      console.log(`[Notice] HTTPS Port ${port} is busy, trying ${port + 1}...`);
+      startHttps(port + 1);
+    } else {
+      console.error('[HTTPS Error]', err.message);
+    }
+  };
+
+  const onListening = () => {
+    httpsServer.removeListener('error', onError);
     const ips = getNetworkIps();
     console.log('  [HTTPS - Camera & Mic for Tablets / Phones]');
     console.log(`  > Local Host PC:     https://localhost:${port}`);
@@ -1549,14 +1569,11 @@ function startHttps(port) {
     console.log('  > Press "r" + Enter:  Restart server');
     console.log('  > Press Ctrl+C:       Shutdown prompt (y/n/r)');
     console.log('================================================================');
-  }).on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-      console.log(`[Notice] HTTPS Port ${port} is busy, trying ${port + 1}...`);
-      startHttps(port + 1);
-    } else {
-      console.error('[HTTPS Error]', err.message);
-    }
-  });
+  };
+
+  httpsServer.once('error', onError);
+  httpsServer.once('listening', onListening);
+  httpsServer.listen(port, '0.0.0.0');
 }
 
 startHttp(HTTP_PORT);

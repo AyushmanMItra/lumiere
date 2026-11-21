@@ -1170,18 +1170,52 @@
             </div>
           </div>
 
-          <!-- Empty Cinema State (Avatar in center when no movie is playing) -->
-          <div id="stagePlaceholder" class="stage-placeholder">
-            <div class="stage-center-avatar" id="stageCenterAvatar">
-              <img id="stageAvatarImg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23949ba4'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Active Cinema Host Avatar">
+          <!-- Empty Cinema State (Discord Lounge Stage Waiting Arena) -->
+          <div id="stagePlaceholder" class="stage-placeholder discord-stage-lounge">
+            <div class="stage-lounge-halo"></div>
+            <div class="stage-lounge-card">
+              <!-- Host Stage Avatar with Dynamic Mic Status Halo & Badge -->
+              <div class="stage-avatar-wrapper mic-muted" id="stageCenterAvatar">
+                <div class="stage-speaking-pulse" id="stageSpeakingPulse"></div>
+                <div class="stage-center-avatar-box" id="stageAvatarBox">
+                  <img id="stageAvatarImg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23949ba4'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Active Cinema Host Avatar">
+                </div>
+                <div class="stage-avatar-mic-badge" id="stageAvatarMicBadge" title="Microphone Muted - Click to Unmute">
+                  <!-- Active Mic Icon -->
+                  <svg class="stage-mic-icon-open" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                  </svg>
+                  <!-- Muted Mic Icon -->
+                  <svg class="stage-mic-icon-muted" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.12L12 8.14V5a3 3 0 0 1 3 3v3.12zM4.41 2.86L3 4.27l6 6V11a3 3 0 0 0 3 3c.39 0 .76-.08 1.1-.21l2.45 2.45C14.39 16.73 13.24 17 12 17c-3.87 0-7-3.13-7-7H3a9 9 0 0 0 8 8.94V21h2v-2.06c1.38-.17 2.66-.67 3.75-1.42l2.84 2.84 1.41-1.41L4.41 2.86z"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Stage Lounge Info -->
+              <div class="stage-lounge-details">
+                <div class="stage-badge-row">
+                  <span class="stage-status-pill is-muted" id="stageStatusPill">
+                    <span class="stage-status-dot"></span>
+                    <span id="stageVoiceStatusText">STAGE VOICE CHANNEL</span>
+                  </span>
+                </div>
+                <h3 class="stage-lounge-title" id="stageLoungeTitle">Cinema Stage Lounge</h3>
+                <p class="stage-lounge-subtext">Voice and chat are live with your party. Start a film or share your screen to stream together.</p>
+              </div>
+
+              <!-- Host Movie Streaming Action -->
+              <div class="stage-lounge-actions">
+                <button id="openMovieLibraryBtn" class="btn btn-discord-primary host-only-btn load-movie-btn" title="Choose a video file to stream">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"></polygon>
+                  </svg>
+                  <span>Select Movie to Stream</span>
+                </button>
+              </div>
             </div>
-            <button id="openMovieLibraryBtn" class="btn btn-primary host-only-btn load-movie-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"></polygon>
-              </svg>
-              <span>Load Movie from PC</span>
-            </button>
           </div>
 
           <!-- Live Screen Reactions Container -->
@@ -1201,9 +1235,11 @@
             <span class="meter-value" id="meterValueText">100%</span>
           </div>
 
-          <!-- Top Left Broadcaster Pill (Repositioned to top-left to eliminate control overlap) -->
-          <div class="stage-bottom-tag" id="stageBottomTag">
+          <!-- Top Left Broadcaster Pill (Discord Stage Live Pill) -->
+          <div class="stage-bottom-tag discord-stream-badge" id="stageBottomTag">
             <span class="stage-pill-dot" id="stageLiveDot"></span>
+            <span class="stage-live-label">LIVE</span>
+            <span class="stage-tag-divider"></span>
             <svg id="stageMicIcon" class="tag-mic-icon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.12L12 8.14V5a3 3 0 0 1 3 3v3.12zM4.41 2.86L3 4.27l6 6V11a3 3 0 0 0 3 3c.39 0 .76-.08 1.1-.21l2.45 2.45C14.39 16.73 13.24 17 12 17c-3.87 0-7-3.13-7-7H3a9 9 0 0 0 8 8.94V21h2v-2.06c1.38-.17 2.66-.67 3.75-1.42l2.84 2.84 1.41-1.41L4.41 2.86z"/>
             </svg>
@@ -1310,6 +1346,7 @@
                   <select id="subtitleTrackSelect" class="hud-select">
                     <option value="off">Off</option>
                   </select>
+                  <span class="hud-pill-divider"></span>
                   <button type="button" id="subtitleSettingsBtn" class="hud-sub-gear-btn" title="Subtitle Settings & Timing Delay">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
@@ -1710,10 +1747,13 @@
 
         </div>
 
-        <!-- Right corner: Fullscreen toggle button (Image 1 bottom right) -->
-        <button id="theaterFullscreenBtn" class="corner-icon-btn" title="Toggle Cinema Fullscreen">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <!-- Right corner: Website Fullscreen toggle button (F11) -->
+        <button id="theaterFullscreenBtn" class="corner-icon-btn" title="Toggle Website Fullscreen (F11)">
+          <svg id="theaterFullscreenExpand" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+          </svg>
+          <svg id="theaterFullscreenCompress" class="hidden" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
           </svg>
         </button>
 

@@ -440,7 +440,9 @@ body.error-page-container {
   filter: contrast(1.04) brightness(0.98);
 }
 
-/* Stage Placeholder (Avatar in center when no movie is playing - Image 1) */
+/* ==========================================================================
+   DISCORD STAGE LOUNGE & ARENA (Waiting State when no media is active)
+   ========================================================================== */
 .stage-placeholder {
   position: absolute;
   inset: 0;
@@ -452,72 +454,311 @@ body.error-page-container {
   background-color: var(--bg-stage);
   border-radius: 12px;
   cursor: default;
+  overflow: hidden;
 }
 
-.stage-center-avatar {
-  width: 84px;
-  height: 84px;
-  border-radius: var(--radius-full);
-  background-color: #4a4746;
+.discord-stage-lounge {
+  background: radial-gradient(circle at 50% 40%, #1e2029 0%, #12131a 55%, #090a0d 100%);
+}
+
+.stage-lounge-halo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 460px;
+  height: 460px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(88, 101, 242, 0.22) 0%, rgba(35, 165, 90, 0.12) 45%, transparent 70%);
+  filter: blur(48px);
+  pointer-events: none;
+  animation: loungeGlowBreathing 4s infinite ease-in-out;
+  z-index: 1;
+}
+
+@keyframes loungeGlowBreathing {
+  0%, 100% { opacity: 0.65; transform: translate(-50%, -50%) scale(0.95); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+}
+
+.stage-lounge-card {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 520px;
+  width: 90%;
+  padding: 32px 36px;
+  background: rgba(30, 31, 38, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.stage-lounge-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.stage-avatar-wrapper {
+  position: relative;
+  width: 94px;
+  height: 94px;
+  margin-bottom: 18px;
+}
+
+/* 1. Concentric speaking pulse halo: ONLY active when mic is open */
+.stage-speaking-pulse {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid #23a55a;
+  opacity: 0.8;
+  animation: speakingHaloPulse 2.4s infinite cubic-bezier(0.25, 1, 0.5, 1);
+  pointer-events: none;
+  display: none;
+}
+
+.stage-avatar-wrapper.mic-open .stage-speaking-pulse {
+  display: block;
+}
+
+.stage-avatar-wrapper.mic-muted .stage-speaking-pulse {
+  display: none !important;
+}
+
+@keyframes speakingHaloPulse {
+  0% { transform: scale(0.92); opacity: 0.9; box-shadow: 0 0 0 0 rgba(35, 165, 90, 0.6); }
+  70% { transform: scale(1.18); opacity: 0; box-shadow: 0 0 0 16px rgba(35, 165, 90, 0); }
+  100% { transform: scale(1.18); opacity: 0; }
+}
+
+/* 2. Avatar Box: Green halo & ring when mic is open; sleek neutral border when muted */
+.stage-center-avatar-box {
+  width: 94px;
+  height: 94px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #2b2d31;
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s ease;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
 }
 
-.stage-placeholder:hover .stage-center-avatar {
-  transform: scale(1.05);
+.stage-avatar-wrapper.mic-open .stage-center-avatar-box {
+  border-color: #23a55a;
+  box-shadow: 0 0 22px rgba(35, 165, 90, 0.45);
 }
 
+.stage-avatar-wrapper.mic-muted .stage-center-avatar-box {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.stage-center-avatar-box img,
 .stage-center-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.load-movie-btn {
+/* 3. Mic Badge: Bottom right circular indicator */
+.stage-avatar-mic-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2.5px solid #1e2029;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.18s ease;
+}
+
+.stage-avatar-mic-badge:hover {
+  transform: scale(1.08);
+}
+
+/* Open Mic: Discord Green (#23a55a) */
+.stage-avatar-wrapper.mic-open .stage-avatar-mic-badge {
+  background-color: #23a55a;
+  box-shadow: 0 2px 10px rgba(35, 165, 90, 0.45);
+}
+
+.stage-avatar-wrapper.mic-open .stage-mic-icon-open {
+  display: block;
+}
+
+.stage-avatar-wrapper.mic-open .stage-mic-icon-muted {
+  display: none;
+}
+
+/* Muted Mic: Discord Red (#da373c) */
+.stage-avatar-wrapper.mic-muted .stage-avatar-mic-badge {
+  background-color: #da373c;
+  box-shadow: 0 2px 10px rgba(218, 55, 60, 0.4);
+}
+
+.stage-avatar-wrapper.mic-muted .stage-mic-icon-open {
+  display: none;
+}
+
+.stage-avatar-wrapper.mic-muted .stage-mic-icon-muted {
+  display: block;
+}
+
+.stage-lounge-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stage-badge-row {
+  margin-bottom: 12px;
+}
+
+.stage-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 12px;
   border-radius: var(--radius-full);
-  padding: 8px 18px;
-  font-size: 13px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  opacity: 0.92;
-  transform: translateY(0);
+  background: rgba(35, 165, 90, 0.15);
+  border: 1px solid rgba(35, 165, 90, 0.35);
+  color: #57F287;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  user-select: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.stage-status-pill.is-muted {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #949ba4;
+}
+
+.stage-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #57F287;
+  box-shadow: 0 0 8px rgba(87, 242, 135, 0.9);
+  animation: livePillPulse 2s infinite ease-in-out;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stage-status-pill.is-muted .stage-status-dot {
+  background-color: #da373c;
+  box-shadow: 0 0 6px rgba(218, 55, 60, 0.5);
+  animation: none;
+}
+
+.stage-lounge-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #f2f3f5;
+  margin-bottom: 8px;
+  letter-spacing: -0.015em;
+}
+
+.stage-lounge-subtext {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #949ba4;
+  margin-bottom: 22px;
+  max-width: 420px;
+}
+
+.btn-discord-primary {
+  background-color: #5865F2;
+  color: #ffffff;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 6px 20px rgba(88, 101, 242, 0.38);
+  transition: background-color 0.18s ease, transform 0.15s ease, box-shadow 0.18s ease;
+  user-select: none;
+}
+
+.btn-discord-primary:hover {
+  background-color: #4752c4;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 26px rgba(88, 101, 242, 0.55);
+}
+
+.btn-discord-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Fallback legacy .load-movie-btn classes */
+.load-movie-btn {
+  opacity: 0.95;
   pointer-events: auto;
-  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.load-movie-btn:hover {
-  opacity: 1;
-  transform: scale(1.03);
-}
-
-/* Stage Bottom Left Name Tag (Image 1) */
 /* ==========================================================================
-   STAGE BROADCASTER BADGE (Top-Left Pill, clean and separated from controls)
+   DISCORD STAGE BROADCASTER BADGE (Top-Left Pill in Theater)
    ========================================================================== */
 .stage-bottom-tag {
   position: absolute;
   top: 16px;
   left: 16px;
-  background-color: rgba(15, 17, 23, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background-color: rgba(18, 20, 27, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: #ffffff;
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
+  padding: 5px 12px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.2px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
   z-index: 6;
   pointer-events: none;
   transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.discord-stream-badge .stage-live-label {
+  background-color: #f23f43;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 1.5px 5px;
+  border-radius: 4px;
+  line-height: 1.2;
+}
+
+.discord-stream-badge .stage-tag-divider {
+  width: 1px;
+  height: 12px;
+  background-color: rgba(255, 255, 255, 0.18);
 }
 
 .stage-pill-dot {
@@ -640,24 +881,24 @@ body.error-page-container {
 }
 
 /* ==========================================================================
-   CINEMA CONTROLS HUD (Modern Cinema Scrubber & Controls)
+   CINEMA CONTROLS HUD (Modern Discord Lounge Scrubber & Player Controls)
    ========================================================================== */
 .cinema-controls-hud {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to top, rgba(5, 6, 9, 0.96) 0%, rgba(5, 6, 9, 0.72) 48%, rgba(5, 6, 9, 0.2) 80%, transparent 100%);
-  padding: 24px 22px 14px;
+  background: linear-gradient(to top, rgba(14, 16, 22, 0.98) 0%, rgba(14, 16, 22, 0.82) 48%, rgba(14, 16, 22, 0.28) 82%, transparent 100%);
+  padding: 26px 24px 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   opacity: 0;
   pointer-events: none;
   transform: translateY(6px);
   transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 8;
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 14px 14px;
 }
 
 .cinema-box:hover .cinema-controls-hud,
@@ -678,15 +919,15 @@ body.error-page-container {
 
 .hud-timeline-bar {
   width: 100%;
-  height: 4px;
-  background-color: rgba(255, 255, 255, 0.16);
-  border-radius: 4px;
+  height: 5px;
+  background-color: rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
   position: relative;
-  transition: height 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: height 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hud-timeline-container:hover .hud-timeline-bar {
-  height: 7px;
+  height: 8px;
 }
 
 .hud-buffered {
@@ -695,8 +936,8 @@ body.error-page-container {
   left: 0;
   height: 100%;
   width: 0%;
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.32);
+  border-radius: 6px;
   transition: width 0.2s linear;
 }
 
@@ -706,20 +947,20 @@ body.error-page-container {
   left: 0;
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, #6366f1 0%, #ec4899 50%, #f43f5e 100%);
-  border-radius: 4px;
-  box-shadow: 0 0 12px rgba(236, 72, 153, 0.55);
+  background: linear-gradient(90deg, #5865F2 0%, #7983f5 55%, #f43f5e 100%);
+  border-radius: 6px;
+  box-shadow: 0 0 14px rgba(88, 101, 242, 0.65);
 }
 
 .hud-thumb {
   position: absolute;
   top: 50%;
   left: 0%;
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
   background-color: #ffffff;
-  box-shadow: 0 0 14px rgba(236, 72, 153, 0.9), 0 2px 6px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 0 3px #5865F2, 0 3px 8px rgba(0, 0, 0, 0.7);
   transform: translate(-50%, -50%) scale(0);
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   pointer-events: none;
@@ -732,22 +973,22 @@ body.error-page-container {
 /* Hover time tooltip */
 .hud-hover-time {
   position: absolute;
-  top: -28px;
+  top: -30px;
   transform: translateX(-50%);
-  background-color: rgba(10, 12, 18, 0.92);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background-color: #1e1f22;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 3px 8px;
-  border-radius: 5px;
+  border-radius: 6px;
   font-size: 11px;
   font-family: var(--font-mono);
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #fff;
+  color: #f2f3f5;
   display: none;
   pointer-events: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65);
 }
 
 /* Controls Row */
@@ -757,7 +998,7 @@ body.error-page-container {
   justify-content: space-between;
   width: 100%;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .hud-left {
@@ -773,12 +1014,12 @@ body.error-page-container {
   max-width: 100%;
 }
 
-/* Play/Pause Circular Glass Button */
+/* Play/Pause Discord Blurple Circular Button */
 .hud-circle-btn {
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
+  background-color: #5865F2;
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #ffffff;
   display: flex;
@@ -787,29 +1028,28 @@ body.error-page-container {
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(88, 101, 242, 0.45);
 }
 
 .hud-circle-btn:hover {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.35), rgba(236, 72, 153, 0.35));
-  border-color: rgba(99, 102, 241, 0.6);
-  color: #ffffff;
+  background-color: #4752c4;
   transform: scale(1.08);
-  box-shadow: 0 0 16px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 6px 22px rgba(88, 101, 242, 0.68);
 }
 
 .hud-circle-btn:active {
   transform: scale(0.94);
 }
 
-/* Secondary Icon Buttons (Rewind 10, Forward 10, Volume, Fullscreen) */
+/* Secondary Icon Buttons (Rewind 10, Forward 10, Volume, Fullscreen, Ambient, PiP) */
 .hud-icon-btn {
   width: 34px;
   height: 34px;
-  border-radius: 8px;
-  background: transparent;
-  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: rgba(255, 255, 255, 0.85);
   display: flex;
   align-items: center;
@@ -820,38 +1060,46 @@ body.error-page-container {
 }
 
 .hud-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.24);
   color: #ffffff;
-  transform: translateY(-1px) scale(1.06);
+  transform: translateY(-1px) scale(1.05);
 }
 
 .hud-icon-btn:active {
-  transform: translateY(0) scale(0.94);
+  transform: translateY(0) scale(0.95);
+}
+
+/* Red Hover for Stop Movie / Eject */
+#stopMovieBtn:hover {
+  background: rgba(242, 63, 67, 0.2);
+  border-color: rgba(242, 63, 67, 0.4);
+  color: #f23f43;
 }
 
 /* Time Display */
 .hud-time {
-  font-size: 12.5px;
+  font-size: 13px;
   font-family: var(--font-mono);
   font-weight: 600;
-  color: #ffffff;
+  color: #f2f3f5;
   display: flex;
   align-items: center;
   gap: 3px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.2px;
   user-select: none;
-  margin-left: 4px;
+  margin-left: 6px;
 }
 
 .hud-time-slash {
-  color: rgba(255, 255, 255, 0.4);
+  color: #80848e;
   font-weight: 400;
   margin: 0 2px;
 }
 
 #durationDisplay {
-  color: rgba(255, 255, 255, 0.65);
+  color: #949ba4;
   font-weight: 500;
 }
 
@@ -863,57 +1111,65 @@ body.error-page-container {
 }
 
 .hud-slider {
-  width: 64px;
-  height: 4px;
+  width: 68px;
+  height: 5px;
   -webkit-appearance: none;
-  background: linear-gradient(to right, #e5a93c 0%, #e5a93c var(--vol-fill, 100%), rgba(255, 255, 255, 0.25) var(--vol-fill, 100%), rgba(255, 255, 255, 0.25) 100%);
-  border-radius: 3px;
+  background: linear-gradient(to right, #5865F2 0%, #5865F2 var(--vol-fill, 100%), rgba(255, 255, 255, 0.22) var(--vol-fill, 100%), rgba(255, 255, 255, 0.22) 100%);
+  border-radius: 4px;
   outline: none;
   cursor: pointer;
   transition: width 0.2s ease;
 }
 
 .hud-slider:hover {
-  background: linear-gradient(to right, #ffc86b 0%, #ffc86b var(--vol-fill, 100%), rgba(255, 255, 255, 0.38) var(--vol-fill, 100%), rgba(255, 255, 255, 0.38) 100%);
+  background: linear-gradient(to right, #7983f5 0%, #7983f5 var(--vol-fill, 100%), rgba(255, 255, 255, 0.35) var(--vol-fill, 100%), rgba(255, 255, 255, 0.35) 100%);
 }
 
 .hud-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
   background: #ffffff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 0 2px #5865F2, 0 1px 4px rgba(0, 0, 0, 0.6);
   cursor: pointer;
   transition: transform 0.15s ease;
 }
 
 .hud-slider:hover::-webkit-slider-thumb {
-  transform: scale(1.2);
+  transform: scale(1.22);
 }
 
 /* Audio & Subtitle Glassmorphic Dropdown Pills */
 .hud-pill-group {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  padding: 4px 10px;
-  border-radius: 20px;
-  transition: all 0.2s ease;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 0 12px;
+  height: 34px;
+  border-radius: var(--radius-full, 9999px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
 }
 
 .hud-pill-group:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .hud-pill-icon {
   color: rgba(255, 255, 255, 0.75);
   flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.hud-pill-group:hover .hud-pill-icon {
+  color: #ffffff;
 }
 
 .hud-select {
@@ -922,6 +1178,7 @@ body.error-page-container {
   color: #ffffff;
   font-size: 12px;
   font-weight: 500;
+  font-family: var(--font-sans);
   outline: none;
   cursor: pointer;
   padding-right: 4px;
@@ -929,15 +1186,59 @@ body.error-page-container {
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
+  line-height: 34px;
 }
 
 #speedSelect {
-  max-width: 48px;
+  max-width: 46px;
 }
 
 .hud-select option {
   background-color: #1e1f24;
   color: #ffffff;
+  font-weight: 500;
+  padding: 6px;
+}
+
+/* Subtle separator between select and settings button */
+.hud-pill-divider {
+  width: 1px;
+  height: 14px;
+  background-color: rgba(255, 255, 255, 0.18);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+/* Subtitle delay gear button */
+.hud-sub-gear-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  padding: 0;
+  transition: transform 0.25s ease, color 0.18s ease, background 0.18s ease;
+  flex-shrink: 0;
+}
+
+.hud-sub-gear-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+  transform: rotate(45deg);
+}
+
+/* Ambient Cinema Backlight Toggle Button */
+#ambientToggleBtn.active-toggle {
+  color: #ffc850;
+  background: rgba(255, 200, 80, 0.16);
+  border: 1px solid rgba(255, 200, 80, 0.35);
+  box-shadow: 0 0 14px rgba(255, 200, 80, 0.28);
+  border-radius: 50%;
 }
 
 /* Mobile responsiveness for Cinema Controls HUD */
@@ -1209,24 +1510,6 @@ body:not(.has-participants) .cinema-stage-wrapper {
   height: 100%;
   object-fit: cover;
   background-color: #000;
-}
-
-/* Top Center Pill: Chevron + Users icon (Image 1) */
-.tile-top-pill {
-  position: absolute;
-  top: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
-  padding: 2px 6px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  color: var(--text-normal);
-  font-size: 10px;
-  z-index: 4;
 }
 
 /* Bottom Left Name Badge on Tile (Image 1) */
@@ -7499,6 +7782,22 @@ body.in-room {
   border-bottom-left-radius: 12px !important;
   border-bottom-right-radius: 12px !important;
   position: relative !important;
+  cursor: grab;
+}
+
+.cinema-stage-wrapper.is-floating-window.is-dragging-window,
+.cinema-stage-wrapper.is-floating-window.is-dragging-window .cinema-box,
+.cinema-stage-wrapper.is-floating-window .cinema-box:active {
+  cursor: grabbing !important;
+}
+
+.cinema-stage-wrapper.is-floating-window .cinema-box button,
+.cinema-stage-wrapper.is-floating-window .cinema-box select,
+.cinema-stage-wrapper.is-floating-window .cinema-box input,
+.cinema-stage-wrapper.is-floating-window .cinema-box a,
+.cinema-stage-wrapper.is-floating-window .cinema-box .cinema-controls,
+.cinema-stage-wrapper.is-floating-window .cinema-box .window-resize-handle {
+  cursor: default;
 }
 
 .cinema-stage-wrapper.is-floating-window .cinema-video,
@@ -7616,6 +7915,22 @@ body.in-room {
   transition: none !important;
   transform: none !important;
   will-change: auto !important;
+  cursor: grab;
+}
+
+.participant-tile.is-floating-window.is-dragging-window,
+.participant-tile.is-floating-window:active {
+  cursor: grabbing !important;
+}
+
+.participant-tile.is-floating-window button,
+.participant-tile.is-floating-window select,
+.participant-tile.is-floating-window input,
+.participant-tile.is-floating-window a,
+.participant-tile.is-floating-window .tile-vol-btn,
+.participant-tile.is-floating-window .tile-volume-popover,
+.participant-tile.is-floating-window .window-resize-handle {
+  cursor: default;
 }
 
 .participant-tile.is-floating-window * {
@@ -7635,10 +7950,6 @@ body.in-room {
 
 .participant-tile.is-floating-window .tile-avatar-center {
   margin: auto;
-}
-
-.participant-tile.is-floating-window .tile-top-pill {
-  display: none !important;
 }
 
 .participant-tile-placeholder {
@@ -7855,6 +8166,7 @@ body.in-room {
 body.window-resizing-active,
 body.window-dragging-active {
   user-select: none !important;
+  cursor: grabbing !important;
 }
 
 
