@@ -556,6 +556,8 @@
     document.body.classList.add('in-room');
     if (el.aboutPage) el.aboutPage.classList.add('hidden');
     el.appContainer.classList.remove('hidden');
+    if (el.dockReactionsTray) el.dockReactionsTray.classList.add('hidden');
+    closeAllDeviceMenus?.(false);
     el.roomTitleDisplay.innerText = `Lumière - ${roomId}`;
     el.stageUsername.innerText = username;
 
@@ -6912,8 +6914,19 @@
 
     // Outside tap listener to dismiss dropdowns & bottom sheets
     const handleOutsideMenuTap = (e) => {
-      if (e && e.target && e.target.closest && e.target.closest('.device-menu, .dock-reactions-menu, .split-dock-btn, .pill-btn, .pill-chevron-btn')) {
-        return;
+      if (e && e.target && e.target.closest) {
+        if (e.target.closest('.device-menu, .dock-reactions-menu')) {
+          return;
+        }
+        if (e.target.closest('#dockReactionsBtn') || e.target.closest('#dockReactionsGroup')) {
+          return;
+        }
+        if (e.target.closest('#moreOptionsBtn') || e.target.closest('#moreOptionsGroup')) {
+          return;
+        }
+        if (e.target.closest('#micDeviceDropdownBtn') || e.target.closest('#camDeviceDropdownBtn')) {
+          return;
+        }
       }
       closeAllDeviceMenus(true);
       document.querySelectorAll('.tile-volume-popover').forEach(p => p.classList.add('hidden'));
