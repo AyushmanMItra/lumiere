@@ -186,6 +186,30 @@ test('style.css defines tablet scaling across 768px-1024px viewports', () => {
   assert(css.includes('min-width: 768px') && css.includes('max-width: 1024px'), 'style.css must define tablet range');
 });
 
+test('style.css optimizes Cinema Stage Lounge card and avatar for mobile portrait viewports', () => {
+  assert(css.includes('.stage-placeholder.stage-lounge'), 'style.css must define stage-placeholder.stage-lounge rules');
+  assert(css.includes('.stage-avatar-wrapper') && css.includes('56px'), 'style.css must scale avatar wrapper on mobile portrait');
+  assert(css.includes('-webkit-line-clamp: 2'), 'style.css must clamp subtext to prevent vertical overflow on mobile');
+  assert(css.includes('.cinema-stage-wrapper:has(#stagePlaceholder:not(.hidden))'), 'style.css must provide lounge height breathing room');
+});
+
+test('style.css provides minimum 44px touch targets on stage mic badge and action buttons', () => {
+  assert(css.includes('.stage-avatar-mic-badge::after'), 'style.css must expand mic badge touch target with pseudo element');
+  assert(css.includes('min-width: 44px') && css.includes('min-height: 44px'), 'style.css must enforce 44px minimum tap target');
+  assert(css.includes('.btn-stage-primary') && css.includes('min-height: 44px'), 'style.css must enforce 44px min-height on stage primary CTA');
+});
+
+test('style.css formats Cinema Stage Lounge into streamlined layout for mobile landscape viewports', () => {
+  assert(css.includes('flex-direction: row !important') && css.includes('.stage-lounge-card'), 'style.css must adapt lounge card to horizontal row in landscape');
+  assert(css.includes('width: 50px !important') && css.includes('.stage-avatar-wrapper'), 'style.css must scale avatar in landscape');
+  assert(css.includes('min-height: 40px !important') && css.includes('.btn-stage-primary'), 'style.css must ensure action button fits landscape');
+});
+
+test('style.css scales Cinema Stage Lounge for ultra-narrow screens (<=360px) and tablets', () => {
+  assert(css.includes('Cinema Stage Lounge Ultra-Narrow Portrait'), 'style.css must define ultra-narrow lounge rules');
+  assert(css.includes('Cinema Stage Lounge Tablet Scaling'), 'style.css must define tablet lounge rules');
+});
+
 // ============================================================================
 // SUITE 4: Strict Zero-Emoji Compliance
 // ============================================================================
