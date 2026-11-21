@@ -1292,13 +1292,17 @@ io.on('connection', (socket) => {
     if (!cleanText) return;
 
     const member = room.members.get(socket.id);
+    const isHost = Boolean(member && (member.isHost || room.hostId === socket.id));
+    const role = isHost ? 'host' : 'viewer';
     const msg = {
       id: Date.now() + Math.random().toString(36).substr(2, 4),
       senderId: socket.id,
       username: member ? member.username : 'User',
       color: member ? member.color : '#5865F2',
       text: cleanText.slice(0, 500),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isHost,
+      role
     };
 
     io.in(roomId).emit('chat-message', msg);
@@ -1311,7 +1315,7 @@ io.on('connection', (socket) => {
 
     const member = room.members.get(socket.id);
     const senderName = (typeof username === 'string' && username.trim()) ? username.trim().slice(0, 32) : (member ? member.username : 'Viewer');
-    const safeEmoji = (typeof emoji === 'string' && emoji.trim()) ? emoji.trim().slice(0, 10) : '❤️';
+    const safeEmoji = (typeof emoji === 'string' && emoji.trim()) ? emoji.trim().slice(0, 10) : 'heart';
 
     io.in(roomId).emit('reaction-burst', {
       emoji: safeEmoji,

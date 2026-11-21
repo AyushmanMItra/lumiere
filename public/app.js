@@ -46,6 +46,8 @@
     // Screenshare & YouTube Watch Party
     isSharingScreen: false,
     screenStream: null,
+    remoteScreenStream: null,
+    screenShareFocus: 'stage',
     screenSharer: null,
     screenSenders: new Map(), // targetId -> RTCRtpSender
     ytPlayer: null,
@@ -55,6 +57,14 @@
     isAmbientOn: true,
     ambientAnimationId: null,
     subOffset: 0.0,
+    subFontScale: 100,
+    subTextOpacity: 100,
+    subBgBlur: 4,
+    subColor: '#ffffff',
+    dialogueBoosterEnabled: false,
+    movieAudioContext: null,
+    movieAudioSource: null,
+    movieAudioNodes: null,
     activePoll: null,
     activeTrivia: null,
     participantVolumes: new Map(), // targetId -> number (0-200)
@@ -68,7 +78,8 @@
     lastSyncSeekTime: 0,
     movieDuration: 0,
     streamStartTime: 0,
-    isLiveStream: false
+    isLiveStream: false,
+    isMiniPlayer: false
   };
 
   const ICE_SERVERS = {
@@ -188,6 +199,12 @@
     participantStripArea: document.getElementById('participantStripArea'),
     participantTopArea: document.getElementById('participantTopArea'),
     participantStripTop: document.getElementById('participantStripTop'),
+    participantStripAudience: document.getElementById('participantStripAudience'),
+    stageSpeakersPartition: document.getElementById('stageSpeakersPartition'),
+    stageAudiencePartition: document.getElementById('stageAudiencePartition'),
+    stageSpeakersHeader: document.getElementById('stageSpeakersHeader'),
+    stageSpeakersCount: document.getElementById('stageSpeakersCount'),
+    stageAudienceCount: document.getElementById('stageAudienceCount'),
     stageCinemaGroup: document.getElementById('stageCinemaGroup'),
 
     dockWrapper: document.getElementById('dockWrapper'),
@@ -207,7 +224,11 @@
     camDeviceList: document.getElementById('camDeviceList'),
 
     hostMovieLibraryDockBtn: document.getElementById('hostMovieLibraryDockBtn'),
+    dockScreenShareBtn: document.getElementById('dockScreenShareBtn'),
     layoutToggleBtn: document.getElementById('layoutToggleBtn'),
+    dockReactionsGroup: document.getElementById('dockReactionsGroup'),
+    dockReactionsBtn: document.getElementById('dockReactionsBtn'),
+    dockReactionsTray: document.getElementById('dockReactionsTray'),
     disconnectBtn: document.getElementById('disconnectBtn'),
     theaterFullscreenBtn: document.getElementById('theaterFullscreenBtn'),
 
@@ -230,8 +251,17 @@
     movieWindowDockBtn: document.getElementById('movieWindowDockBtn'),
     videoHoldIndicator: document.getElementById('videoHoldIndicator'),
     holdRingProgress: document.getElementById('holdRingProgress'),
+    windowSnapGuide: document.getElementById('windowSnapGuide'),
+    miniPlayerControls: document.getElementById('miniPlayerControls'),
+    miniPlayerPlayPauseBtn: document.getElementById('miniPlayerPlayPauseBtn'),
+    miniPlayerMuteBtn: document.getElementById('miniPlayerMuteBtn'),
+    exitMiniPlayerBtn: document.getElementById('exitMiniPlayerBtn'),
 
     screenSharePlayer: document.getElementById('screenSharePlayer'),
+    screenSharePipContainer: document.getElementById('screenSharePipContainer'),
+    screenShareFocusBtn: document.getElementById('screenShareFocusBtn'),
+    screenSharePipVideo: document.getElementById('screenSharePipVideo'),
+    screenSharePipLabel: document.getElementById('screenSharePipLabel'),
     youtubePlayerBox: document.getElementById('youtubePlayerBox'),
     youtubeIframe: document.getElementById('youtubeIframe'),
     streamingPlayerBox: document.getElementById('streamingPlayerBox'),
@@ -318,12 +348,26 @@
 
     subtitleDropOverlay: document.getElementById('subtitleDropOverlay'),
     subtitleSettingsBtn: document.getElementById('subtitleSettingsBtn'),
-    subtitleModal: document.getElementById('subtitleModal'),
+    subtitleModal: document.getElementById('subtitlesModal') || document.getElementById('subtitleModal'),
+    subtitlesModal: document.getElementById('subtitlesModal') || document.getElementById('subtitleModal'),
     closeSubtitleModalBtn: document.getElementById('closeSubtitleModalBtn'),
     doneSubtitleBtn: document.getElementById('doneSubtitleBtn'),
     subOffsetDisplay: document.getElementById('subOffsetDisplay'),
     subOffsetResetBtn: document.getElementById('subOffsetResetBtn'),
     customSubFileInput: document.getElementById('customSubFileInput'),
+
+    // Subtitle Live Preview & Customization Sliders (Milestone 4)
+    subtitlePreviewCard: document.getElementById('subtitlePreviewCard'),
+    subtitlePreviewText: document.getElementById('subtitlePreviewText'),
+    subtitlePreviewBox: document.getElementById('subtitlePreviewBox'),
+    subFontScaleSlider: document.getElementById('subFontScaleSlider'),
+    subTextOpacitySlider: document.getElementById('subTextOpacitySlider'),
+    subBgBlurSlider: document.getElementById('subBgBlurSlider'),
+    subDelaySlider: document.getElementById('subDelaySlider'),
+    subFontScaleValue: document.getElementById('subFontScaleValue'),
+    subTextOpacityValue: document.getElementById('subTextOpacityValue'),
+    subBgBlurValue: document.getElementById('subBgBlurValue'),
+    dialogueBoosterToggle: document.getElementById('dialogueBoosterToggle'),
 
     mobileGestureOverlay: document.getElementById('mobileGestureOverlay'),
     gestureLeftIndicator: document.getElementById('gestureLeftIndicator'),
@@ -540,6 +584,7 @@
 
     // Room joined callback
     s.on('room-joined', async (data) => {
+      playUIAudio('room-join');
       state.selfId = data.selfId;
       state.isHost = data.isHost;
       state.inRoom = true;
@@ -729,6 +774,18 @@
 
     s.on('sync-screen-share-stopped', () => {
       state.screenSharer = null;
+      state.remoteScreenStream = null;
+      state.screenShareFocus = 'stage';
+      if (el.screenSharePipContainer) {
+        el.screenSharePipContainer.classList.add('hidden');
+        el.screenSharePipContainer.classList.remove('pip-showing-screen', 'pip-showing-camera');
+      }
+      if (el.screenSharePipVideo) {
+        el.screenSharePipVideo.srcObject = null;
+      }
+      if (el.screenShareFocusBtn) {
+        el.screenShareFocusBtn.classList.remove('active');
+      }
       if (el.screenSharePlayer) {
         el.screenSharePlayer.srcObject = null;
         try { el.screenSharePlayer.load(); } catch (e) {}
@@ -740,7 +797,10 @@
         } else if (state.currentMovie.type === 'streaming') {
           if (el.streamingPlayerBox) el.streamingPlayerBox.classList.remove('hidden');
         } else {
-          if (el.moviePlayer) el.moviePlayer.classList.remove('hidden');
+          if (el.moviePlayer) {
+        el.moviePlayer.classList.remove('hidden');
+        initMovieAudioEngine(el.moviePlayer);
+      }
         }
       } else {
         if (el.stagePlaceholder) el.stagePlaceholder.classList.remove('hidden');
@@ -931,7 +991,10 @@
       if (member) {
         member.isSpeaking = isSpeaking;
         const tile = document.getElementById(`participant-tile-${id}`);
-        if (tile) tile.classList.toggle('is-speaking', isSpeaking);
+        if (tile) {
+          tile.classList.toggle('is-speaking', isSpeaking);
+          tile.classList.toggle('stage-speaking-halo', isSpeaking);
+        }
       }
     });
 
@@ -1162,7 +1225,10 @@
 
   function setLocalSpeaking(isSpeaking) {
     const tile = document.getElementById(`participant-tile-${state.selfId}`);
-    if (tile) tile.classList.toggle('is-speaking', isSpeaking);
+    if (tile) {
+      tile.classList.toggle('is-speaking', isSpeaking);
+      tile.classList.toggle('stage-speaking-halo', isSpeaking);
+    }
     if (state.socket && state.roomId) {
       state.socket.emit('update-speaking-status', { roomId: state.roomId, isSpeaking });
     }
@@ -1506,6 +1572,7 @@
         }
 
         el.toggleCameraBtn.classList.remove('pill-btn-off');
+        el.toggleCameraBtn.classList.add('active-status-ring', 'ring-camera');
         el.camOnIcon.classList.remove('hidden');
         el.camOffIcon.classList.add('hidden');
 
@@ -1558,6 +1625,7 @@
       if (selfAvatar) selfAvatar.classList.remove('hidden');
 
       el.toggleCameraBtn.classList.add('pill-btn-off');
+      el.toggleCameraBtn.classList.remove('active-status-ring', 'ring-camera');
       el.camOnIcon.classList.add('hidden');
       el.camOffIcon.classList.remove('hidden');
 
@@ -1574,19 +1642,23 @@
       const ok = await enableMicrophone();
       if (!ok) return;
       state.isMicMuted = false;
+      playUIAudio('mic-unmute');
     } else {
       // User tapped to MUTE -> release microphone hardware immediately so phone stays in Media Loudspeaker mode
       disableMicrophone();
       state.isMicMuted = true;
+      playUIAudio('mic-mute');
     }
 
     if (state.isMicMuted) {
       el.toggleMicBtn.classList.add('pill-btn-muted');
+      el.toggleMicBtn.classList.remove('active-status-ring', 'ring-speaking');
       el.micOnIcon.classList.add('hidden');
       el.micOffIcon.classList.remove('hidden');
       setLocalSpeaking(false);
     } else {
       el.toggleMicBtn.classList.remove('pill-btn-muted');
+      el.toggleMicBtn.classList.add('active-status-ring', 'ring-speaking');
       el.micOnIcon.classList.remove('hidden');
       el.micOffIcon.classList.add('hidden');
     }
@@ -1637,6 +1709,10 @@
   // ==========================================================================
 
   function updateScreenShareMenuUI() {
+    if (el.dockScreenShareBtn) {
+      el.dockScreenShareBtn.classList.toggle('active-status-ring', !!state.isSharingScreen);
+      el.dockScreenShareBtn.classList.toggle('ring-screenshare', !!state.isSharingScreen);
+    }
     if (!el.menuScreenshareBtn) return;
     if (state.isSharingScreen) {
       el.menuScreenshareBtn.classList.add('active-sharing');
@@ -1699,6 +1775,33 @@
       if (el.streamingPlayerBox) el.streamingPlayerBox.classList.add('hidden');
       if (el.stageUsername) el.stageUsername.textContent = `${state.username}'s Screen`;
 
+      // Initialize Screen Share PiP container
+      state.screenShareFocus = 'stage';
+      if (el.screenSharePipContainer) {
+        el.screenSharePipContainer.classList.remove('hidden');
+        el.screenSharePipContainer.classList.add('pip-showing-camera');
+        el.screenSharePipContainer.classList.remove('pip-showing-screen');
+      }
+      if (el.screenSharePipLabel) {
+        el.screenSharePipLabel.textContent = 'Active Speaker';
+      }
+      if (el.screenShareFocusBtn) {
+        el.screenShareFocusBtn.classList.remove('active');
+      }
+      if (el.screenSharePipVideo) {
+        let activeCamStream = (state.isCamOn && state.localVideoStream) ? state.localVideoStream : null;
+        if (!activeCamStream) {
+          for (const [id, s] of state.remoteStreams.entries()) {
+            if (s && s.getVideoTracks().length > 0) {
+              activeCamStream = s;
+              break;
+            }
+          }
+        }
+        el.screenSharePipVideo.srcObject = activeCamStream;
+        if (activeCamStream) el.screenSharePipVideo.play().catch(() => {});
+      }
+
       // Broadcast to room
       if (state.socket) {
         state.socket.emit('start-screen-share', {
@@ -1752,7 +1855,20 @@
     }
 
     state.isSharingScreen = false;
+    state.remoteScreenStream = null;
+    state.screenShareFocus = 'stage';
     updateScreenShareMenuUI();
+
+    if (el.screenSharePipContainer) {
+      el.screenSharePipContainer.classList.add('hidden');
+      el.screenSharePipContainer.classList.remove('pip-showing-screen', 'pip-showing-camera');
+    }
+    if (el.screenSharePipVideo) {
+      el.screenSharePipVideo.srcObject = null;
+    }
+    if (el.screenShareFocusBtn) {
+      el.screenShareFocusBtn.classList.remove('active');
+    }
 
     // Remove track from peer connections and renegotiate
     if (state.screenSenders) {
@@ -1784,7 +1900,10 @@
       } else if (state.currentMovie.type === 'streaming') {
         if (el.streamingPlayerBox) el.streamingPlayerBox.classList.remove('hidden');
       } else {
-        if (el.moviePlayer) el.moviePlayer.classList.remove('hidden');
+        if (el.moviePlayer) {
+        el.moviePlayer.classList.remove('hidden');
+        initMovieAudioEngine(el.moviePlayer);
+      }
       }
       if (el.stageUsername) el.stageUsername.textContent = 'Stream';
     } else {
@@ -1798,6 +1917,8 @@
   }
 
   function handleRemoteScreenTrack(stream, targetId) {
+    state.remoteScreenStream = stream;
+    state.screenShareFocus = 'stage';
     if (el.screenSharePlayer) {
       el.screenSharePlayer.srcObject = stream;
       el.screenSharePlayer.classList.remove('hidden');
@@ -1812,6 +1933,114 @@
     if (el.streamingPlayerBox) el.streamingPlayerBox.classList.add('hidden');
     const sharerName = state.screenSharer?.sharerName || state.members.get(targetId)?.username || 'Remote User';
     if (el.stageUsername) el.stageUsername.textContent = `${sharerName}'s Screen`;
+
+    // Initialize Screen Share PiP container for remote share
+    if (el.screenSharePipContainer) {
+      el.screenSharePipContainer.classList.remove('hidden');
+      el.screenSharePipContainer.classList.add('pip-showing-camera');
+      el.screenSharePipContainer.classList.remove('pip-showing-screen');
+    }
+    if (el.screenSharePipLabel) {
+      el.screenSharePipLabel.textContent = 'Active Speaker';
+    }
+    if (el.screenShareFocusBtn) {
+      el.screenShareFocusBtn.classList.remove('active');
+    }
+    if (el.screenSharePipVideo) {
+      let activeCamStream = (state.isCamOn && state.localVideoStream) ? state.localVideoStream : null;
+      if (!activeCamStream) {
+        for (const [id, s] of state.remoteStreams.entries()) {
+          if (s && s.getVideoTracks().length > 0) {
+            activeCamStream = s;
+            break;
+          }
+        }
+      }
+      el.screenSharePipVideo.srcObject = activeCamStream;
+      if (activeCamStream) el.screenSharePipVideo.play().catch(() => {});
+    }
+  }
+
+  function swapScreenShareFocus() {
+    const activeStream = state.screenStream || state.remoteScreenStream || (el.screenSharePlayer ? el.screenSharePlayer.srcObject : null);
+    if (!activeStream) {
+      showToast('No active screen share to swap focus', 'info');
+      return;
+    }
+
+    state.screenShareFocus = (state.screenShareFocus === 'pip') ? 'stage' : 'pip';
+    const isPip = (state.screenShareFocus === 'pip');
+
+    if (isPip) {
+      // Screen share moved to PiP container; center stage focused on webcam/movie
+      if (el.screenSharePipContainer) {
+        el.screenSharePipContainer.classList.remove('hidden');
+        el.screenSharePipContainer.classList.add('pip-showing-screen');
+        el.screenSharePipContainer.classList.remove('pip-showing-camera');
+      }
+      if (el.screenSharePipLabel) {
+        el.screenSharePipLabel.textContent = 'Screen Share (PiP)';
+      }
+      if (el.screenSharePipVideo) {
+        el.screenSharePipVideo.srcObject = activeStream;
+        el.screenSharePipVideo.play().catch(() => {});
+      }
+
+      if (el.screenSharePlayer) {
+        el.screenSharePlayer.classList.add('hidden');
+      }
+      if (state.currentMovie) {
+        if (state.currentMovie.type === 'youtube' && el.youtubePlayerBox) {
+          el.youtubePlayerBox.classList.remove('hidden');
+        } else if (state.currentMovie.type === 'streaming' && el.streamingPlayerBox) {
+          el.streamingPlayerBox.classList.remove('hidden');
+        } else if (el.moviePlayer) {
+          el.moviePlayer.classList.remove('hidden');
+        }
+      } else if (el.stagePlaceholder) {
+        el.stagePlaceholder.classList.remove('hidden');
+      }
+      showToast('Focused webcam/stage view (Screen Share in PiP)');
+    } else {
+      // Screen share moved to center stage; PiP shows webcam/active speaker
+      if (el.screenSharePlayer) {
+        el.screenSharePlayer.srcObject = activeStream;
+        el.screenSharePlayer.classList.remove('hidden');
+        el.screenSharePlayer.play().catch(() => {});
+      }
+      if (el.moviePlayer) el.moviePlayer.classList.add('hidden');
+      if (el.stagePlaceholder) el.stagePlaceholder.classList.add('hidden');
+      if (el.youtubePlayerBox) el.youtubePlayerBox.classList.add('hidden');
+      if (el.streamingPlayerBox) el.streamingPlayerBox.classList.add('hidden');
+
+      if (el.screenSharePipContainer) {
+        el.screenSharePipContainer.classList.remove('hidden');
+        el.screenSharePipContainer.classList.add('pip-showing-camera');
+        el.screenSharePipContainer.classList.remove('pip-showing-screen');
+      }
+      if (el.screenSharePipLabel) {
+        el.screenSharePipLabel.textContent = 'Active Speaker';
+      }
+
+      let activeCamStream = (state.isCamOn && state.localVideoStream) ? state.localVideoStream : null;
+      if (!activeCamStream) {
+        for (const [id, s] of state.remoteStreams.entries()) {
+          if (s && s.getVideoTracks().length > 0) {
+            activeCamStream = s;
+            break;
+          }
+        }
+      }
+      if (el.screenSharePipVideo) {
+        el.screenSharePipVideo.srcObject = activeCamStream;
+        if (activeCamStream) el.screenSharePipVideo.play().catch(() => {});
+      }
+      showToast('Focused Screen Share on Center Stage');
+    }
+
+    if (el.screenShareFocusBtn) {
+      el.screenShareFocusBtn.classList.toggle('active', isPip);
+    }
   }
 
   // ==========================================================================
@@ -2374,6 +2603,84 @@
     suppressClick: false
   };
 
+  const SNAP_DISTANCE = 32;
+  let activeSnapTarget = null;
+
+  function calculateWindowSnap(desiredLeft, desiredTop, wWidth, wHeight, winW, winH) {
+    const snapEdges = {
+      left: 16,
+      top: 54,
+      right: Math.max(16, winW - wWidth - 16),
+      bottom: Math.max(54, winH - wHeight - 74)
+    };
+
+    let snappedLeft = null;
+    let snappedTop = null;
+
+    if (Math.abs(desiredLeft - snapEdges.left) <= SNAP_DISTANCE) {
+      snappedLeft = snapEdges.left;
+    } else if (Math.abs(desiredLeft - snapEdges.right) <= SNAP_DISTANCE) {
+      snappedLeft = snapEdges.right;
+    }
+
+    if (Math.abs(desiredTop - snapEdges.top) <= SNAP_DISTANCE) {
+      snappedTop = snapEdges.top;
+    } else if (Math.abs(desiredTop - snapEdges.bottom) <= SNAP_DISTANCE) {
+      snappedTop = snapEdges.bottom;
+    }
+
+    if (snappedLeft !== null || snappedTop !== null) {
+      return {
+        isSnapped: true,
+        snapX: snappedLeft !== null ? snappedLeft : Math.max(10, Math.min(winW - wWidth - 10, desiredLeft)),
+        snapY: snappedTop !== null ? snappedTop : Math.max(10, Math.min(winH - 60, desiredTop))
+      };
+    }
+
+    return {
+      isSnapped: false,
+      snapX: null,
+      snapY: null
+    };
+  }
+
+  function updateWindowSnapGuide(snapResult, wWidth, wHeight) {
+    const guide = el.windowSnapGuide || document.getElementById('windowSnapGuide');
+    if (!guide) return;
+
+    if (snapResult && snapResult.isSnapped) {
+      guide.style.left = `${Math.round(snapResult.snapX)}px`;
+      guide.style.top = `${Math.round(snapResult.snapY)}px`;
+      guide.style.width = `${Math.round(wWidth)}px`;
+      guide.style.height = `${Math.round(wHeight)}px`;
+      guide.classList.remove('hidden');
+      guide.style.opacity = '1';
+      activeSnapTarget = { left: snapResult.snapX, top: snapResult.snapY };
+    } else {
+      guide.classList.add('hidden');
+      guide.style.opacity = '0';
+      activeSnapTarget = null;
+    }
+  }
+
+  function applyWindowSnapOnRelease(targetWindow) {
+    const guide = el.windowSnapGuide || document.getElementById('windowSnapGuide');
+    if (guide) {
+      guide.classList.add('hidden');
+      guide.style.opacity = '0';
+    }
+
+    if (activeSnapTarget && targetWindow) {
+      targetWindow.style.transition = 'left 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.18s cubic-bezier(0.2, 0.8, 0.2, 1)';
+      targetWindow.style.left = `${Math.round(activeSnapTarget.left)}px`;
+      targetWindow.style.top = `${Math.round(activeSnapTarget.top)}px`;
+      setTimeout(() => {
+        targetWindow.style.transition = '';
+      }, 200);
+      activeSnapTarget = null;
+    }
+  }
+
   const WINDOW_HOLD_DURATION_MS = 1000;
   const HOLD_INDICATOR_DELAY_MS = 200;
 
@@ -2546,6 +2853,9 @@
 
           stage.style.left = `${Math.round(boundedLeft)}px`;
           stage.style.top = `${Math.round(boundedTop)}px`;
+
+          const snapResult = calculateWindowSnap(desiredLeft, desiredTop, wWidth, wHeight, winW, winH);
+          updateWindowSnapGuide(snapResult, wWidth, wHeight);
         }
         return;
       }
@@ -2565,6 +2875,7 @@
         isFloatingDragging = false;
         stage.classList.remove('is-dragging-window');
         document.body.classList.remove('window-dragging-active');
+        applyWindowSnapOnRelease(stage);
         saveMovieWindowLayout();
         setTimeout(() => {
           windowManager.suppressClick = false;
@@ -2648,11 +2959,15 @@
 
       targetWindow.style.left = `${Math.round(boundedLeft)}px`;
       targetWindow.style.top = `${Math.round(boundedTop)}px`;
+
+      const snapResult = calculateWindowSnap(desiredLeft, desiredTop, wWidth, wHeight, winW, winH);
+      updateWindowSnapGuide(snapResult, wWidth, wHeight);
     };
 
     const onUp = () => {
       targetWindow.classList.remove('is-dragging-window');
       document.body.classList.remove('window-dragging-active');
+      applyWindowSnapOnRelease(targetWindow);
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
       window.removeEventListener('touchmove', onMove);
@@ -3337,16 +3652,60 @@
   }
 
   function openSubtitleModal() {
-    if (el.subtitleModal) el.subtitleModal.classList.remove('hidden');
+    const modal = el.subtitlesModal || el.subtitleModal;
+    if (modal) modal.classList.remove('hidden');
+    updateSubtitleLivePreview();
+    if (el.moviePlayer && (el.moviePlayer.src || state.currentMovie)) {
+      enterMiniPlayerMode();
+    }
   }
 
   function closeSubtitleModal() {
-    if (el.subtitleModal) el.subtitleModal.classList.add('hidden');
+    const modal = el.subtitlesModal || el.subtitleModal;
+    if (modal) modal.classList.add('hidden');
+    if (!state.chatOpen) {
+      const isAnyModalOpen = Boolean(document.querySelector('.modal-overlay:not(.hidden), .feedback-modal-overlay:not(.hidden)'));
+      if (!isAnyModalOpen) {
+        exitMiniPlayerMode();
+      }
+    }
+  }
+
+  function updateSubtitleLivePreview() {
+    const fontScale = state.subFontScale !== undefined ? state.subFontScale : 100;
+    const textOpacity = (state.subTextOpacity !== undefined ? state.subTextOpacity : 100) / 100;
+    const bgBlur = state.subBgBlur !== undefined ? state.subBgBlur : 4;
+    const colorVal = state.subColor || '#ffffff';
+    const offset = state.subOffset || 0.0;
+
+    if (el.subtitlePreviewText) {
+      el.subtitlePreviewText.style.fontSize = Math.round(18 * (fontScale / 100)) + 'px';
+      el.subtitlePreviewText.style.opacity = textOpacity.toString();
+      el.subtitlePreviewText.style.color = colorVal;
+    }
+
+    if (el.subtitlePreviewBox) {
+      el.subtitlePreviewBox.style.backdropFilter = `blur(${bgBlur}px)`;
+      el.subtitlePreviewBox.style.webkitBackdropFilter = `blur(${bgBlur}px)`;
+    }
+
+    if (el.subFontScaleValue) el.subFontScaleValue.textContent = `${fontScale}%`;
+    if (el.subTextOpacityValue) el.subTextOpacityValue.textContent = `${Math.round(textOpacity * 100)}%`;
+    if (el.subBgBlurValue) el.subBgBlurValue.textContent = `${bgBlur}px`;
+    if (el.subOffsetDisplay) {
+      el.subOffsetDisplay.textContent = `${offset > 0 ? '+' : ''}${offset.toFixed(1)}s`;
+    }
+    if (el.subDelaySlider && Math.abs(parseFloat(el.subDelaySlider.value) - offset) > 0.05) {
+      el.subDelaySlider.value = offset.toFixed(1);
+    }
   }
 
   function adjustSubtitleOffset(delta) {
     state.subOffset = Math.round((state.subOffset + delta) * 10) / 10;
     updateSubtitleOffsetUI();
+    if (el.subDelaySlider) {
+      el.subDelaySlider.value = state.subOffset.toFixed(1);
+    }
     try {
       if (el.moviePlayer && el.moviePlayer.textTracks) {
         for (let i = 0; i < el.moviePlayer.textTracks.length; i++) {
@@ -3367,6 +3726,9 @@
     const delta = -state.subOffset;
     state.subOffset = 0.0;
     updateSubtitleOffsetUI();
+    if (el.subDelaySlider) {
+      el.subDelaySlider.value = '0.0';
+    }
     try {
       if (el.moviePlayer && el.moviePlayer.textTracks) {
         for (let i = 0; i < el.moviePlayer.textTracks.length; i++) {
@@ -3398,24 +3760,254 @@
       document.head.appendChild(styleEl);
     }
 
-    const sizeBtn = document.querySelector('.sub-style-btn.active[data-style-type="size"]');
-    const colorBtn = document.querySelector('.sub-style-btn.active[data-style-type="color"]');
-    const sizeVal = sizeBtn ? sizeBtn.dataset.val : 'normal';
-    const colorVal = colorBtn ? colorBtn.dataset.val : '#ffffff';
+    const fontScale = state.subFontScale !== undefined ? state.subFontScale : 100;
+    const textOpacity = (state.subTextOpacity !== undefined ? state.subTextOpacity : 100) / 100;
+    const bgBlur = state.subBgBlur !== undefined ? state.subBgBlur : 4;
+    const colorVal = state.subColor || '#ffffff';
 
-    let fontSize = '20px';
-    if (sizeVal === 'large') fontSize = '26px';
-    if (sizeVal === 'xlarge') fontSize = '32px';
+    const calculatedFontSize = Math.round(20 * (fontScale / 100)) + 'px';
+
+    let r = 255, g = 255, b = 255;
+    if (colorVal.startsWith('#') && colorVal.length === 7) {
+      r = parseInt(colorVal.slice(1, 3), 16);
+      g = parseInt(colorVal.slice(3, 5), 16);
+      b = parseInt(colorVal.slice(5, 7), 16);
+    }
+    const rgbaColor = `rgba(${r}, ${g}, ${b}, ${textOpacity})`;
 
     styleEl.textContent = `
       ::cue {
-        font-size: ${fontSize} !important;
-        color: ${colorVal} !important;
+        font-size: ${calculatedFontSize} !important;
+        color: ${rgbaColor} !important;
         background-color: rgba(0, 0, 0, 0.78) !important;
-        text-shadow: 0 1px 3px rgba(0,0,0,0.9) !important;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+        backdrop-filter: blur(${bgBlur}px) !important;
+        -webkit-backdrop-filter: blur(${bgBlur}px) !important;
         font-family: inherit !important;
       }
     `;
+
+    updateSubtitleLivePreview();
+  }
+
+  // ==========================================================================
+  // 2B. MOVIE AUDIO ENGINE & DIALOGUE BOOSTER (NIGHT MODE)
+  // ==========================================================================
+
+  function initMovieAudioEngine(mediaEl) {
+    if (!mediaEl) return null;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return null;
+
+      if (!state.movieAudioContext) {
+        state.movieAudioContext = new AudioCtx();
+      }
+
+      const ctx = state.movieAudioContext;
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+
+      // Safely creates createMediaElementSource(mediaEl) cached on state.movieAudioSource
+      // to prevent duplicate InvalidStateError across playback lifecycle
+      if (!state.movieAudioSource) {
+        try {
+          state.movieAudioSource = ctx.createMediaElementSource(mediaEl);
+        } catch (srcErr) {
+          console.warn('[AudioEngine] MediaElementSource binding notice:', srcErr.message);
+          return null;
+        }
+      }
+
+      if (state.movieAudioNodes) {
+        return state.movieAudioNodes;
+      }
+
+      // 1. DynamicsCompressorNode with night-mode parameters:
+      // threshold: -28dB, knee: 24dB, ratio: 12:1, attack: 0.003s, release: 0.25s
+      const compressor = ctx.createDynamicsCompressor();
+      compressor.threshold.setValueAtTime(-28, ctx.currentTime);
+      compressor.knee.setValueAtTime(24, ctx.currentTime);
+      compressor.ratio.setValueAtTime(12, ctx.currentTime);
+      compressor.attack.setValueAtTime(0.003, ctx.currentTime);
+      compressor.release.setValueAtTime(0.25, ctx.currentTime);
+
+      // 2. BiquadFilterNode with speech frequency peaking (~2.2 kHz, Q: 1.2, gain: 4.5 dB)
+      const speechFilter = ctx.createBiquadFilter();
+      speechFilter.type = 'peaking';
+      speechFilter.frequency.setValueAtTime(2200, ctx.currentTime);
+      speechFilter.Q.setValueAtTime(1.2, ctx.currentTime);
+      speechFilter.gain.setValueAtTime(4.5, ctx.currentTime);
+
+      // 3. Gain nodes for booster and clean bypass
+      const boosterGain = ctx.createGain();
+      boosterGain.gain.setValueAtTime(state.dialogueBoosterEnabled ? 1.0 : 0.0, ctx.currentTime);
+
+      const bypassGain = ctx.createGain();
+      bypassGain.gain.setValueAtTime(state.dialogueBoosterEnabled ? 0.0 : 1.0, ctx.currentTime);
+
+      const masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(1.0, ctx.currentTime);
+
+      // Connect processing path: source -> speechFilter -> compressor -> boosterGain -> masterGain
+      state.movieAudioSource.connect(speechFilter);
+      speechFilter.connect(compressor);
+      compressor.connect(boosterGain);
+      boosterGain.connect(masterGain);
+
+      // Connect clean bypass path: source -> bypassGain -> masterGain
+      state.movieAudioSource.connect(bypassGain);
+      bypassGain.connect(masterGain);
+
+      // Connect master output to audio context destination
+      masterGain.connect(ctx.destination);
+
+      state.movieAudioNodes = {
+        compressor,
+        speechFilter,
+        boosterGain,
+        bypassGain,
+        masterGain
+      };
+
+      return state.movieAudioNodes;
+    } catch (err) {
+      console.warn('[AudioEngine] Audio engine initialization notice:', err.message);
+      return null;
+    }
+  }
+
+  function toggleDialogueBooster(enabled) {
+    const isTargetEnabled = (typeof enabled === 'boolean') ? enabled : !state.dialogueBoosterEnabled;
+    state.dialogueBoosterEnabled = isTargetEnabled;
+
+    if (el.moviePlayer) {
+      initMovieAudioEngine(el.moviePlayer);
+    }
+
+    if (state.movieAudioContext && state.movieAudioContext.state === 'suspended') {
+      state.movieAudioContext.resume().catch(() => {});
+    }
+
+    if (state.movieAudioNodes && state.movieAudioContext) {
+      const now = state.movieAudioContext.currentTime;
+      if (state.dialogueBoosterEnabled) {
+        state.movieAudioNodes.bypassGain.gain.setTargetAtTime(0.0, now, 0.05);
+        state.movieAudioNodes.boosterGain.gain.setTargetAtTime(1.0, now, 0.05);
+      } else {
+        state.movieAudioNodes.boosterGain.gain.setTargetAtTime(0.0, now, 0.05);
+        state.movieAudioNodes.bypassGain.gain.setTargetAtTime(1.0, now, 0.05);
+      }
+    }
+
+    if (el.dialogueBoosterToggle) {
+      el.dialogueBoosterToggle.checked = state.dialogueBoosterEnabled;
+    }
+
+    showToast(state.dialogueBoosterEnabled 
+      ? 'Dialogue Booster (Night Mode) Enabled' 
+      : 'Dialogue Booster Disabled'
+    );
+  }
+
+  // ==========================================================================
+  // MINI-PLAYER MODE
+  // ==========================================================================
+
+  function enterMiniPlayerMode() {
+    if (!el.moviePlayer || state.isMiniPlayer) return;
+    const hasActiveMedia = Boolean(el.moviePlayer.src || state.currentMovie);
+    if (!hasActiveMedia) return;
+
+    const wasPlaying = !el.moviePlayer.paused;
+    const currentTime = el.moviePlayer.currentTime;
+    const playbackRate = el.moviePlayer.playbackRate;
+
+    state.isMiniPlayer = true;
+    document.body.classList.add('mini-player-active');
+    if (el.cinemaStageWrapper) {
+      el.cinemaStageWrapper.classList.add('mini-player-active');
+    }
+    if (el.stageSection) {
+      el.stageSection.classList.add('mini-player-active');
+    }
+
+    showToast('Mini-Player Mode Activated');
+
+    if (wasPlaying && el.moviePlayer.paused) {
+      el.moviePlayer.play().catch(() => {});
+    }
+  }
+
+  function exitMiniPlayerMode() {
+    if (!state.isMiniPlayer && !document.body.classList.contains('mini-player-active')) return;
+    const wasPlaying = el.moviePlayer && !el.moviePlayer.paused;
+    const currentTime = el.moviePlayer ? el.moviePlayer.currentTime : 0;
+    const playbackRate = el.moviePlayer ? el.moviePlayer.playbackRate : 1;
+
+    state.isMiniPlayer = false;
+    document.body.classList.remove('mini-player-active');
+    if (el.cinemaStageWrapper) {
+      el.cinemaStageWrapper.classList.remove('mini-player-active');
+      el.cinemaStageWrapper.style.transform = '';
+    }
+    if (el.stageSection) {
+      el.stageSection.classList.remove('mini-player-active');
+    }
+
+    showToast('Restored Theater Player');
+
+    if (wasPlaying && el.moviePlayer && el.moviePlayer.paused) {
+      el.moviePlayer.play().catch(() => {});
+    }
+  }
+
+  function setupMiniPlayerControls() {
+    if (el.exitMiniPlayerBtn) {
+      el.exitMiniPlayerBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        exitMiniPlayerMode();
+      });
+    }
+    if (el.miniPlayerPlayPauseBtn) {
+      el.miniPlayerPlayPauseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!el.moviePlayer) return;
+        if (el.moviePlayer.paused) {
+          el.moviePlayer.play().catch(() => {});
+        } else {
+          el.moviePlayer.pause();
+        }
+      });
+    }
+    if (el.miniPlayerMuteBtn) {
+      el.miniPlayerMuteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!el.moviePlayer) return;
+        el.moviePlayer.muted = !el.moviePlayer.muted;
+        showToast(el.moviePlayer.muted ? 'Mini-Player Muted' : 'Mini-Player Unmuted');
+      });
+    }
+  }
+
+  function setupMiniPlayerModalObserver() {
+    const modalElements = document.querySelectorAll('.modal-overlay, .feedback-modal-overlay');
+    if (window.MutationObserver && modalElements.length) {
+      const observer = new MutationObserver(() => {
+        const isAnyModalOpen = Boolean(document.querySelector('.modal-overlay:not(.hidden), .feedback-modal-overlay:not(.hidden)'));
+        if (isAnyModalOpen) {
+          if (el.moviePlayer && (el.moviePlayer.src || state.currentMovie) && !state.isMiniPlayer) {
+            enterMiniPlayerMode();
+          }
+        } else if (!state.chatOpen && state.isMiniPlayer) {
+          exitMiniPlayerMode();
+        }
+      });
+      modalElements.forEach(m => {
+        observer.observe(m, { attributes: true, attributeFilter: ['class', 'style'] });
+      });
+    }
   }
 
   // ==========================================================================
@@ -3439,14 +4031,93 @@
     }
   }
 
+  // ==========================================================================
+  // PROCEDURAL WEB AUDIO MICRO-INTERACTIONS
+  // ==========================================================================
+
+  let lastHoverAudioTime = 0;
+  function playUIAudio(type) {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!state.uiAudioContext) {
+        state.uiAudioContext = new AudioCtx();
+      }
+      const ctx = state.uiAudioContext;
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+
+      const now = ctx.currentTime;
+      if (type === 'hover') {
+        const hoverNow = Date.now();
+        if (hoverNow - lastHoverAudioTime < 45) return;
+        lastHoverAudioTime = hoverNow;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(900, now);
+        osc.frequency.exponentialRampToValueAtTime(1300, now + 0.02);
+        gain.gain.setValueAtTime(0.015, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.025);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.025);
+      } else if (type === 'mic-mute') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(330, now + 0.08);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.085);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.085);
+      } else if (type === 'mic-unmute') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(330, now);
+        osc.frequency.exponentialRampToValueAtTime(520, now + 0.08);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.085);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.085);
+      } else if (type === 'room-join') {
+        const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const startTime = now + idx * 0.035;
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, startTime);
+          gain.gain.setValueAtTime(0.08, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.32);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(startTime);
+          osc.stop(startTime + 0.32);
+        });
+      }
+    } catch (e) {
+      // AudioContext unavailable or autoplay prevented
+    }
+  }
+
   function getSoundName(id) {
     const names = {
-      airhorn: 'Airhorn 📢',
-      applause: 'Applause 👏',
-      drumroll: 'Drumroll 🥁',
-      sting: 'Dramatic Sting 😱',
-      laugh: 'Laugh Track 😂',
-      rimshot: 'Ba-Dum-Tss 🥁'
+      airhorn: 'Airhorn [HORN]',
+      applause: 'Applause [CLAP]',
+      drumroll: 'Drumroll [ROLL]',
+      sting: 'Dramatic Sting [SHOCK]',
+      laugh: 'Laugh Track [LAUGH]',
+      rimshot: 'Ba-Dum-Tss [DRUM]'
     };
     return names[id] || id;
   }
@@ -3828,15 +4499,16 @@
     state.renderCount = (state.renderCount || 0) + 1;
     el.participantStrip.innerHTML = '';
     if (el.participantStripTop) el.participantStripTop.innerHTML = '';
+    if (el.participantStripAudience) el.participantStripAudience.innerHTML = '';
 
     const members = Array.from(state.members.values());
     const isPortrait = isPortraitMode();
+    const isStageGrid = (el.mainWorkspace && (el.mainWorkspace.classList.contains('is-grid-view') || el.mainWorkspace.classList.contains('stage-grid-mode'))) ||
+                        (el.participantStripArea && el.participantStripArea.classList.contains('stage-grid-mode'));
 
     if (el.stageCinemaGroup) el.stageCinemaGroup.dataset.participantCount = String(members.length);
     if (el.stageSection) el.stageSection.dataset.participantCount = String(members.length);
 
-    // In landscape mode, on desktop, or when only 1 participant:
-    // keep participant in primary strip (bottom in portrait, right column in landscape)
     if (members.length === 0) {
       if (el.participantTopArea) {
         el.participantTopArea.classList.add('hidden');
@@ -3846,11 +4518,68 @@
         el.participantStripArea.classList.add('hidden');
         el.participantStripArea.dataset.count = '0';
       }
+      if (el.stageSpeakersHeader) el.stageSpeakersHeader.classList.add('hidden');
+      if (el.stageAudiencePartition) el.stageAudiencePartition.classList.add('hidden');
       document.body.classList.remove('has-participants');
       return;
     }
 
     document.body.classList.add('has-participants');
+
+    if (isStageGrid) {
+      // Discord Stage Grid mode: Partition broadcasters/speakers and passive audience
+      if (el.participantTopArea) {
+        el.participantTopArea.classList.add('hidden');
+        el.participantTopArea.dataset.count = '0';
+      }
+      if (el.participantStripArea) {
+        el.participantStripArea.classList.remove('hidden');
+        el.participantStripArea.dataset.count = String(members.length);
+      }
+
+      const speakers = [];
+      const audience = [];
+
+      members.forEach(m => {
+        if (m.isSpeaking || m.isCamOn || !m.isMuted || m.isHost || m.id === state.selfId) {
+          speakers.push(m);
+        } else {
+          audience.push(m);
+        }
+      });
+
+      if (speakers.length === 0 && members.length > 0) {
+        speakers.push(members[0]);
+        audience.splice(0, 1);
+      }
+
+      if (el.stageSpeakersHeader) {
+        el.stageSpeakersHeader.classList.toggle('hidden', audience.length === 0);
+      }
+      if (el.stageSpeakersCount) el.stageSpeakersCount.textContent = String(speakers.length);
+      if (el.stageAudienceCount) el.stageAudienceCount.textContent = String(audience.length);
+      if (el.stageAudiencePartition) {
+        el.stageAudiencePartition.classList.toggle('hidden', audience.length === 0);
+      }
+
+      speakers.forEach(member => {
+        el.participantStrip.appendChild(createParticipantTile(member));
+      });
+
+      if (el.participantStripAudience) {
+        audience.forEach(member => {
+          const tile = createParticipantTile(member);
+          tile.classList.add('is-audience-tile');
+          el.participantStripAudience.appendChild(tile);
+        });
+      }
+      return;
+    }
+
+    // Standard theater layout
+    if (el.stageSpeakersHeader) el.stageSpeakersHeader.classList.add('hidden');
+    if (el.stageAudiencePartition) el.stageAudiencePartition.classList.add('hidden');
+
     if (!isPortrait || members.length <= 1) {
       if (el.participantTopArea) {
         el.participantTopArea.classList.add('hidden');
@@ -3893,6 +4622,9 @@
     const tile = document.createElement('div');
     tile.className = 'participant-tile';
     tile.id = `participant-tile-${member.id}`;
+    if (member.isSpeaking) {
+      tile.classList.add('is-speaking', 'stage-speaking-halo');
+    }
 
     // Center Avatar
     const avatar = document.createElement('div');
@@ -4050,6 +4782,12 @@
   function updateParticipantTileState(id) {
     const member = state.members.get(id);
     if (!member) return;
+
+    const tile = document.getElementById(`participant-tile-${id}`);
+    if (tile && typeof member.isSpeaking !== 'undefined') {
+      tile.classList.toggle('is-speaking', !!member.isSpeaking);
+      tile.classList.toggle('stage-speaking-halo', !!member.isSpeaking);
+    }
 
     const mic = document.getElementById(`tile-mic-${id}`);
     if (mic) {
@@ -4291,7 +5029,10 @@
       if (el.youtubePlayerBox) el.youtubePlayerBox.classList.add('hidden');
       if (el.streamingPlayerBox) el.streamingPlayerBox.classList.add('hidden');
       if (el.screenSharePlayer) el.screenSharePlayer.classList.add('hidden');
-      if (el.moviePlayer) el.moviePlayer.classList.remove('hidden');
+      if (el.moviePlayer) {
+        el.moviePlayer.classList.remove('hidden');
+        initMovieAudioEngine(el.moviePlayer);
+      }
 
       if (el.modalNowPlayingBanner) el.modalNowPlayingBanner.classList.remove('hidden');
       if (el.modalNowPlayingTitle) el.modalNowPlayingTitle.innerText = movie.filename || 'Direct URL Stream';
@@ -4764,10 +5505,19 @@
         }
         chatOpeningTimer = null;
       }, 280);
+
+      if (el.moviePlayer && (el.moviePlayer.src || state.currentMovie)) {
+        enterMiniPlayerMode();
+      }
     } else {
       state.chatOpen = false;
       document.body.classList.remove('chat-is-open');
       document.body.classList.add('chat-is-closing');
+
+      const isAnyModalOpen = Boolean(document.querySelector('.modal-overlay:not(.hidden), .feedback-modal-overlay:not(.hidden)'));
+      if (!isAnyModalOpen) {
+        exitMiniPlayerMode();
+      }
 
       if (el.chatSidebar && !el.chatSidebar.classList.contains('hidden')) {
         el.chatSidebar.classList.remove('chat-panel-opening');
@@ -4815,6 +5565,11 @@
     const item = document.createElement('div');
     item.className = 'chat-msg';
 
+    const isHost = Boolean(msg.isHost || (state.members && state.members.get(msg.senderId)?.isHost) || msg.role === 'host');
+    const roleBadgeHtml = isHost
+      ? '<span class="chat-role-badge role-host">HOST</span>'
+      : '<span class="chat-role-badge role-viewer">VIEWER</span>';
+
     item.innerHTML = `
       <div class="chat-msg-avatar" style="background-color: ${msg.color || '#5865F2'}">
         ${escapeHtml((msg.username || 'U').charAt(0).toUpperCase())}
@@ -4822,6 +5577,7 @@
       <div class="chat-msg-content">
         <div class="chat-msg-header">
           <span class="chat-msg-user" style="color: ${msg.color || '#5865F2'}">${escapeHtml(msg.username)}</span>
+          ${roleBadgeHtml}
           <span class="chat-msg-time">${msg.timestamp}</span>
         </div>
         <div class="chat-msg-text">${escapeHtml(msg.text)}</div>
@@ -4848,97 +5604,97 @@
     cinema: {
       title: 'Cinema & Vibes',
       items: [
-        { e: '🍿', tags: 'popcorn movie cinema snack' },
-        { e: '🎬', tags: 'clapper cinema movie action' },
-        { e: '🎥', tags: 'movie camera film recording' },
-        { e: '🎞️', tags: 'film frames movie projector' },
-        { e: '🎟️', tags: 'admission ticket cinema pass' },
-        { e: '📽️', tags: 'film projector theater' },
-        { e: '📺', tags: 'television tv screen' },
-        { e: '🍕', tags: 'pizza slice food snack cheese' },
-        { e: '🍔', tags: 'hamburger burger fastfood' },
-        { e: '🍟', tags: 'fries french fries snack' },
-        { e: '🌭', tags: 'hotdog sausage snack' },
-        { e: '🥤', tags: 'soda cup drink beverage cola' },
-        { e: '🍻', tags: 'beer mugs cheers party drinks' },
-        { e: '🥂', tags: 'champagne glasses toast cheers' },
-        { e: '🍫', tags: 'chocolate bar candy sweet' },
-        { e: '🛋️', tags: 'couch sofa relax watching' },
-        { e: '🎭', tags: 'theater masks drama arts' },
-        { e: '🎧', tags: 'headphones audio sound music' },
-        { e: '🔊', tags: 'speaker loud volume audio' },
-        { e: '🕶️', tags: 'sunglasses cool shades 3d' },
-        { e: '🍪', tags: 'cookie sweet snack biscuit' }
+        { e: ':popcorn:', tags: 'popcorn movie cinema snack' },
+        { e: ':clapper:', tags: 'clapper cinema movie action' },
+        { e: ':movie_camera:', tags: 'movie camera film recording' },
+        { e: ':film_strip:', tags: 'film frames movie projector' },
+        { e: ':ticket:', tags: 'admission ticket cinema pass' },
+        { e: ':projector:', tags: 'film projector theater' },
+        { e: ':tv:', tags: 'television tv screen' },
+        { e: ':pizza:', tags: 'pizza slice food snack cheese' },
+        { e: ':burger:', tags: 'hamburger burger fastfood' },
+        { e: ':fries:', tags: 'fries french fries snack' },
+        { e: ':hotdog:', tags: 'hotdog sausage snack' },
+        { e: ':drink:', tags: 'soda cup drink beverage cola' },
+        { e: ':beers:', tags: 'beer mugs cheers party drinks' },
+        { e: ':cheers:', tags: 'champagne glasses toast cheers' },
+        { e: ':chocolate:', tags: 'chocolate bar candy sweet' },
+        { e: ':couch:', tags: 'couch sofa relax watching' },
+        { e: ':masks:', tags: 'theater masks drama arts' },
+        { e: ':headphones:', tags: 'headphones audio sound music' },
+        { e: ':speaker:', tags: 'speaker loud volume audio' },
+        { e: ':sunglasses:', tags: 'sunglasses cool shades 3d' },
+        { e: ':cookie:', tags: 'cookie sweet snack biscuit' }
       ]
     },
     popular: {
       title: 'Popular Reactions',
       items: [
-        { e: '😂', tags: 'laughing lol tears haha funny' },
-        { e: '🤣', tags: 'rofl rolling on floor laugh' },
-        { e: '😭', tags: 'crying tears sad sob' },
-        { e: '💀', tags: 'skull dead lol dying' },
-        { e: '🥹', tags: 'emotional holding back tears touched' },
-        { e: '🥺', tags: 'pleading eyes cute please puppy' },
-        { e: '🤩', tags: 'starstruck amazed excited wow' },
-        { e: '😎', tags: 'cool sunglasses chill boss' },
-        { e: '🥳', tags: 'party face celebrating woo' },
-        { e: '🤯', tags: 'exploding head mind blown shock' },
-        { e: '🫠', tags: 'melting face warm awkward' },
-        { e: '🤠', tags: 'cowboy hat smiley' },
-        { e: '😈', tags: 'smiling devil cheeky mischievous' },
-        { e: '😇', tags: 'angel innocent halo' },
-        { e: '😜', tags: 'winking eye tongue out goofy' },
-        { e: '🤤', tags: 'drooling hungry delicious yummy' },
-        { e: '😱', tags: 'screaming scared shocked fear' },
-        { e: '🥱', tags: 'yawning tired sleepy bored' },
-        { e: '😴', tags: 'sleeping face zzz bed' },
-        { e: '🥶', tags: 'cold freezing chilled icy' },
-        { e: '🥵', tags: 'hot sweating overwhelmed' }
+        { e: ':laugh:', tags: 'laughing lol tears haha funny' },
+        { e: ':rofl:', tags: 'rofl rolling on floor laugh' },
+        { e: ':cry:', tags: 'crying tears sad sob' },
+        { e: ':skull:', tags: 'skull dead lol dying' },
+        { e: ':emotional:', tags: 'emotional holding back tears touched' },
+        { e: ':plead:', tags: 'pleading eyes cute please puppy' },
+        { e: ':starstruck:', tags: 'starstruck amazed excited wow' },
+        { e: ':cool:', tags: 'cool sunglasses chill boss' },
+        { e: ':party_face:', tags: 'party face celebrating woo' },
+        { e: ':mindblown:', tags: 'exploding head mind blown shock' },
+        { e: ':melting:', tags: 'melting face warm awkward' },
+        { e: ':cowboy:', tags: 'cowboy hat smiley' },
+        { e: ':devil:', tags: 'smiling devil cheeky mischievous' },
+        { e: ':angel:', tags: 'angel innocent halo' },
+        { e: ':goofy:', tags: 'winking eye tongue out goofy' },
+        { e: ':drool:', tags: 'drooling hungry delicious yummy' },
+        { e: ':screaming:', tags: 'screaming scared shocked fear' },
+        { e: ':yawn:', tags: 'yawning tired sleepy bored' },
+        { e: ':sleep:', tags: 'sleeping face zzz bed' },
+        { e: ':cold:', tags: 'cold freezing chilled icy' },
+        { e: ':hot:', tags: 'hot sweating overwhelmed' }
       ]
     },
     hype: {
       title: 'Hype & Love',
       items: [
-        { e: '🔥', tags: 'fire flame lit hot hype' },
-        { e: '⚡', tags: 'lightning bolt zap energy speed' },
-        { e: '💯', tags: 'hundred 100 points perfect score' },
-        { e: '🚀', tags: 'rocket ship blastoff launch moon hype' },
-        { e: '✨', tags: 'sparkles sparkle stars magic' },
-        { e: '💥', tags: 'boom collision explosion bang' },
-        { e: '🎉', tags: 'tada party popper celebration' },
-        { e: '🎊', tags: 'confetti ball festival party' },
-        { e: '🏆', tags: 'trophy prize winner champion' },
-        { e: '💖', tags: 'sparkling heart love romance' },
-        { e: '❤️', tags: 'red heart love like romance' },
-        { e: '🖤', tags: 'black heart dark aesthetic' },
-        { e: '🤍', tags: 'white heart peace pure' },
-        { e: '👑', tags: 'crown king queen royal goat' },
-        { e: '🌟', tags: 'glowing star night shine' },
-        { e: '💫', tags: 'dizzy star shooting magic' },
-        { e: '🎯', tags: 'bullseye direct hit target' },
-        { e: '💣', tags: 'bomb explosive lit boom' }
+        { e: ':fire:', tags: 'fire flame lit hot hype' },
+        { e: ':lightning:', tags: 'lightning bolt zap energy speed' },
+        { e: ':100:', tags: 'hundred 100 points perfect score' },
+        { e: ':rocket:', tags: 'rocket ship blastoff launch moon hype' },
+        { e: ':sparkles:', tags: 'sparkles sparkle stars magic' },
+        { e: ':boom:', tags: 'boom collision explosion bang' },
+        { e: ':party:', tags: 'tada party popper celebration' },
+        { e: ':confetti:', tags: 'confetti ball festival party' },
+        { e: ':trophy:', tags: 'trophy prize winner champion' },
+        { e: ':sparkle_heart:', tags: 'sparkling heart love romance' },
+        { e: ':heart:', tags: 'red heart love like romance' },
+        { e: ':black_heart:', tags: 'black heart dark aesthetic' },
+        { e: ':white_heart:', tags: 'white heart peace pure' },
+        { e: ':crown:', tags: 'crown king queen royal goat' },
+        { e: ':star:', tags: 'glowing star night shine' },
+        { e: ':shooting_star:', tags: 'dizzy star shooting magic' },
+        { e: ':target:', tags: 'bullseye direct hit target' },
+        { e: ':bomb:', tags: 'bomb explosive lit boom' }
       ]
     },
     gestures: {
       title: 'Claps & Gestures',
       items: [
-        { e: '👏', tags: 'clapping hands applause bravo' },
-        { e: '🙌', tags: 'raising hands praise celebration' },
-        { e: '👍', tags: 'thumbs up like yes agree good' },
-        { e: '👎', tags: 'thumbs down dislike bad no' },
-        { e: '👊', tags: 'fist bump bro punch' },
-        { e: '✌️', tags: 'peace sign victory fingers' },
-        { e: '🤞', tags: 'crossed fingers hope luck' },
-        { e: '🫡', tags: 'saluting face respect yes sir' },
-        { e: '🤝', tags: 'handshake deal agreement' },
-        { e: '🫶', tags: 'heart hands love care' },
-        { e: '🤙', tags: 'call me shaka hang loose' },
-        { e: '👀', tags: 'eyes looking side-eye tea drama' },
-        { e: '👁️', tags: 'single eye watch see' },
-        { e: '🧠', tags: 'brain smart genius 200iq' },
-        { e: '🦾', tags: 'mechanical robot arm flex strength' },
-        { e: '🙏', tags: 'folded hands pray please thanks' }
+        { e: ':clap:', tags: 'clapping hands applause bravo' },
+        { e: ':praise:', tags: 'raising hands praise celebration' },
+        { e: ':thumbs_up:', tags: 'thumbs up like yes agree good' },
+        { e: ':thumbs_down:', tags: 'thumbs down dislike bad no' },
+        { e: ':fist_bump:', tags: 'fist bump bro punch' },
+        { e: ':peace:', tags: 'peace sign victory fingers' },
+        { e: ':crossed_fingers:', tags: 'crossed fingers hope luck' },
+        { e: ':salute:', tags: 'saluting face respect yes sir' },
+        { e: ':handshake:', tags: 'handshake deal agreement' },
+        { e: ':heart_hands:', tags: 'heart hands love care' },
+        { e: ':shaka:', tags: 'call me shaka hang loose' },
+        { e: ':eyes:', tags: 'eyes looking side-eye tea drama' },
+        { e: ':eye:', tags: 'single eye watch see' },
+        { e: ':brain:', tags: 'brain smart genius 200iq' },
+        { e: ':flex:', tags: 'mechanical robot arm flex strength' },
+        { e: ':pray:', tags: 'folded hands pray please thanks' }
       ]
     }
   };
@@ -4991,7 +5747,7 @@
       el.chatReactionsTray.querySelectorAll('.reaction-item-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
-          const emoji = btn.dataset.emoji || '❤️';
+          const emoji = btn.dataset.emoji || 'heart';
           sendLiveReaction(emoji);
         });
       });
@@ -5121,6 +5877,25 @@
     });
   }
 
+  function getReactionDisplay(emoji) {
+    if (!emoji) return '<span class="reaction-tag-custom">[REACT]</span>';
+    const clean = String(emoji).toLowerCase().trim();
+    if (clean === 'heart' || clean === 'love' || clean === ':heart:') return '<span class="reaction-tag-love">[LOVE]</span>';
+    if (clean === 'fire' || clean === ':fire:') return '<span class="reaction-tag-fire">[FIRE]</span>';
+    if (clean === 'popcorn' || clean === ':popcorn:') return '<span class="reaction-tag-popcorn">[POP]</span>';
+    if (clean === 'clap' || clean === ':clap:') return '<span class="reaction-tag-clap">[CLAP]</span>';
+    if (clean === 'laugh' || clean === ':laugh:') return '<span class="reaction-tag-laugh">[LAUGH]</span>';
+    if (clean === 'shock' || clean === 'wow' || clean === ':shock:') return '<span class="reaction-tag-shock">[WOW]</span>';
+    if (clean === 'rocket' || clean === 'hype' || clean === ':rocket:') return '<span class="reaction-tag-rocket">[HYPE]</span>';
+    if (clean === 'party' || clean === ':party:') return '<span class="reaction-tag-party">[PARTY]</span>';
+    if (clean === 'dead' || clean === ':skull:') return '<span class="reaction-tag-dead">[DEAD]</span>';
+    if (clean.startsWith(':') && clean.endsWith(':')) {
+      const tag = clean.slice(1, -1).toUpperCase();
+      return `<span class="reaction-tag-custom">[${escapeHtml(tag)}]</span>`;
+    }
+    return `<span class="reaction-tag-custom">${escapeHtml(clean.toUpperCase())}</span>`;
+  }
+
   function spawnReactionBurst(emoji, username) {
     const containers = [el.reactionBurstContainer, el.chatReactionBurstContainer].filter(Boolean);
     if (!containers.length) return;
@@ -5143,7 +5918,7 @@
           wrapper.style.setProperty('--rot-mid', `${rotMid}deg`);
           wrapper.style.setProperty('--rot-end', `${rotEnd}deg`);
 
-          let html = `<span class="floating-reaction-emoji">${emoji}</span>`;
+          let html = `<span class="floating-reaction-emoji">${getReactionDisplay(emoji)}</span>`;
           if (i === 0 && username && cIdx === 0) {
             html += `<span class="floating-reaction-user">${escapeHtml(username)}</span>`;
           }
@@ -5899,7 +6674,8 @@
     };
 
     closeAllDeviceMenus = (animate = true) => {
-      const allMenus = [el.micDeviceMenu, el.camDeviceMenu, el.moreOptionsMenu, el.activityMenu];
+      if (el.dockReactionsBtn) el.dockReactionsBtn.classList.remove('active-status-ring', 'ring-reactions');
+      const allMenus = [el.micDeviceMenu, el.camDeviceMenu, el.moreOptionsMenu, el.activityMenu, el.dockReactionsTray];
       const activeMenus = allMenus.filter(m => m && !m.classList.contains('hidden'));
       if (activeMenus.length === 0) return;
 
@@ -6147,12 +6923,60 @@
     if (el.subOffsetResetBtn) {
       el.subOffsetResetBtn.onclick = resetSubtitleOffset;
     }
+
+    // Continuous Subtitle Customization Sliders (Real-time input listeners)
+    if (el.subFontScaleSlider) {
+      el.subFontScaleSlider.addEventListener('input', (e) => {
+        state.subFontScale = parseInt(e.target.value, 10) || 100;
+        applySubtitleStyling();
+      });
+    }
+    if (el.subTextOpacitySlider) {
+      el.subTextOpacitySlider.addEventListener('input', (e) => {
+        state.subTextOpacity = parseInt(e.target.value, 10) || 100;
+        applySubtitleStyling();
+      });
+    }
+    if (el.subBgBlurSlider) {
+      el.subBgBlurSlider.addEventListener('input', (e) => {
+        state.subBgBlur = parseInt(e.target.value, 10) || 0;
+        applySubtitleStyling();
+      });
+    }
+    if (el.subDelaySlider) {
+      el.subDelaySlider.addEventListener('input', (e) => {
+        const newOffset = Math.round(parseFloat(e.target.value) * 10) / 10;
+        const delta = Math.round((newOffset - state.subOffset) * 10) / 10;
+        if (delta !== 0) {
+          adjustSubtitleOffset(delta);
+        }
+      });
+    }
+
+    // Dialogue Booster (Night Mode) Toggle
+    if (el.dialogueBoosterToggle) {
+      el.dialogueBoosterToggle.addEventListener('change', (e) => {
+        toggleDialogueBooster(e.target.checked);
+      });
+    }
+
     document.querySelectorAll('.sub-style-btn').forEach(btn => {
       btn.onclick = () => {
         const type = btn.getAttribute('data-style-type');
-        if (type) {
-          btn.parentElement?.querySelectorAll(`.sub-style-btn[data-style-type="${type}"]`).forEach(b => b.classList.remove('active'));
+        if (type === 'size') {
+          const val = btn.getAttribute('data-val');
+          btn.parentElement?.querySelectorAll('.sub-style-btn[data-style-type="size"]').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
+          if (val === 'normal') state.subFontScale = 100;
+          if (val === 'large') state.subFontScale = 135;
+          if (val === 'xlarge') state.subFontScale = 175;
+          if (el.subFontScaleSlider) el.subFontScaleSlider.value = state.subFontScale;
+          applySubtitleStyling();
+        } else if (type === 'color') {
+          const val = btn.getAttribute('data-val');
+          btn.parentElement?.querySelectorAll('.sub-style-btn[data-style-type="color"]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          state.subColor = val || '#ffffff';
           applySubtitleStyling();
         }
       };
@@ -6230,15 +7054,84 @@
       }
     };
 
-    // Layout Toggle (Theater Stage vs Grid Gallery View)
+    // Layout Toggle (Theater Stage vs Discord Stage Grid View)
     let isGridView = false;
     if (el.layoutToggleBtn) {
       el.layoutToggleBtn.onclick = () => {
         isGridView = !isGridView;
         el.mainWorkspace.classList.toggle('is-grid-view', isGridView);
-        showToast(isGridView ? 'Switched to Grid Gallery View' : 'Switched to Cinema Stage View');
+        el.mainWorkspace.classList.toggle('stage-grid-mode', isGridView);
+        if (el.participantStripArea) el.participantStripArea.classList.toggle('stage-grid-mode', isGridView);
+        el.layoutToggleBtn.classList.toggle('active-status-ring', isGridView);
+        el.layoutToggleBtn.classList.toggle('ring-layout', isGridView);
+        renderParticipantStrip();
+        showToast(isGridView ? 'Switched to Discord Stage Grid View' : 'Switched to Cinema Stage View');
       };
     }
+
+    // Dock Screen Share Button
+    if (el.dockScreenShareBtn) {
+      el.dockScreenShareBtn.addEventListener('click', () => {
+        toggleScreenShare();
+      });
+    }
+
+    // Screen Share PiP Focus Button (1-Click Focus Toggle)
+    if (el.screenShareFocusBtn) {
+      el.screenShareFocusBtn.addEventListener('click', () => {
+        swapScreenShareFocus();
+      });
+    }
+
+    // Dock Reactions Button & Quick Tray
+    function toggleDockReactionsTray() {
+      if (!el.dockReactionsTray) return;
+      const isHidden = el.dockReactionsTray.classList.contains('hidden');
+      if (isHidden) {
+        closeAllDeviceMenus(false);
+        el.dockReactionsTray.classList.remove('hidden');
+        if (el.dockReactionsBtn) {
+          el.dockReactionsBtn.classList.add('active-status-ring', 'ring-reactions');
+        }
+      } else {
+        closeDockReactionsTray();
+      }
+    }
+
+    function closeDockReactionsTray() {
+      if (el.dockReactionsTray) {
+        el.dockReactionsTray.classList.add('hidden');
+      }
+      if (el.dockReactionsBtn) {
+        el.dockReactionsBtn.classList.remove('active-status-ring', 'ring-reactions');
+      }
+    }
+
+    if (el.dockReactionsBtn) {
+      el.dockReactionsBtn.addEventListener('click', (e) => {
+        if (e.stopPropagation) e.stopPropagation();
+        toggleDockReactionsTray();
+      });
+    }
+
+    if (el.dockReactionsTray) {
+      el.dockReactionsTray.querySelectorAll('.dock-reaction-item').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          if (e.stopPropagation) e.stopPropagation();
+          const reaction = btn.dataset.reaction || 'heart';
+          sendLiveReaction(reaction);
+          closeDockReactionsTray();
+        });
+      });
+    }
+
+    // Attach procedural hover sound to all dock and HUD buttons with throttle
+    document.addEventListener('mouseover', (e) => {
+      const target = e.target.closest && e.target.closest('.pill-btn, .hud-circle-btn, .hud-icon-btn, .pill-chevron-btn, .dock-reaction-item');
+      if (target) {
+        playUIAudio('hover');
+      }
+    });
 
     // 1. Cinema Fullscreen (Red arrow: Cinema Box ONLY - movie theater view)
     const toggleCinemaFullscreen = () => {
@@ -6581,6 +7474,10 @@
         }
       });
       if (el.moviePlayer) {
+        initMovieAudioEngine(el.moviePlayer);
+        if (state.movieAudioContext && state.movieAudioContext.state === 'suspended') {
+          state.movieAudioContext.resume().catch(() => {});
+        }
         if (typeof el.moviePlayer.setSinkId === 'function') {
           el.moviePlayer.setSinkId('').catch(() => {});
         }
@@ -6600,6 +7497,14 @@
     document.addEventListener('click', unlockAudio, { once: true });
 
     // Video Play/Pause & Movie Library
+    if (el.moviePlayer) {
+      el.moviePlayer.addEventListener('play', () => {
+        initMovieAudioEngine(el.moviePlayer);
+        if (state.movieAudioContext && state.movieAudioContext.state === 'suspended') {
+          state.movieAudioContext.resume().catch(() => {});
+        }
+      });
+    }
     el.playPauseBtn.onclick = handlePlayPauseToggle;
     if (el.stopMovieBtn) el.stopMovieBtn.onclick = hostStopMovie;
     if (el.modalStopMovieBtn) {
@@ -6667,6 +7572,8 @@
     initMobileGestures();
     initSubtitleDragAndDrop();
     initWindowManagement();
+    setupMiniPlayerControls();
+    setupMiniPlayerModalObserver();
 
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', () => {

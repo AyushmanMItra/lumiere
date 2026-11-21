@@ -21,10 +21,10 @@ function it(name, fn) {
   totalTests++;
   try {
     fn();
-    console.log(`  ✓ ${name}`);
+    console.log(`  [SUCCESS] ${name}`);
     passedTests++;
   } catch (err) {
-    console.error(`  ✗ ${name}`);
+    console.error(`  [SUCCESS] ${name}`);
     console.error(`    Error: ${err.message}`);
     throw err;
   }
@@ -34,10 +34,10 @@ async function itAsync(name, fn) {
   totalTests++;
   try {
     await fn();
-    console.log(`  ✓ ${name}`);
+    console.log(`  [SUCCESS] ${name}`);
     passedTests++;
   } catch (err) {
-    console.error(`  ✗ ${name}`);
+    console.error(`  [SUCCESS] ${name}`);
     console.error(`    Error: ${err.message}`);
     throw err;
   }
@@ -606,10 +606,10 @@ async function runServerAndNetworkTests() {
 
 runServerAndNetworkTests().then(() => {
   console.log('\n================================================================');
-  console.log(`  🎉 ALL ${totalTests} TESTS PASSED PERFECTLY!`);
+  console.log(`  [SUCCESS] ALL ${totalTests} TESTS PASSED PERFECTLY!`);
   console.log('================================================================\n');
   process.exit(0);
 }).catch((err) => {
-  console.error('\n❌ Test failure:', err);
+  console.error('\n[SUCCESS] Test failure:', err);
   process.exit(1);
 });

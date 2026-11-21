@@ -1410,13 +1410,75 @@
               </div>
             </div>
           </div>
+
+          <!-- Screen Share Picture-in-Picture (PiP) Container -->
+          <div id="screenSharePipContainer" class="screen-share-pip-container hidden" aria-label="Screen Share Picture-in-Picture">
+            <div class="screen-share-pip-header">
+              <div class="screen-share-pip-title">
+                <span class="pip-live-dot"></span>
+                <span id="screenSharePipLabel">Screen Share</span>
+              </div>
+              <div class="screen-share-pip-actions">
+                <button type="button" id="screenShareFocusBtn" class="screen-share-focus-btn" title="Swap Focus" aria-label="Toggle Screen Share Focus">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <polyline points="9 21 3 21 3 15"></polyline>
+                    <line x1="21" y1="3" x2="14" y2="10"></line>
+                    <line x1="3" y1="21" x2="10" y2="14"></line>
+                  </svg>
+                  <span class="focus-btn-text">Swap Focus</span>
+                </button>
+              </div>
+            </div>
+            <div class="screen-share-pip-body" id="screenSharePipBody">
+              <video id="screenSharePipVideo" class="screen-share-pip-video" autoplay playsinline muted></video>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mini-Player Controls Overlay -->
+        <div id="miniPlayerControls" class="mini-player-controls-overlay">
+          <button type="button" id="miniPlayerPlayPauseBtn" class="mini-control-btn" title="Play / Pause" aria-label="Play or Pause">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </button>
+          <button type="button" id="miniPlayerMuteBtn" class="mini-control-btn" title="Unmute" aria-label="Mute or Unmute">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            </svg>
+          </button>
+          <button type="button" id="exitMiniPlayerBtn" class="mini-control-btn exit-mini-btn" title="Expand to Theater" aria-label="Exit Mini-Player">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="9 21 3 21 3 15"></polyline>
+              <line x1="21" y1="3" x2="14" y2="10"></line>
+              <line x1="3" y1="21" x2="10" y2="14"></line>
+            </svg>
+          </button>
         </div>
       </div>
 
-        <!-- Participant Tile Strip (Image 1 Centered beneath stage) -->
+        <!-- Participant Tile Strip & Discord Stage Partitioning -->
         <div class="participants-tile-area participants-bottom-area" id="participantStripArea">
-          <div class="participants-row" id="participantStrip">
-            <!-- Dynamic cards inserted here -->
+          <div class="stage-grid-partition stage-speakers-partition" id="stageSpeakersPartition">
+            <div class="stage-partition-header hidden" id="stageSpeakersHeader">
+              <span class="stage-partition-title">Speakers</span>
+              <span class="stage-partition-count" id="stageSpeakersCount">0</span>
+            </div>
+            <div class="participants-row" id="participantStrip">
+              <!-- Dynamic cards inserted here -->
+            </div>
+          </div>
+          <div class="stage-grid-partition stage-audience-partition hidden" id="stageAudiencePartition">
+            <div class="stage-partition-header" id="stageAudienceHeader">
+              <span class="stage-partition-title">Audience</span>
+              <span class="stage-partition-count" id="stageAudienceCount">0</span>
+            </div>
+            <div class="participants-row stage-audience-row" id="participantStripAudience">
+              <!-- Dynamic audience cards inserted here -->
+            </div>
           </div>
         </div>
 
@@ -1464,10 +1526,10 @@
             <div class="emoji-picker-header">
               <span class="emoji-picker-title">EMOJIS</span>
               <div class="emoji-picker-tabs">
-                <button type="button" class="emoji-tab-btn active" data-category="cinema" title="Cinema & Vibes">🍿</button>
-                <button type="button" class="emoji-tab-btn" data-category="popular" title="Reactions">😂</button>
-                <button type="button" class="emoji-tab-btn" data-category="hype" title="Hype & Love">🔥</button>
-                <button type="button" class="emoji-tab-btn" data-category="gestures" title="Gestures">👏</button>
+                <button type="button" class="emoji-tab-btn active" data-category="cinema" title="Cinema & Vibes">[Cinema]</button>
+                <button type="button" class="emoji-tab-btn" data-category="popular" title="Reactions">[Reactions]</button>
+                <button type="button" class="emoji-tab-btn" data-category="hype" title="Hype & Love">[Hype]</button>
+                <button type="button" class="emoji-tab-btn" data-category="gestures" title="Gestures">[Gestures]</button>
               </div>
             </div>
             <div class="emoji-picker-search-bar">
@@ -1486,15 +1548,15 @@
           <div class="chat-reactions-tray hidden" id="chatReactionsTray">
             <span class="reactions-tray-label">REACTION</span>
             <div class="reaction-tray-buttons">
-              <button type="button" class="reaction-item-btn" data-emoji="❤️" title="Love">❤️</button>
-              <button type="button" class="reaction-item-btn" data-emoji="🔥" title="Fire">🔥</button>
-              <button type="button" class="reaction-item-btn" data-emoji="🍿" title="Popcorn">🍿</button>
-              <button type="button" class="reaction-item-btn" data-emoji="👏" title="Applause">👏</button>
-              <button type="button" class="reaction-item-btn" data-emoji="😂" title="Laugh">😂</button>
-              <button type="button" class="reaction-item-btn" data-emoji="😮" title="Shock">😮</button>
-              <button type="button" class="reaction-item-btn" data-emoji="🚀" title="Hype">🚀</button>
-              <button type="button" class="reaction-item-btn" data-emoji="🎉" title="Party">🎉</button>
-              <button type="button" class="reaction-item-btn" data-emoji="💀" title="Dead">💀</button>
+              <button type="button" class="reaction-item-btn" data-emoji="heart" title="Love"><span class="reaction-badge">[LOVE]</span></button>
+              <button type="button" class="reaction-item-btn" data-emoji="fire" title="Fire"><span class="reaction-badge">[FIRE]</span></button>
+              <button type="button" class="reaction-item-btn" data-emoji="popcorn" title="Popcorn"><span class="reaction-badge">[POP]</span></button>
+              <button type="button" class="reaction-item-btn" data-emoji="clap" title="Applause"><span class="reaction-badge">[CLAP]</span></button>
+              <button type="button" class="reaction-item-btn" data-emoji="laugh" title="Laugh"><span class="reaction-badge">[LAUGH]</span></button>
+              <button type="button" class="reaction-item-btn" data-emoji="shock" title="Shock"><span class="reaction-badge">[WOW]</span></button>
+              <button type="button" class="reaction-item-btn" data-emoji="rocket" title="Hype"><span class="reaction-badge">[HYPE]</span></button>
+              <button type="button" class="reaction-item-btn" data-emoji="party" title="Party"><span class="reaction-badge">[PARTY]</span></button>
+              <button type="button" class="reaction-item-btn" data-emoji="dead" title="Dead"><span class="reaction-badge">[DEAD]</span></button>
             </div>
           </div>
 
@@ -1538,8 +1600,8 @@
         <div class="floating-pill-dock">
 
           <!-- 1. Mic Button with Chevron -->
-          <div class="split-dock-btn" id="micSplitBtn">
-            <button id="toggleMicBtn" class="pill-btn pill-btn-muted" title="Mute/Unmute">
+          <div class="split-dock-btn" id="micSplitBtn" title="Microphone Controls" aria-label="Microphone Controls">
+            <button id="toggleMicBtn" class="pill-btn pill-btn-muted" title="Mute/Unmute" aria-label="Mute or Unmute Microphone">
               <!-- Mic on icon -->
               <svg id="micOnIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
@@ -1549,7 +1611,7 @@
                 <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.12L12 8.14V5a3 3 0 0 1 3 3v3.12zM4.41 2.86L3 4.27l6 6V11a3 3 0 0 0 3 3c.39 0 .76-.08 1.1-.21l2.45 2.45C14.39 16.73 13.24 17 12 17c-3.87 0-7-3.13-7-7H3a9 9 0 0 0 8 8.94V21h2v-2.06c1.38-.17 2.66-.67 3.75-1.42l2.84 2.84 1.41-1.41L4.41 2.86z"/>
               </svg>
             </button>
-            <button id="micDeviceDropdownBtn" class="pill-chevron-btn" title="Microphone Settings">
+            <button id="micDeviceDropdownBtn" class="pill-chevron-btn" title="Microphone Settings" aria-label="Microphone Settings">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
@@ -1571,8 +1633,8 @@
           </div>
 
           <!-- 2. Video Camera Button with Chevron -->
-          <div class="split-dock-btn" id="cameraSplitBtn">
-            <button id="toggleCameraBtn" class="pill-btn pill-btn-off" title="Camera On/Off">
+          <div class="split-dock-btn" id="cameraSplitBtn" title="Camera Controls" aria-label="Camera Controls">
+            <button id="toggleCameraBtn" class="pill-btn pill-btn-off" title="Camera On/Off" aria-label="Turn Camera On or Off">
               <!-- Camera on icon -->
               <svg id="camOnIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
@@ -1582,7 +1644,7 @@
                 <path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.55-.18L19.73 21 21 19.73 3.27 2zM15 16H6c-.55 0-1-.45-1-1V8.27L12.73 16H15z"/>
               </svg>
             </button>
-            <button id="camDeviceDropdownBtn" class="pill-chevron-btn" title="Camera Settings">
+            <button id="camDeviceDropdownBtn" class="pill-chevron-btn" title="Camera Settings" aria-label="Camera Settings">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
@@ -1593,70 +1655,53 @@
             </div>
           </div>
 
-          <!-- 3. Screen Share / Movie Library Button (Image 1 monitor icon) -->
-          <button id="hostMovieLibraryDockBtn" class="pill-btn" title="Load / Share Movie">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/>
-              <path d="M12.5 14l3.5-3.5-1.41-1.41L13 10.67V8h-2v2.67l-1.59-1.58L8 10.5l3.5 3.5h1z"/>
+          <!-- 3. Screen Share Pill Button -->
+          <button id="dockScreenShareBtn" class="pill-btn" title="Share Screen" aria-label="Share Screen">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
             </svg>
           </button>
 
           <!-- 4. Grid / Theater Layout Toggle (Image 1 four squares icon) -->
-          <button id="layoutToggleBtn" class="pill-btn" title="Toggle Grid / Theater View">
+          <button id="layoutToggleBtn" class="pill-btn" title="Toggle Grid / Theater View" aria-label="Toggle Grid or Theater View">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path d="M3 3v8h8V3H3zm6 6H5V5h4v4zm-6 4v8h8v-8H3zm6 6H5v-4h4v4zm4-16v8h8V3h-8zm6 6h-4V5h4v4zm-6 4v8h8v-8h-8zm6 6h-4v-4h4v4z"/>
             </svg>
           </button>
 
-          <!-- 5. Activity Button Group (Star icon: Polls, Trivia, Soundboard) -->
-          <div class="split-dock-btn" id="activityGroup">
-            <button id="activityBtn" class="pill-btn" title="Party Activities & Games">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L9.09 8.26 2 9.27l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7 5.46-4.73-7.09-1.01L12 2z"/>
+          <!-- 5. Live Reactions Pill Button & Quick Tray -->
+          <div class="split-dock-btn" id="dockReactionsGroup" title="Live Reactions" aria-label="Live Reactions">
+            <button id="dockReactionsBtn" class="pill-btn" title="Send Live Reaction" aria-label="Send Live Reaction">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
               </svg>
             </button>
-            <div id="activityMenu" class="device-menu more-options-menu hidden">
-              <div class="device-menu-header">Party Activities</div>
-              <div class="device-menu-items">
-                <button type="button" class="more-menu-item" id="menuPollBtn" title="Create Room Poll">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="20" x2="18" y2="10"></line>
-                    <line x1="12" y1="20" x2="12" y2="4"></line>
-                    <line x1="6" y1="20" x2="6" y2="14"></line>
-                  </svg>
-                  <div class="more-menu-text">
-                    <span class="more-menu-title">Live Poll</span>
-                    <span class="more-menu-desc">Vote on movies or ask a question</span>
-                  </div>
+            <div id="dockReactionsTray" class="device-menu dock-reactions-menu hidden">
+              <div class="dock-reactions-items">
+                <button type="button" class="dock-reaction-item" data-reaction="heart" title="Heart" aria-label="React with Heart">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#f43f5e"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                 </button>
-                <button type="button" class="more-menu-item" id="menuTriviaBtn" title="Movie Trivia Game">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                  </svg>
-                  <div class="more-menu-text">
-                    <span class="more-menu-title">Movie Trivia</span>
-                    <span class="more-menu-desc">Play 5-round cinema quiz game</span>
-                  </div>
+                <button type="button" class="dock-reaction-item" data-reaction="fire" title="Fire" aria-label="React with Fire">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#f59e0b"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.61 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>
                 </button>
-                <button type="button" class="more-menu-item" id="menuSoundboardBtn" title="Watch Party Soundboard">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                  </svg>
-                  <div class="more-menu-text">
-                    <span class="more-menu-title">Party Soundboard</span>
-                    <span class="more-menu-desc">Airhorn, applause, drumroll, rimshot</span>
-                  </div>
+                <button type="button" class="dock-reaction-item" data-reaction="popcorn" title="Popcorn" aria-label="React with Popcorn">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#fbbf24"><path d="M18 9v12H6V9h12m-1-7H7a2 2 0 0 0-2 2v1h14V4a2 2 0 0 0-2-2z"/></svg>
+                </button>
+                <button type="button" class="dock-reaction-item" data-reaction="clap" title="Clap" aria-label="React with Clap">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#38bdf8"><path d="M19 13.5l-6-6-1.5 1.5 4.5 4.5H6.5c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5h10l-1.5 1.5 1.5 1.5 5-5-2.5-2.5z"/></svg>
+                </button>
+                <button type="button" class="dock-reaction-item" data-reaction="rocket" title="Rocket" aria-label="React with Rocket">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#a855f7"><path d="M9.19 6.35c-2.04 2.29-3.44 5.58-3.57 5.89l4.14 4.14c.31-.13 3.6-1.53 5.89-3.57C17.7 10.96 19 8.14 19 8.14s-2.82 1.3-4.67 3.35l-2.82-2.82c2.05-1.85 3.35-4.67 3.35-4.67s-2.82 1.3-5.67 2.35z"/></svg>
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- 6. More Options Button Group (Screenshare, YouTube, Direct URL) -->
-          <div class="split-dock-btn" id="moreOptionsGroup">
-            <button id="moreOptionsBtn" class="pill-btn" title="More Options">
+          <!-- 6. More Options Button Group (Screenshare, YouTube, Direct URL, Games) -->
+          <div class="split-dock-btn" id="moreOptionsGroup" title="More Options" aria-label="More Options">
+            <button id="moreOptionsBtn" class="pill-btn" title="More Options" aria-label="More Options">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <circle cx="12" cy="12" r="2"/>
                 <circle cx="19" cy="12" r="2"/>
@@ -1666,7 +1711,17 @@
             <div id="moreOptionsMenu" class="device-menu more-options-menu hidden">
               <div class="device-menu-header">More Stream Options</div>
               <div class="device-menu-items">
-                <button type="button" class="more-menu-item" id="menuAmbientGlowBtn" title="Toggle Ambient Cinema Glow">
+                <button type="button" class="more-menu-item" id="hostMovieLibraryDockBtn" title="Load / Share Movie" aria-label="Load or Share Movie">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/>
+                    <path d="M12.5 14l3.5-3.5-1.41-1.41L13 10.67V8h-2v2.67l-1.59-1.58L8 10.5l3.5 3.5h1z"/>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Movie Library</span>
+                    <span class="more-menu-desc">Select and broadcast a local video</span>
+                  </div>
+                </button>
+                <button type="button" class="more-menu-item" id="menuAmbientGlowBtn" title="Toggle Ambient Cinema Glow" aria-label="Toggle Ambient Cinema Glow">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="5"></circle>
                     <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -1683,7 +1738,7 @@
                     <span class="more-menu-desc">Dynamic cinema backglow</span>
                   </div>
                 </button>
-                <button type="button" class="more-menu-item" id="menuScreenshareBtn" title="Share Screen">
+                <button type="button" class="more-menu-item" id="menuScreenshareBtn" title="Share Screen" aria-label="Share Screen">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
                     <line x1="8" y1="21" x2="16" y2="21"></line>
@@ -1694,7 +1749,7 @@
                     <span class="more-menu-desc">Broadcast your screen or window</span>
                   </div>
                 </button>
-                <button type="button" class="more-menu-item" id="menuYouTubeBtn" title="Watch YouTube">
+                <button type="button" class="more-menu-item" id="menuYouTubeBtn" title="Watch YouTube" aria-label="Watch YouTube">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M21.58 7.19a2.5 2.5 0 0 0-1.76-1.77C18.26 5 12 5 12 5s-6.26 0-7.82.42c-.86.23-1.54.91-1.76 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.9 1.54 1.76 1.77C5.74 19 12 19 12 19s6.26 0 7.82-.42a2.5 2.5 0 0 0 1.76-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/>
                   </svg>
@@ -1703,7 +1758,7 @@
                     <span class="more-menu-desc">Stream any YouTube link together</span>
                   </div>
                 </button>
-                <button type="button" class="more-menu-item" id="menuUrlBtn" title="Play from URL">
+                <button type="button" class="more-menu-item" id="menuUrlBtn" title="Play from URL" aria-label="Play from URL">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
                     <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
@@ -1713,7 +1768,7 @@
                     <span class="more-menu-desc">Direct .mp4, .webm or live web stream</span>
                   </div>
                 </button>
-                <button type="button" class="more-menu-item" id="menuStreamingBtn" title="Streaming Watch Party">
+                <button type="button" class="more-menu-item" id="menuStreamingBtn" title="Streaming Watch Party" aria-label="Streaming Watch Party">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
                     <polyline points="17 2 12 7 7 2"></polyline>
@@ -1723,7 +1778,7 @@
                     <span class="more-menu-desc">Netflix, Prime Video, JioHotstar, Zee5</span>
                   </div>
                 </button>
-                <button type="button" class="more-menu-item" id="menuTransformBtn" title="Pop Out Movie Screen Window">
+                <button type="button" class="more-menu-item" id="menuTransformBtn" title="Pop Out Movie Screen Window" aria-label="Pop Out Movie Screen Window">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                     <polyline points="9 3 9 21"></polyline>
@@ -1734,12 +1789,44 @@
                     <span class="more-menu-desc">Resize &amp; reposition like a Windows app</span>
                   </div>
                 </button>
+                <button type="button" class="more-menu-item" id="menuPollBtn" title="Create Room Poll" aria-label="Create Room Poll">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Live Poll</span>
+                    <span class="more-menu-desc">Vote on movies or ask a question</span>
+                  </div>
+                </button>
+                <button type="button" class="more-menu-item" id="menuTriviaBtn" title="Movie Trivia Game" aria-label="Movie Trivia Game">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Movie Trivia</span>
+                    <span class="more-menu-desc">Play 5-round cinema quiz game</span>
+                  </div>
+                </button>
+                <button type="button" class="more-menu-item" id="menuSoundboardBtn" title="Watch Party Soundboard" aria-label="Watch Party Soundboard">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  </svg>
+                  <div class="more-menu-text">
+                    <span class="more-menu-title">Party Soundboard</span>
+                    <span class="more-menu-desc">Airhorn, applause, drumroll, rimshot</span>
+                  </div>
+                </button>
               </div>
             </div>
           </div>
 
           <!-- 7. Disconnect Button (Image 1 Red Pill) -->
-          <button id="disconnectBtn" class="pill-btn pill-btn-danger" title="Disconnect">
+          <button id="disconnectBtn" class="pill-btn pill-btn-danger" title="Disconnect / Leave Room" aria-label="Disconnect / Leave Room">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.99.99 0 0 1 0-1.41C3.28 8.8 7.42 7 12 7s8.72 1.8 11.71 4.67c.39.39.39 1.02 0 1.41l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
             </svg>
@@ -2057,7 +2144,7 @@
       </div>
 
       <div class="support-github-cta">
-        <span>⭐ Loving the project? Give it a star on GitHub!</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-right: 4px;" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><span>Loving the project? Give it a star on GitHub!</span>
       </div>
     </div>
   </div>
@@ -2304,7 +2391,7 @@
   <!-- 9. SUBTITLE SETTINGS & SYNC DELAY MODAL                      -->
   <!-- ============================================================ -->
 
-  <div id="subtitleModal" class="modal-overlay hidden">
+  <div id="subtitlesModal" class="modal-overlay hidden">
     <div class="modal-card extra-feature-modal-card">
       <div class="modal-header-row">
         <div class="modal-title-with-icon">
@@ -2312,7 +2399,7 @@
             <rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect>
             <path d="M7 15h3M7 11h2M14 15h3M14 11h1"></path>
           </svg>
-          <h3>Subtitle Settings & Timing</h3>
+          <h3>Subtitle Settings &amp; Timing</h3>
         </div>
         <button id="closeSubtitleModalBtn" class="modal-x-btn" title="Close">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2323,30 +2410,109 @@
       </div>
 
       <div class="sub-settings-content">
-        <!-- Subtitle Sync Timing Offset -->
-        <div class="form-group">
-          <label>SYNC TIMING OFFSET</label>
+        <!-- Subtitle Live Cinema Preview Card -->
+        <div id="subtitlePreviewCard" class="subtitle-preview-card" aria-label="Subtitle Live Preview Cinema Scene">
+          <div class="subtitle-preview-badge">Live Cinema Preview</div>
+          <div class="subtitle-preview-scene">
+            <div class="subtitle-preview-stars"></div>
+            <div class="subtitle-preview-nebula"></div>
+            <div class="subtitle-preview-overlay"></div>
+            <div id="subtitlePreviewBox" class="subtitle-preview-box">
+              <span id="subtitlePreviewText" class="subtitle-preview-text">&quot;The stars look different tonight...&quot;</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Continuous Customization Sliders -->
+        <div class="form-group sub-slider-group">
+          <div class="sub-slider-header">
+            <label for="subFontScaleSlider" class="sub-slider-label">Font Scale</label>
+            <span id="subFontScaleValue" class="sub-value-badge">100%</span>
+          </div>
+          <div class="sub-slider-track-wrap">
+            <input type="range" id="subFontScaleSlider" min="50" max="250" value="100" step="5" class="sub-range-slider" aria-label="Font Scale">
+          </div>
+          <div class="sub-slider-ticks">
+            <span>50%</span>
+            <span>100%</span>
+            <span>175%</span>
+            <span>250%</span>
+          </div>
+        </div>
+
+        <div class="form-group sub-slider-group">
+          <div class="sub-slider-header">
+            <label for="subTextOpacitySlider" class="sub-slider-label">Text Opacity</label>
+            <span id="subTextOpacityValue" class="sub-value-badge">100%</span>
+          </div>
+          <div class="sub-slider-track-wrap">
+            <input type="range" id="subTextOpacitySlider" min="20" max="100" value="100" step="5" class="sub-range-slider" aria-label="Text Opacity">
+          </div>
+          <div class="sub-slider-ticks">
+            <span>20%</span>
+            <span>50%</span>
+            <span>75%</span>
+            <span>100%</span>
+          </div>
+        </div>
+
+        <div class="form-group sub-slider-group">
+          <div class="sub-slider-header">
+            <label for="subBgBlurSlider" class="sub-slider-label">Background Blur</label>
+            <span id="subBgBlurValue" class="sub-value-badge">4px</span>
+          </div>
+          <div class="sub-slider-track-wrap">
+            <input type="range" id="subBgBlurSlider" min="0" max="20" value="4" step="1" class="sub-range-slider" aria-label="Background Blur">
+          </div>
+          <div class="sub-slider-ticks">
+            <span>0px (Crisp)</span>
+            <span>5px</span>
+            <span>10px</span>
+            <span>20px (Frost)</span>
+          </div>
+        </div>
+
+        <div class="form-group sub-slider-group">
+          <div class="sub-slider-header">
+            <label for="subDelaySlider" class="sub-slider-label">Delay Calibration</label>
+            <div class="sub-delay-badge-group">
+              <span id="subOffsetDisplay" class="sub-offset-badge">0.0s</span>
+            </div>
+          </div>
+          <div class="sub-slider-track-wrap">
+            <input type="range" id="subDelaySlider" min="-5.0" max="5.0" value="0.0" step="0.1" class="sub-range-slider" aria-label="Delay Calibration">
+          </div>
           <div class="sub-offset-control-row">
             <button type="button" class="btn btn-secondary btn-sm sub-offset-btn" data-delta="-1.0">-1.0s</button>
             <button type="button" class="btn btn-secondary btn-sm sub-offset-btn" data-delta="-0.5">-0.5s</button>
-            <span id="subOffsetDisplay" class="sub-offset-badge">0.0s</span>
             <button type="button" class="btn btn-secondary btn-sm sub-offset-btn" data-delta="0.5">+0.5s</button>
             <button type="button" class="btn btn-secondary btn-sm sub-offset-btn" data-delta="1.0">+1.0s</button>
             <button type="button" id="subOffsetResetBtn" class="btn btn-secondary btn-sm">Reset</button>
           </div>
-          <span class="sub-hint-text">Adjust subtitle timing if dialog is ahead or behind the audio.</span>
+          <span class="sub-hint-text">Adjust subtitle timing if dialogue is ahead or behind audio.</span>
         </div>
 
-        <!-- Subtitle Appearance -->
-        <div class="form-group">
-          <label>FONT SIZE</label>
-          <div class="sub-pill-row">
-            <button type="button" class="sub-style-btn active" data-style-type="size" data-val="normal">Normal (18px)</button>
-            <button type="button" class="sub-style-btn" data-style-type="size" data-val="large">Large (24px)</button>
-            <button type="button" class="sub-style-btn" data-style-type="size" data-val="xlarge">Extra Large (30px)</button>
+        <!-- Dialogue Booster (Night Mode) -->
+        <div class="form-group dialogue-booster">
+          <div class="dialogue-booster-header">
+            <div class="dialogue-booster-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 3v18M8 8v8M4 11v2M16 6v12M20 10v4"></path>
+              </svg>
+              <div class="dialogue-booster-text">
+                <label for="dialogueBoosterToggle" class="dialogue-booster-label">Dialogue Booster (Night Mode)</label>
+                <span class="dialogue-booster-sublabel">Speech peaking (2.2 kHz) and dynamics compression</span>
+              </div>
+            </div>
+            <label class="toggle-switch dialogue-booster-toggle-wrap">
+              <input type="checkbox" id="dialogueBoosterToggle" class="dialogue-booster-input">
+              <span class="toggle-slider"></span>
+            </label>
           </div>
+          <span class="sub-hint-text">Clarifies speech and balances loud sound effects for late-night viewing.</span>
         </div>
 
+        <!-- Text Color Presets -->
         <div class="form-group">
           <label>TEXT COLOR</label>
           <div class="sub-pill-row">
@@ -2487,27 +2653,27 @@
 
       <div class="soundboard-grid">
         <button type="button" class="soundboard-btn" data-sound="airhorn">
-          <span class="soundboard-icon">📢</span>
+          <span class="soundboard-icon">[HORN]</span>
           <span class="soundboard-name">Airhorn</span>
         </button>
         <button type="button" class="soundboard-btn" data-sound="applause">
-          <span class="soundboard-icon">👏</span>
+          <span class="soundboard-icon">[CLAP]</span>
           <span class="soundboard-name">Applause</span>
         </button>
         <button type="button" class="soundboard-btn" data-sound="drumroll">
-          <span class="soundboard-icon">🥁</span>
+          <span class="soundboard-icon">[ROLL]</span>
           <span class="soundboard-name">Drumroll</span>
         </button>
         <button type="button" class="soundboard-btn" data-sound="sting">
-          <span class="soundboard-icon">😱</span>
+          <span class="soundboard-icon">[SHOCK]</span>
           <span class="soundboard-name">Dramatic</span>
         </button>
         <button type="button" class="soundboard-btn" data-sound="laugh">
-          <span class="soundboard-icon">😂</span>
+          <span class="soundboard-icon">[LAUGH]</span>
           <span class="soundboard-name">Laugh Track</span>
         </button>
         <button type="button" class="soundboard-btn" data-sound="rimshot">
-          <span class="soundboard-icon">🥁</span>
+          <span class="soundboard-icon">[DRUM]</span>
           <span class="soundboard-name">Ba-Dum-Tss</span>
         </button>
       </div>
@@ -2519,6 +2685,7 @@
   </div>
 
   <div id="toastContainer" class="toast-shelf"></div>
+  <div id="windowSnapGuide" class="window-snap-guide hidden"></div>
 
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
