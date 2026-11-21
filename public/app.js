@@ -5706,6 +5706,8 @@
       ? '<span class="chat-role-badge role-host">HOST</span>'
       : '<span class="chat-role-badge role-viewer">VIEWER</span>';
 
+    const formattedText = formatChatMessageText(msg.text);
+
     item.innerHTML = `
       <div class="chat-msg-avatar" style="background-color: ${msg.color || '#5865F2'}">
         ${escapeHtml((msg.username || 'U').charAt(0).toUpperCase())}
@@ -5716,13 +5718,27 @@
           ${roleBadgeHtml}
           <span class="chat-msg-time">${msg.timestamp}</span>
         </div>
-        <div class="chat-msg-text">${escapeHtml(msg.text)}</div>
+        <div class="chat-msg-text">${formattedText}</div>
       </div>
     `;
 
     el.chatMessages.appendChild(item);
     requestAnimationFrame(() => {
       el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+    });
+  }
+
+  function formatChatMessageText(text) {
+    if (!text) return '';
+    let escaped = escapeHtml(text);
+    return escaped.replace(/:([a-z0-9_]+):/gi, (match, p1) => {
+      const key = p1.toLowerCase();
+      if (REACTION_SVGS[key]) {
+        return `<span class="chat-inline-reaction-svg">${REACTION_SVGS[key]}</span>`;
+      }
+      if (key === 'love') return `<span class="chat-inline-reaction-svg">${REACTION_SVGS.heart}</span>`;
+      if (key === 'skull') return `<span class="chat-inline-reaction-svg">${REACTION_SVGS.dead}</span>`;
+      return match;
     });
   }
 
@@ -5947,7 +5963,12 @@
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'emoji-item-btn';
-    btn.innerText = emoji;
+    const cleanKey = emoji.replace(/:/g, '').toLowerCase();
+    if (REACTION_SVGS[cleanKey]) {
+      btn.innerHTML = REACTION_SVGS[cleanKey];
+    } else {
+      btn.innerText = emoji;
+    }
     btn.title = emoji;
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -6013,23 +6034,29 @@
     });
   }
 
+  const REACTION_SVGS = {
+    heart: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#f43f5e" aria-label="Heart"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>',
+    fire: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#f59e0b" aria-label="Fire"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.61 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>',
+    popcorn: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#fbbf24" aria-label="Popcorn"><path d="M7 3a2.5 2.5 0 0 0-2.45 2.05A2.5 2.5 0 0 0 3 7.5a2.5 2.5 0 0 0 2 2.45V10l1.8 11h10.4L19 10v-.05A2.5 2.5 0 0 0 21 7.5a2.5 2.5 0 0 0-1.55-2.45A2.5 2.5 0 0 0 17 3a2.5 2.5 0 0 0-2.12 1.18A2.5 2.5 0 0 0 12 3a2.5 2.5 0 0 0-2.88 1.18A2.5 2.5 0 0 0 7 3zm1.5 8h2l.7 8h-2l-.7-8zm4.5 0h2l-.7 8h-2l.7-8z"/></svg>',
+    clap: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#38bdf8" aria-label="Clap"><path d="M19 13.5l-6-6-1.5 1.5 4.5 4.5H6.5c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5h10l-1.5 1.5 1.5 1.5 5-5-2.5-2.5z"/><path d="M12 4l-1.4 1.4 2.6 2.6 1.4-1.4zM7 8l1.4-1.4 2.6 2.6L9.6 10.6z"/></svg>',
+    laugh: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#eab308" aria-label="Laugh"><circle cx="12" cy="12" r="10" fill="#eab308"/><path d="M7 9.5c.5-1 1.8-1.5 3-1s1.5 1.8 1 2.5M17 9.5c-.5-1-1.8-1.5-3-1s-1.5 1.8-1 2.5" stroke="#1f2232" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M7 13.5c1 2.5 3 4 5 4s4-1.5 5-4H7z" fill="#1f2232"/><path d="M9 13.5c.8 1.2 2 1.8 3 1.8s2.2-.6 3-1.8H9z" fill="#fff"/></svg>',
+    shock: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#a855f7" aria-label="Shock"><circle cx="12" cy="12" r="10" fill="#a855f7"/><circle cx="8.5" cy="9.5" r="1.8" fill="#1f2232"/><circle cx="15.5" cy="9.5" r="1.8" fill="#1f2232"/><ellipse cx="12" cy="15.5" rx="3.2" ry="4" fill="#1f2232"/></svg>',
+    wow: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#a855f7" aria-label="Shock"><circle cx="12" cy="12" r="10" fill="#a855f7"/><circle cx="8.5" cy="9.5" r="1.8" fill="#1f2232"/><circle cx="15.5" cy="9.5" r="1.8" fill="#1f2232"/><ellipse cx="12" cy="15.5" rx="3.2" ry="4" fill="#1f2232"/></svg>',
+    rocket: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#818cf8" aria-label="Rocket"><path d="M9.19 6.35c-2.04 2.29-3.44 5.58-3.57 5.89l4.14 4.14c.31-.13 3.6-1.53 5.89-3.57C17.7 10.96 19 8.14 19 8.14s-2.82 1.3-4.67 3.35l-2.82-2.82c2.05-1.85 3.35-4.67 3.35-4.67s-2.82 1.3-5.67 2.35z"/><path d="M5.5 15.5l-2 2 1 3 3 1 2-2z" fill="#f59e0b"/></svg>',
+    hype: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#818cf8" aria-label="Rocket"><path d="M9.19 6.35c-2.04 2.29-3.44 5.58-3.57 5.89l4.14 4.14c.31-.13 3.6-1.53 5.89-3.57C17.7 10.96 19 8.14 19 8.14s-2.82 1.3-4.67 3.35l-2.82-2.82c2.05-1.85 3.35-4.67 3.35-4.67s-2.82 1.3-5.67 2.35z"/><path d="M5.5 15.5l-2 2 1 3 3 1 2-2z" fill="#f59e0b"/></svg>',
+    party: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#ec4899" aria-label="Party"><path d="M3 21l3.5-9 5.5 5.5-9 3.5zm11.5-13.5l1.5-1.5M19 8l2-1M15 15l2 1M18 3l1 2M12 4l1 1" stroke="#ec4899" stroke-width="2.2" stroke-linecap="round"/><circle cx="19" cy="12" r="1.5" fill="#f59e0b"/><circle cx="14" cy="5" r="1.5" fill="#38bdf8"/><circle cx="8" cy="4" r="1.5" fill="#a855f7"/></svg>',
+    dead: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#cbd5e1" aria-label="Dead"><path d="M12 2C7.58 2 4 5.58 4 10c0 2.76 1.4 5.18 3.53 6.6v2.4c0 .55.45 1 1 1h6.94c.55 0 1-.45 1-1v-2.4C18.6 15.18 20 12.76 20 10c0-4.42-3.58-8-8-8zm-3.5 10c-.83 0-1.5-.67-1.5-1.5S7.67 9 8.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm7 0c-.83 0-1.5-.67-1.5-1.5S14.67 9 15.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm-5 6.5h-1v-2h1v2zm2 0h-1v-2h1v2zm2 0h-1v-2h1v2z"/></svg>'
+  };
+
   function getReactionDisplay(emoji) {
-    if (!emoji) return '<span class="reaction-tag-custom">[REACT]</span>';
-    const clean = String(emoji).toLowerCase().trim();
-    if (clean === 'heart' || clean === 'love' || clean === ':heart:') return '<span class="reaction-tag-love">[LOVE]</span>';
-    if (clean === 'fire' || clean === ':fire:') return '<span class="reaction-tag-fire">[FIRE]</span>';
-    if (clean === 'popcorn' || clean === ':popcorn:') return '<span class="reaction-tag-popcorn">[POP]</span>';
-    if (clean === 'clap' || clean === ':clap:') return '<span class="reaction-tag-clap">[CLAP]</span>';
-    if (clean === 'laugh' || clean === ':laugh:') return '<span class="reaction-tag-laugh">[LAUGH]</span>';
-    if (clean === 'shock' || clean === 'wow' || clean === ':shock:') return '<span class="reaction-tag-shock">[WOW]</span>';
-    if (clean === 'rocket' || clean === 'hype' || clean === ':rocket:') return '<span class="reaction-tag-rocket">[HYPE]</span>';
-    if (clean === 'party' || clean === ':party:') return '<span class="reaction-tag-party">[PARTY]</span>';
-    if (clean === 'dead' || clean === ':skull:') return '<span class="reaction-tag-dead">[DEAD]</span>';
-    if (clean.startsWith(':') && clean.endsWith(':')) {
-      const tag = clean.slice(1, -1).toUpperCase();
-      return `<span class="reaction-tag-custom">[${escapeHtml(tag)}]</span>`;
+    if (!emoji) return REACTION_SVGS.heart;
+    const clean = String(emoji).toLowerCase().trim().replace(/^:|:$/g, '');
+    if (REACTION_SVGS[clean]) {
+      return REACTION_SVGS[clean];
     }
-    return `<span class="reaction-tag-custom">${escapeHtml(clean.toUpperCase())}</span>`;
+    if (clean === 'love') return REACTION_SVGS.heart;
+    if (clean === 'skull') return REACTION_SVGS.dead;
+    return `<span class="reaction-tag-custom">[${escapeHtml(clean.toUpperCase())}]</span>`;
   }
 
   function spawnReactionBurst(emoji, username) {

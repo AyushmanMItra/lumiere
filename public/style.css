@@ -3481,7 +3481,6 @@ body:not(.has-participants) .cinema-stage-wrapper {
 }
 
 .reaction-item-btn {
-  font-size: 22px;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -3495,10 +3494,20 @@ body:not(.has-participants) .cinema-stage-wrapper {
   user-select: none;
 }
 
+.reaction-item-btn svg {
+  width: 22px;
+  height: 22px;
+  transition: transform 0.18s ease;
+}
+
 .reaction-item-btn:hover {
-  transform: scale(1.35) translateY(-3px);
+  transform: scale(1.32) translateY(-2px);
   background: rgba(255, 255, 255, 0.12);
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+}
+
+.reaction-item-btn:hover svg {
+  transform: scale(1.15);
 }
 
 .reaction-item-btn:active {
@@ -3544,8 +3553,42 @@ body:not(.has-participants) .cinema-stage-wrapper {
 }
 
 .floating-reaction-emoji {
-  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   filter: drop-shadow(0 4px 14px rgba(88, 101, 242, 0.65)) drop-shadow(0 8px 24px rgba(0, 0, 0, 0.7));
+}
+
+.floating-reaction-emoji .reaction-svg {
+  width: 38px;
+  height: 38px;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.75));
+}
+
+.floating-reaction-user {
+  font-size: 11px;
+  font-weight: 700;
+  color: #dbdee1;
+  background: rgba(14, 16, 24, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-top: 4px;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.chat-inline-reaction-svg {
+  display: inline-flex;
+  vertical-align: -3px;
+  margin: 0 3px;
+}
+
+.chat-inline-reaction-svg .reaction-svg {
+  width: 18px;
+  height: 18px;
 }
 
 .reaction-tag-love {
