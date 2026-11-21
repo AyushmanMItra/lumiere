@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* ==========================================================================
-   STREAM ROOM - AUTHENTIC DISCORD THEME & OLED CINEMA SYSTEM
+   STREAM ROOM - AUTHENTIC THEME & OLED CINEMA SYSTEM
    ========================================================================== */
 
 :root {
@@ -441,7 +441,7 @@ body.error-page-container {
 }
 
 /* ==========================================================================
-   DISCORD STAGE LOUNGE & ARENA (Waiting State when no media is active)
+   STAGE LOUNGE & ARENA (Waiting State when no media is active)
    ========================================================================== */
 .stage-placeholder {
   position: absolute;
@@ -457,7 +457,8 @@ body.error-page-container {
   overflow: hidden;
 }
 
-.discord-stage-lounge {
+.stage-lounge,
+.cinema-stage-lounge {
   background: radial-gradient(circle at 50% 40%, #1e2029 0%, #12131a 55%, #090a0d 100%);
 }
 
@@ -592,7 +593,7 @@ body.error-page-container {
   transform: scale(1.08);
 }
 
-/* Open Mic: Discord Green (#23a55a) */
+/* Open Mic: Green (#23a55a) */
 .stage-avatar-wrapper.mic-open .stage-avatar-mic-badge {
   background-color: #23a55a;
   box-shadow: 0 2px 10px rgba(35, 165, 90, 0.45);
@@ -606,7 +607,7 @@ body.error-page-container {
   display: none;
 }
 
-/* Muted Mic: Discord Red (#da373c) */
+/* Muted Mic: Red (#da373c) */
 .stage-avatar-wrapper.mic-muted .stage-avatar-mic-badge {
   background-color: #da373c;
   box-shadow: 0 2px 10px rgba(218, 55, 60, 0.4);
@@ -685,7 +686,7 @@ body.error-page-container {
   max-width: 420px;
 }
 
-.btn-discord-primary {
+.btn-stage-primary {
   background-color: #5865F2;
   color: #ffffff;
   border: none;
@@ -702,13 +703,13 @@ body.error-page-container {
   user-select: none;
 }
 
-.btn-discord-primary:hover {
+.btn-stage-primary:hover {
   background-color: #4752c4;
   transform: translateY(-2px);
   box-shadow: 0 8px 26px rgba(88, 101, 242, 0.55);
 }
 
-.btn-discord-primary:active {
+.btn-stage-primary:active {
   transform: translateY(0) scale(0.98);
 }
 
@@ -719,7 +720,7 @@ body.error-page-container {
 }
 
 /* ==========================================================================
-   DISCORD STAGE BROADCASTER BADGE (Top-Left Pill in Theater)
+   STAGE BROADCASTER BADGE (Top-Left Pill in Theater)
    ========================================================================== */
 .stage-bottom-tag {
   position: absolute;
@@ -744,7 +745,7 @@ body.error-page-container {
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
-.discord-stream-badge .stage-live-label {
+.stage-stream-badge .stage-live-label {
   background-color: #f23f43;
   color: #ffffff;
   font-size: 10px;
@@ -755,7 +756,7 @@ body.error-page-container {
   line-height: 1.2;
 }
 
-.discord-stream-badge .stage-tag-divider {
+.stage-stream-badge .stage-tag-divider {
   width: 1px;
   height: 12px;
   background-color: rgba(255, 255, 255, 0.18);
@@ -881,7 +882,7 @@ body.error-page-container {
 }
 
 /* ==========================================================================
-   CINEMA CONTROLS HUD (Modern Discord Lounge Scrubber & Player Controls)
+   CINEMA CONTROLS HUD (Modern Lounge Scrubber & Player Controls)
    ========================================================================== */
 .cinema-controls-hud {
   position: absolute;
@@ -1014,7 +1015,7 @@ body.error-page-container {
   max-width: 100%;
 }
 
-/* Play/Pause Discord Blurple Circular Button */
+/* Play/Pause Blurple Circular Button */
 .hud-circle-btn {
   width: 42px;
   height: 42px;
@@ -2993,7 +2994,7 @@ body:not(.has-participants) .cinema-stage-wrapper {
 }
 
 /* ==========================================================================
-   4. DISCORD CHAT SIDEBAR (Matching Image 3)
+   4. CHAT SIDEBAR (Matching Image 3)
    ========================================================================== */
 
 .chat-panel {
@@ -3680,7 +3681,7 @@ body:not(.has-participants) .cinema-stage-wrapper {
 }
 
 /* ==========================================================================
-   GRID GALLERY VIEW & DISCORD STAGE LAYOUT
+   GRID GALLERY VIEW & STAGE LAYOUT
    ========================================================================== */
 
 .is-grid-view .stage-section,
@@ -3732,7 +3733,7 @@ body:not(.has-participants) .cinema-stage-wrapper {
   width: 100% !important;
 }
 
-/* Discord Stage Grid Partitioning */
+/* Stage Grid Partitioning */
 .stage-grid-partition {
   width: 100%;
   display: flex;
@@ -4215,7 +4216,7 @@ body:not(.has-participants) .cinema-stage-wrapper {
   }
 }
 
-/* Discord Sleek Scrollbars */
+/* Sleek Scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

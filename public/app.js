@@ -1,5 +1,5 @@
 // ==========================================================================
-// STREAM ROOM - DISCORD-STYLE SYNCHRONIZED THEATER & CALL
+// STREAM ROOM - SYNCHRONIZED THEATER & CALL
 // ==========================================================================
 
 (() => {
@@ -4527,7 +4527,7 @@
     document.body.classList.add('has-participants');
 
     if (isStageGrid) {
-      // Discord Stage Grid mode: Partition broadcasters/speakers and passive audience
+      // Stage Grid mode: Partition broadcasters/speakers and passive audience
       if (el.participantTopArea) {
         el.participantTopArea.classList.add('hidden');
         el.participantTopArea.dataset.count = '0';
@@ -5598,7 +5598,7 @@
   }
 
   // ==========================================================================
-  // DISCORD CHAT PANEL (Matching Image 3)
+  // CHAT PANEL (Matching Image 3)
   // ==========================================================================
 
   let chatClosingTimer = null;
@@ -6658,24 +6658,24 @@
       });
     }
 
-    // Discord Community Modal Handlers
-    const discordModal = document.getElementById('discordModal');
-    const openDiscordModal = (e) => {
+    // Community Modal Handlers
+    const communityModal = document.getElementById('communityModal');
+    const openCommunityModal = (e) => {
       if (e && e.preventDefault) e.preventDefault();
-      if (discordModal) discordModal.classList.remove('hidden');
+      if (communityModal) communityModal.classList.remove('hidden');
     };
-    const closeDiscordModal = () => {
-      if (discordModal) discordModal.classList.add('hidden');
+    const closeCommunityModal = () => {
+      if (communityModal) communityModal.classList.add('hidden');
     };
-    const footerDiscordBtn = document.getElementById('footerDiscordBtn');
-    if (footerDiscordBtn) footerDiscordBtn.addEventListener('click', openDiscordModal);
-    const discordCloseBtn = document.getElementById('discordCloseBtn');
-    if (discordCloseBtn) discordCloseBtn.addEventListener('click', closeDiscordModal);
-    const discordDoneBtn = document.getElementById('discordDoneBtn');
-    if (discordDoneBtn) discordDoneBtn.addEventListener('click', closeDiscordModal);
-    if (discordModal) {
-      discordModal.addEventListener('click', (e) => {
-        if (e.target === discordModal) closeDiscordModal();
+    const footerCommunityBtn = document.getElementById('footerCommunityBtn');
+    if (footerCommunityBtn) footerCommunityBtn.addEventListener('click', openCommunityModal);
+    const communityCloseBtn = document.getElementById('communityCloseBtn');
+    if (communityCloseBtn) communityCloseBtn.addEventListener('click', closeCommunityModal);
+    const communityDoneBtn = document.getElementById('communityDoneBtn');
+    if (communityDoneBtn) communityDoneBtn.addEventListener('click', closeCommunityModal);
+    if (communityModal) {
+      communityModal.addEventListener('click', (e) => {
+        if (e.target === communityModal) closeCommunityModal();
       });
     }
 
@@ -6683,7 +6683,7 @@
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         if (tailscaleModal && !tailscaleModal.classList.contains('hidden')) closeTailscaleModal();
-        if (discordModal && !discordModal.classList.contains('hidden')) closeDiscordModal();
+        if (communityModal && !communityModal.classList.contains('hidden')) closeCommunityModal();
       }
     });
 
@@ -7217,7 +7217,7 @@
       }
     };
 
-    // Layout Toggle (Theater Stage vs Discord Stage Grid View)
+    // Layout Toggle (Theater Stage vs Stage Grid View)
     let isGridView = false;
     if (el.layoutToggleBtn) {
       el.layoutToggleBtn.onclick = () => {
@@ -7228,7 +7228,7 @@
         el.layoutToggleBtn.classList.toggle('active-status-ring', isGridView);
         el.layoutToggleBtn.classList.toggle('ring-layout', isGridView);
         renderParticipantStrip();
-        showToast(isGridView ? 'Switched to Discord Stage Grid View' : 'Switched to Cinema Stage View');
+        showToast(isGridView ? 'Switched to Stage Grid View' : 'Switched to Cinema Stage View');
       };
     }
 

@@ -176,7 +176,7 @@ For an optimal mobile theater experience, install the dedicated native Android a
 - **Key Features**:
   - **Edge-to-Edge Immersive Cinema**: True fullscreen dark theater mode without browser address bars or navigation clutter.
   - **Seamless WebRTC Permissions**: Camera and microphone access automatically granted for synchronized group video and voice chat.
-  - **Native Picture-in-Picture (PiP)**: Keep watching and listening to friends when switching to WhatsApp, Discord, or your home screen.
+  - **Native Picture-in-Picture (PiP)**: Keep watching and listening to friends when switching to messaging apps or your home screen.
   - **Screen Timeout Prevention**: Keeps your phone display awake throughout long movie screenings (`FLAG_KEEP_SCREEN_ON`).
   - **Local SSL Bypass**: Automatic handling for local self-signed HTTPS connections (port 3443).
   - **Quick Server Switcher**: Connect to Localhost (Termux), Phone Hotspot (`192.168.43.1`), Home Wi-Fi, or Tailscale with 1 tap.

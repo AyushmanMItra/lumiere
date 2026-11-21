@@ -757,8 +757,8 @@ app.get('/api/subtitles', (req, res) => {
 // Socket.io Real-Time Room & Playback Synchronization
 // ------------------------------------------------------------------
 
-// Discord-like avatar background colors
-const DISCORD_COLORS = [
+// Avatar background colors
+const AVATAR_COLORS = [
   '#5865F2', // Blurple
   '#57F287', // Green
   '#FEE75C', // Yellow
@@ -807,7 +807,7 @@ io.on('connection', (socket) => {
       room.hostId = socket.id;
     }
 
-    const randomColor = DISCORD_COLORS[Math.floor(Math.random() * DISCORD_COLORS.length)];
+    const randomColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
 
     const hostMember = room.members.get(room.hostId);
     const isHost = (room.hostId === socket.id) || Boolean(hostMember && username && hostMember.username === username);

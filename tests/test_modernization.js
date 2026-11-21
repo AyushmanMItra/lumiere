@@ -3,8 +3,8 @@
  * 
  * Verifies all features assigned across:
  * - R2: Bottom Action Pill Dock (7 items, glassmorphism, active status rings)
- * - R2: Side Chat Panel (Discord message cards, role badges, procedural Web Audio)
- * - R3: Discord Stage Grid, Speaking Halos & Screen Share Picture-in-Picture
+ * - R2: Side Chat Panel (Message cards, role badges, procedural Web Audio)
+ * - R3: Stage Grid, Speaking Halos & Screen Share Picture-in-Picture
  * - R4: Subtitle Settings Live Preview Sliders & Web Audio Dialogue Booster
  * - R5: Viewport Edge/Corner Window Snapping & Mini-Player Mode
  * - R6: Strict Policy Adherence (Zero emojis across all source files)
@@ -192,7 +192,7 @@ test('app.js attaches click listeners to dock pills including #dockScreenShareBt
 // ============================================================================
 suite('R2 - Side Chat Panel, Role Badges & Procedural UI Audio');
 
-test('style.css defines Discord-style message card layout and hover rules for .chat-msg', () => {
+test('style.css defines modern message card layout and hover rules for .chat-msg', () => {
   assert(css.includes('.chat-msg'), 'style.css must define .chat-msg');
   assert(css.includes('.chat-msg:hover') || css.includes('.chat-msg.hover') || css.includes('.chat-msg:hover .'),
     'style.css must define .chat-msg:hover for message card interaction highlight');
@@ -280,11 +280,11 @@ test('style.css and app.js implement reaction burst animations with spring physi
 });
 
 // ============================================================================
-// SUITE 3: Discord Stage Grid, Speaking Halos & Screen Share PiP (R3)
+// SUITE 3: Cinema Stage Grid, Speaking Halos & Screen Share PiP (R3)
 // ============================================================================
-suite('R3 - Discord Stage Grid, Speaking Halos & Screen Share PiP');
+suite('R3 - Cinema Stage Grid, Speaking Halos & Screen Share PiP');
 
-test('style.css defines Discord Stage layout grid partitioning active speakers and participants', () => {
+test('style.css defines Cinema Stage layout grid partitioning active speakers and participants', () => {
   const hasGridView = css.includes('.is-grid-view') || css.includes('.stage-grid-mode');
   assert(hasGridView, 'style.css must define grid view class (.is-grid-view or .stage-grid-mode)');
 
