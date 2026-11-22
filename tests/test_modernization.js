@@ -97,7 +97,7 @@ test('index.html defines all 7 action pills in bottom dock', () => {
   const hasMic = html.includes('id="toggleMicBtn"') || html.includes('id="micSplitBtn"');
   const hasCam = html.includes('id="toggleCameraBtn"') || html.includes('id="cameraSplitBtn"');
   const hasScreenShare = html.includes('id="dockScreenShareBtn"');
-  const hasLayout = html.includes('id="layoutToggleBtn"');
+  const hasMovieLibrary = html.includes('id="dockMovieLibraryBtn"') || html.includes('id="hostMovieLibraryDockBtn"');
   const hasReactions = html.includes('id="dockReactionsBtn"') || html.includes('id="dockReactionsGroup"');
   const hasOptions = html.includes('id="moreOptionsBtn"') || html.includes('id="moreOptionsGroup"');
   const hasDisconnect = html.includes('id="disconnectBtn"');
@@ -105,7 +105,7 @@ test('index.html defines all 7 action pills in bottom dock', () => {
   assert(hasMic, 'Must contain Mic pill button (#toggleMicBtn or #micSplitBtn)');
   assert(hasCam, 'Must contain Camera pill button (#toggleCameraBtn or #cameraSplitBtn)');
   assert(hasScreenShare, 'Must contain Screen Share pill button (#dockScreenShareBtn)');
-  assert(hasLayout, 'Must contain Layout pill button (#layoutToggleBtn)');
+  assert(hasMovieLibrary, 'Must contain Movie Library pill button (#dockMovieLibraryBtn or #hostMovieLibraryDockBtn)');
   assert(hasReactions, 'Must contain Reactions pill button (#dockReactionsBtn or #dockReactionsGroup)');
   assert(hasOptions, 'Must contain Options pill button (#moreOptionsBtn or #moreOptionsGroup)');
   assert(hasDisconnect, 'Must contain Disconnect pill button (#disconnectBtn)');
@@ -126,8 +126,8 @@ test('Action pills are organized inside .floating-pill-dock capsule container', 
     '.floating-pill-dock must contain Mic pill');
   assert(dockSubstring.includes('toggleCameraBtn') || dockSubstring.includes('cameraSplitBtn'),
     '.floating-pill-dock must contain Camera pill');
-  assert(dockSubstring.includes('layoutToggleBtn'),
-    '.floating-pill-dock must contain Layout pill');
+  assert(dockSubstring.includes('dockMovieLibraryBtn') || dockSubstring.includes('hostMovieLibraryDockBtn'),
+    '.floating-pill-dock must contain Movie Library pill');
   assert(dockSubstring.includes('disconnectBtn'),
     '.floating-pill-dock must contain Disconnect pill');
 });
@@ -137,7 +137,7 @@ test('Action pills have descriptive accessibility title or aria-label attributes
     /id="(?:toggleMicBtn|micSplitBtn)"[^>]*?(?:title|aria-label)=/s,
     /id="(?:toggleCameraBtn|cameraSplitBtn)"[^>]*?(?:title|aria-label)=/s,
     /id="dockScreenShareBtn"[^>]*?(?:title|aria-label)=/s,
-    /id="layoutToggleBtn"[^>]*?(?:title|aria-label)=/s,
+    /id="(?:dockMovieLibraryBtn|hostMovieLibraryDockBtn)"[^>]*?(?:title|aria-label)=/s,
     /id="(?:dockReactionsBtn|dockReactionsGroup)"[^>]*?(?:title|aria-label)=/s,
     /id="(?:moreOptionsBtn|moreOptionsGroup)"[^>]*?(?:title|aria-label)=/s,
     /id="disconnectBtn"[^>]*?(?:title|aria-label)=/s
@@ -185,6 +185,24 @@ test('app.js attaches click listeners to dock pills including #dockScreenShareBt
   const hasReactionsBinding = (app.includes('dockReactionsBtn') || app.includes('dockReactionsGroup')) &&
     (app.includes("addEventListener('click'") || app.includes('onclick') || app.includes('toggleReactionMenu') || app.includes('showReactions'));
   assert(hasReactionsBinding, 'app.js must bind click handling to #dockReactionsBtn or #dockReactionsGroup');
+
+  const hasMovieLibraryBinding = (app.includes('dockMovieLibraryBtn') || app.includes('hostMovieLibraryDockBtn')) &&
+    (app.includes('openMovieModal') || app.includes('onclick') || app.includes("addEventListener('click'"));
+  assert(hasMovieLibraryBinding, 'app.js must bind click handling to Movie Library dock pill');
+});
+
+test('Movie library is removed from three dot menu and placed in action dock', () => {
+  const moreMenuMatch = html.match(/id="moreOptionsMenu"[\s\S]*?<\/div>\s*<\/div>/);
+  if (moreMenuMatch) {
+    const moreMenuContent = moreMenuMatch[0];
+    assert(!moreMenuContent.includes('Movie Library'), 'three dot menu must not contain Movie Library');
+  }
+  const dockMatch = html.match(/class="floating-pill-dock"[\s\S]*?<!-- Right corner/);
+  if (dockMatch) {
+    const dockContent = dockMatch[0];
+    assert(dockContent.includes('dockMovieLibraryBtn') || dockContent.includes('hostMovieLibraryDockBtn'), 'action dock must contain Movie Library');
+    assert(!dockContent.includes('layoutToggleBtn'), 'action dock must not contain layoutToggleBtn');
+  }
 });
 
 // ============================================================================

@@ -1672,6 +1672,10 @@ body:not(.has-participants) .cinema-stage-wrapper {
   color: #fff !important;
 }
 
+.pill-btn.active-status-ring.ring-library,
+.pill-btn.ring-library,
+.pill-btn.active-status-ring.ring-movie,
+.pill-btn.ring-movie,
 .pill-btn.active-status-ring.ring-layout,
 .pill-btn.ring-layout {
   border-color: #5865F2 !important;

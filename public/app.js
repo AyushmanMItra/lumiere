@@ -224,9 +224,9 @@
     camDeviceMenu: document.getElementById('camDeviceMenu'),
     camDeviceList: document.getElementById('camDeviceList'),
 
-    hostMovieLibraryDockBtn: document.getElementById('hostMovieLibraryDockBtn'),
+    dockMovieLibraryBtn: document.getElementById('dockMovieLibraryBtn') || document.getElementById('hostMovieLibraryDockBtn'),
+    hostMovieLibraryDockBtn: document.getElementById('dockMovieLibraryBtn') || document.getElementById('hostMovieLibraryDockBtn'),
     dockScreenShareBtn: document.getElementById('dockScreenShareBtn'),
-    layoutToggleBtn: document.getElementById('layoutToggleBtn'),
     dockReactionsGroup: document.getElementById('dockReactionsGroup'),
     dockReactionsBtn: document.getElementById('dockReactionsBtn'),
     dockReactionsTray: document.getElementById('dockReactionsTray'),
@@ -6561,12 +6561,29 @@
   // ==========================================================================
 
   async function openMovieModal() {
+    if (typeof closeAllDeviceMenus === 'function') {
+      closeAllDeviceMenus(false);
+    }
     el.movieModal.classList.remove('hidden');
+    if (el.dockMovieLibraryBtn) {
+      el.dockMovieLibraryBtn.classList.add('active-status-ring', 'ring-library');
+    }
     loadMoviesList();
   }
 
   function closeMovieModal() {
     el.movieModal.classList.add('hidden');
+    if (el.dockMovieLibraryBtn) {
+      el.dockMovieLibraryBtn.classList.remove('active-status-ring', 'ring-library');
+    }
+  }
+
+  function toggleMovieModal() {
+    if (el.movieModal && !el.movieModal.classList.contains('hidden')) {
+      closeMovieModal();
+    } else {
+      openMovieModal();
+    }
   }
 
   async function loadMoviesList() {
@@ -7141,6 +7158,7 @@
     // Close modals on Escape key
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        if (el.movieModal && !el.movieModal.classList.contains('hidden')) closeMovieModal();
         if (tailscaleModal && !tailscaleModal.classList.contains('hidden')) closeTailscaleModal();
         if (communityModal && !communityModal.classList.contains('hidden')) closeCommunityModal();
       }
@@ -7687,18 +7705,10 @@
       }
     };
 
-    // Layout Toggle (Theater Stage vs Stage Grid View)
-    let isGridView = false;
-    if (el.layoutToggleBtn) {
-      el.layoutToggleBtn.onclick = () => {
-        isGridView = !isGridView;
-        el.mainWorkspace.classList.toggle('is-grid-view', isGridView);
-        el.mainWorkspace.classList.toggle('stage-grid-mode', isGridView);
-        if (el.participantStripArea) el.participantStripArea.classList.toggle('stage-grid-mode', isGridView);
-        el.layoutToggleBtn.classList.toggle('active-status-ring', isGridView);
-        el.layoutToggleBtn.classList.toggle('ring-layout', isGridView);
-        renderParticipantStrip();
-        showToast(isGridView ? 'Switched to Stage Grid View' : 'Switched to Cinema Stage View');
+    // Dock Movie Library Button
+    if (el.dockMovieLibraryBtn) {
+      el.dockMovieLibraryBtn.onclick = () => {
+        toggleMovieModal();
       };
     }
 
@@ -8002,11 +8012,16 @@
       };
     }
     // Do not open movie library when tapping the stage background/placeholder
-    el.openMovieLibraryBtn.onclick = (e) => {
-      if (e) e.stopPropagation();
-      openMovieModal();
-    };
-    el.hostMovieLibraryDockBtn.onclick = openMovieModal;
+    if (el.openMovieLibraryBtn) {
+      el.openMovieLibraryBtn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        openMovieModal();
+      };
+    }
+    if (el.dockMovieLibraryBtn) el.dockMovieLibraryBtn.onclick = toggleMovieModal;
+    if (el.hostMovieLibraryDockBtn && el.hostMovieLibraryDockBtn !== el.dockMovieLibraryBtn) {
+      el.hostMovieLibraryDockBtn.onclick = toggleMovieModal;
+    }
 
     // Track selections
     el.audioTrackSelect.onchange = () => {
@@ -8046,6 +8061,13 @@
     // Modal
     el.closeMovieModalBtn.onclick = closeMovieModal;
     el.refreshMoviesBtn.onclick = loadMoviesList;
+    if (el.movieModal) {
+      el.movieModal.addEventListener('click', (e) => {
+        if (e.target === el.movieModal) {
+          closeMovieModal();
+        }
+      });
+    }
 
   // Plan B: Double-Tap / Gesture Seeking on Cinema Screen
   function initDoubleTapSeeking() {

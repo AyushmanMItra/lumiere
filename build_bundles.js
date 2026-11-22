@@ -54,6 +54,10 @@ async function run() {
     fs.copyFileSync(jsOutPath, path.join(testWebsitePublic, 'app.min.js'));
     fs.copyFileSync(cssPath, path.join(testWebsitePublic, 'style.css'));
     fs.copyFileSync(cssOutPath, path.join(testWebsitePublic, 'style.min.css'));
+    const htmlPath = path.join(publicDir, 'index.html');
+    if (fs.existsSync(htmlPath)) {
+      fs.copyFileSync(htmlPath, path.join(testWebsitePublic, 'index.html'));
+    }
     console.log('Synchronized production bundles to test_website/public/');
   }
 }
