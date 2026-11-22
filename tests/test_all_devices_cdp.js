@@ -247,7 +247,12 @@ async function runAllTests() {
     await cdp.send('Page.enable');
     await cdp.send('DOM.enable');
     await cdp.send('Runtime.enable');
-    await sleep(800);
+    for (let i = 0; i < 50; i++) {
+      const ready = await cdp.eval('document.readyState === "complete"');
+      if (ready) break;
+      await sleep(100);
+    }
+    await sleep(300);
 
     // Initialize full movie room environment
     await cdp.eval(`(() => {

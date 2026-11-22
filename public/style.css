@@ -408,6 +408,10 @@ body.error-page-container {
   justify-content: center;
   flex-shrink: 1;
   margin: 0 auto;
+  transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              scale 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              border-radius 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Main Cinema Frame (Matching the red outline: grand cinema stage) */
@@ -8580,9 +8584,23 @@ body.in-room {
   max-width: none !important;
   max-height: none !important;
   aspect-ratio: auto !important;
+  transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              scale 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              border-radius 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              left 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              top 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              width 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              height 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform, box-shadow;
+}
+
+/* Zero-lag direct cursor tracking during window drag and resize */
+body.window-dragging-active .cinema-stage-wrapper.is-floating-window,
+body.window-resizing-active .cinema-stage-wrapper.is-floating-window,
+.cinema-stage-wrapper.is-floating-window.is-dragging-window,
+.cinema-stage-wrapper.is-floating-window.is-resizing {
   transition: none !important;
-  transform: none !important;
-  will-change: auto !important;
 }
 
 .cinema-stage-wrapper.is-floating-window * {
@@ -9160,7 +9178,56 @@ body.window-dragging-active {
   z-index: 2500 !important;
   overflow: hidden !important;
   margin: 0 !important;
-  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, width 0.25s ease, height 0.25s ease !important;
+  transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              scale 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              border-radius 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              opacity 0.2s ease,
+              width 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              height 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              right 0.38s cubic-bezier(0.34, 1.56, 0.64, 1),
+              bottom 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* Fluid Motion Spring Physics Active Transition Class */
+#cinemaStageWrapper.window-spring-active,
+.cinema-stage-wrapper.window-spring-active {
+  transition: transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1),
+              scale 0.42s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.42s cubic-bezier(0.34, 1.56, 0.64, 1),
+              border-radius 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform, box-shadow, border-radius;
+}
+
+/* Zero-transition lock during active window drag and resize */
+body.window-dragging-active #cinemaStageWrapper,
+body.window-dragging-active .cinema-stage-wrapper,
+body.window-dragging-active .is-floating-window,
+body.window-resizing-active #cinemaStageWrapper,
+body.window-resizing-active .cinema-stage-wrapper,
+body.window-resizing-active .is-floating-window,
+#cinemaStageWrapper.is-dragging-window,
+#cinemaStageWrapper.is-resizing,
+.cinema-stage-wrapper.is-dragging-window,
+.cinema-stage-wrapper.is-resizing,
+.is-floating-window.is-dragging-window,
+.is-floating-window.is-resizing {
+  transition: none !important;
+}
+
+body.window-dragging-active #cinemaStageWrapper *,
+body.window-dragging-active .cinema-stage-wrapper *,
+body.window-dragging-active .is-floating-window *,
+body.window-resizing-active #cinemaStageWrapper *,
+body.window-resizing-active .cinema-stage-wrapper *,
+body.window-resizing-active .is-floating-window *,
+#cinemaStageWrapper.is-dragging-window *,
+#cinemaStageWrapper.is-resizing *,
+.cinema-stage-wrapper.is-dragging-window *,
+.cinema-stage-wrapper.is-resizing *,
+.is-floating-window.is-dragging-window *,
+.is-floating-window.is-resizing * {
+  transition: none !important;
 }
 
 .mini-player-active #cinemaStageWrapper .cinema-box,

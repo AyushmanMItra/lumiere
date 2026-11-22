@@ -46,6 +46,16 @@ async function run() {
 
   fs.writeFileSync(cssOutPath, minifiedCss.styles, 'utf8');
   console.log(`Minified style.min.css size: ${(Buffer.byteLength(minifiedCss.styles) / 1024).toFixed(1)} KB`);
+
+  // 3. Synchronize to test_website/public
+  const testWebsitePublic = path.join(__dirname, 'test_website', 'public');
+  if (fs.existsSync(testWebsitePublic)) {
+    fs.copyFileSync(jsPath, path.join(testWebsitePublic, 'app.js'));
+    fs.copyFileSync(jsOutPath, path.join(testWebsitePublic, 'app.min.js'));
+    fs.copyFileSync(cssPath, path.join(testWebsitePublic, 'style.css'));
+    fs.copyFileSync(cssOutPath, path.join(testWebsitePublic, 'style.min.css'));
+    console.log('Synchronized production bundles to test_website/public/');
+  }
 }
 
 run().catch(err => {

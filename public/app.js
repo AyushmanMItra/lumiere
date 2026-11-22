@@ -2839,12 +2839,12 @@
     }
 
     if (activeSnapTarget && targetWindow) {
-      targetWindow.style.transition = 'left 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.18s cubic-bezier(0.2, 0.8, 0.2, 1)';
+      targetWindow.style.transition = 'left 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.28s cubic-bezier(0.34, 1.56, 0.64, 1)';
       targetWindow.style.left = `${Math.round(activeSnapTarget.left)}px`;
       targetWindow.style.top = `${Math.round(activeSnapTarget.top)}px`;
       setTimeout(() => {
         targetWindow.style.transition = '';
-      }, 200);
+      }, 300);
       activeSnapTarget = null;
     }
   }
@@ -2954,6 +2954,7 @@
 
       if (isFloating) {
         // Dragging anywhere on the floating movie screen
+        cancelStageSpringPhysics(stage);
         bringWindowToFront(stage);
         const rect = stage.getBoundingClientRect();
         dragGrabOffsetX = clientX - rect.left;
@@ -2997,6 +2998,7 @@
         if (!isFloatingDragging && dist > 3) {
           isFloatingDragging = true;
           windowManager.suppressClick = true;
+          cancelStageSpringPhysics(stage);
           stage.classList.add('is-dragging-window');
           document.body.classList.add('window-dragging-active');
         }
@@ -3088,6 +3090,7 @@
     e.preventDefault();
     e.stopPropagation();
 
+    cancelStageSpringPhysics(targetWindow);
     bringWindowToFront(targetWindow);
 
     const isTouch = !!e.touches;
@@ -3153,6 +3156,7 @@
     e.preventDefault();
     e.stopPropagation();
 
+    cancelStageSpringPhysics(targetWindow);
     bringWindowToFront(targetWindow);
 
     const isTouch = !!e.touches;
@@ -3236,6 +3240,83 @@
     window.addEventListener('touchend', onUp);
   }
 
+  function cancelStageSpringPhysics(targetEl) {
+    if (!targetEl) return;
+    if (targetEl._springCleanupTimer) {
+      clearTimeout(targetEl._springCleanupTimer);
+      targetEl._springCleanupTimer = null;
+    }
+    if (targetEl._springEndHandler) {
+      targetEl.removeEventListener('transitionend', targetEl._springEndHandler);
+      targetEl._springEndHandler = null;
+    }
+    targetEl.classList.remove('window-spring-active');
+    targetEl.style.removeProperty('transform-origin');
+    targetEl.style.removeProperty('transform');
+    targetEl.style.removeProperty('scale');
+    targetEl.style.removeProperty('transition');
+  }
+
+  function animateStageSpringPhysics(targetEl, dx, dy, sx, sy, onComplete) {
+    if (!targetEl) return;
+    if (document.body.classList.contains('window-dragging-active') ||
+        document.body.classList.contains('window-resizing-active') ||
+        targetEl.classList.contains('is-dragging-window') ||
+        targetEl.classList.contains('is-resizing')) {
+      cancelStageSpringPhysics(targetEl);
+      if (onComplete) onComplete();
+      return;
+    }
+
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(sx - 1) < 0.02 && Math.abs(sy - 1) < 0.02) {
+      cancelStageSpringPhysics(targetEl);
+      if (onComplete) onComplete();
+      return;
+    }
+
+    cancelStageSpringPhysics(targetEl);
+
+    targetEl.style.setProperty('transition', 'none', 'important');
+    targetEl.style.setProperty('transform-origin', '0 0', 'important');
+    targetEl.style.setProperty('transform', `translate3d(${dx.toFixed(2)}px, ${dy.toFixed(2)}px, 0) scale(${sx.toFixed(4)}, ${sy.toFixed(4)})`, 'important');
+    targetEl.classList.add('window-spring-active');
+
+    void targetEl.offsetWidth;
+
+    requestAnimationFrame(() => {
+      if (document.body.classList.contains('window-dragging-active') ||
+          document.body.classList.contains('window-resizing-active') ||
+          targetEl.classList.contains('is-dragging-window') ||
+          targetEl.classList.contains('is-resizing')) {
+        cancelStageSpringPhysics(targetEl);
+        if (onComplete) onComplete();
+        return;
+      }
+
+      const springCurve = '0.42s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      targetEl.style.setProperty('transition', `transform ${springCurve}, scale ${springCurve}, box-shadow ${springCurve}, border-radius ${springCurve}`, 'important');
+      targetEl.style.setProperty('transform', 'translate3d(0, 0, 0) scale(1, 1)', 'important');
+
+      let cleaned = false;
+      const cleanup = () => {
+        if (cleaned) return;
+        cleaned = true;
+        cancelStageSpringPhysics(targetEl);
+        if (onComplete) onComplete();
+      };
+
+      const onEnd = (evt) => {
+        if (evt.target === targetEl && (evt.propertyName === 'transform' || evt.propertyName === 'box-shadow' || evt.propertyName === 'scale')) {
+          cleanup();
+        }
+      };
+
+      targetEl._springEndHandler = onEnd;
+      targetEl.addEventListener('transitionend', onEnd);
+      targetEl._springCleanupTimer = setTimeout(cleanup, 480);
+    });
+  }
+
   function popOutMovieWindow(savedLayout = null) {
     const stage = el.cinemaStageWrapper;
     if (!stage) return;
@@ -3271,6 +3352,9 @@
       left = Math.max(10, Math.min(maxL, savedLayout.left ?? defaultL));
       top = Math.max(10, Math.min(maxT, savedLayout.top ?? defaultT));
     }
+
+    const firstRect = stage.getBoundingClientRect();
+    cancelStageSpringPhysics(stage);
 
     // Create / insert stage placeholder into stage's original spot
     let placeholder = document.getElementById('movieStagePlaceholder');
@@ -3345,12 +3429,30 @@
     }
 
     saveMovieWindowLayout();
+
+    if (firstRect && firstRect.width > 0 && firstRect.height > 0) {
+      stage.style.setProperty('transition', 'none', 'important');
+      stage.style.setProperty('transform', 'none', 'important');
+      void stage.offsetWidth;
+      const lastRect = stage.getBoundingClientRect();
+      if (lastRect && lastRect.width > 0 && lastRect.height > 0) {
+        const dx = firstRect.left - lastRect.left;
+        const dy = firstRect.top - lastRect.top;
+        const sx = firstRect.width / lastRect.width;
+        const sy = firstRect.height / lastRect.height;
+        animateStageSpringPhysics(stage, dx, dy, sx, sy);
+      }
+    }
+
     showToast('Movie Screen popped out. Drag title bar to move.');
   }
 
   function dockMovieWindow() {
     const stage = el.cinemaStageWrapper;
     if (!stage) return;
+
+    const firstRect = stage.getBoundingClientRect();
+    cancelStageSpringPhysics(stage);
 
     stage.classList.remove('is-floating-window');
     stage.classList.remove('is-dragging-window');
@@ -3393,6 +3495,20 @@
     try {
       localStorage.removeItem('lumiere_movie_window_layout');
     } catch (_) {}
+
+    if (firstRect && firstRect.width > 0 && firstRect.height > 0) {
+      stage.style.setProperty('transition', 'none', 'important');
+      stage.style.setProperty('transform', 'none', 'important');
+      void stage.offsetWidth;
+      const lastRect = stage.getBoundingClientRect();
+      if (lastRect && lastRect.width > 0 && lastRect.height > 0) {
+        const dx = firstRect.left - lastRect.left;
+        const dy = firstRect.top - lastRect.top;
+        const sx = firstRect.width / lastRect.width;
+        const sy = firstRect.height / lastRect.height;
+        animateStageSpringPhysics(stage, dx, dy, sx, sy);
+      }
+    }
 
     showToast('Movie Screen docked to theater');
   }
@@ -3463,11 +3579,12 @@
     const winW = window.innerWidth;
     const winH = window.innerHeight;
 
-    const rect = tile.getBoundingClientRect();
-    const defaultW = Math.max(220, Math.min(360, Math.round(rect.width || 240)));
-    const defaultH = Math.max(160, Math.min(260, Math.round(rect.height || 160) + 28));
-    const defaultL = Math.max(16, Math.min(winW - defaultW - 16, Math.round(rect.left || 30)));
-    const defaultT = Math.max(16, Math.min(winH - defaultH - 60, Math.round(rect.top || 80)));
+    const firstRect = tile.getBoundingClientRect();
+    cancelStageSpringPhysics(tile);
+    const defaultW = Math.max(220, Math.min(360, Math.round(firstRect.width || 240)));
+    const defaultH = Math.max(160, Math.min(260, Math.round(firstRect.height || 160) + 28));
+    const defaultL = Math.max(16, Math.min(winW - defaultW - 16, Math.round(firstRect.left || 30)));
+    const defaultT = Math.max(16, Math.min(winH - defaultH - 60, Math.round(firstRect.top || 80)));
 
     let placeholder = document.getElementById(`placeholder-${tile.id}`);
     if (!placeholder && tile.parentNode) {
@@ -3500,11 +3617,29 @@
 
     const titleBar = tile.querySelector('.window-title-bar');
     if (titleBar) titleBar.classList.remove('hidden');
+
+    if (firstRect && firstRect.width > 0 && firstRect.height > 0) {
+      tile.style.setProperty('transition', 'none', 'important');
+      tile.style.setProperty('transform', 'none', 'important');
+      void tile.offsetWidth;
+      const lastRect = tile.getBoundingClientRect();
+      if (lastRect && lastRect.width > 0 && lastRect.height > 0) {
+        const dx = firstRect.left - lastRect.left;
+        const dy = firstRect.top - lastRect.top;
+        const sx = firstRect.width / lastRect.width;
+        const sy = firstRect.height / lastRect.height;
+        animateStageSpringPhysics(tile, dx, dy, sx, sy);
+      }
+    }
+
     showToast('Webcam tile popped out');
   }
 
   function dockParticipantWindow(tile) {
     if (!tile) return;
+
+    const firstRect = tile.getBoundingClientRect();
+    cancelStageSpringPhysics(tile);
 
     tile.classList.remove('is-floating-window');
     tile.classList.remove('is-dragging-window');
@@ -3535,6 +3670,20 @@
     if (vid && stream) {
       vid.srcObject = stream;
       if (wasPlaying) vid.play().catch(() => {});
+    }
+
+    if (firstRect && firstRect.width > 0 && firstRect.height > 0) {
+      tile.style.setProperty('transition', 'none', 'important');
+      tile.style.setProperty('transform', 'none', 'important');
+      void tile.offsetWidth;
+      const lastRect = tile.getBoundingClientRect();
+      if (lastRect && lastRect.width > 0 && lastRect.height > 0) {
+        const dx = firstRect.left - lastRect.left;
+        const dy = firstRect.top - lastRect.top;
+        const sx = firstRect.width / lastRect.width;
+        const sy = firstRect.height / lastRect.height;
+        animateStageSpringPhysics(tile, dx, dy, sx, sy);
+      }
     }
 
     showToast('Webcam tile docked');
@@ -4088,14 +4237,20 @@
     const hasActiveMedia = Boolean(el.moviePlayer.src || state.currentMovie);
     if (!hasActiveMedia) return;
 
+    const stage = el.cinemaStageWrapper;
+    const firstRect = stage ? stage.getBoundingClientRect() : null;
+    if (stage) cancelStageSpringPhysics(stage);
+
     const wasPlaying = !el.moviePlayer.paused;
     const currentTime = el.moviePlayer.currentTime;
     const playbackRate = el.moviePlayer.playbackRate;
 
     state.isMiniPlayer = true;
     document.body.classList.add('mini-player-active');
-    if (el.cinemaStageWrapper) {
-      el.cinemaStageWrapper.classList.add('mini-player-active');
+    if (stage) {
+      stage.style.setProperty('transition', 'none', 'important');
+      stage.style.setProperty('transform', 'none', 'important');
+      stage.classList.add('mini-player-active');
     }
     if (el.stageSection) {
       el.stageSection.classList.add('mini-player-active');
@@ -4108,6 +4263,18 @@
     if (wasPlaying && el.moviePlayer.paused) {
       el.moviePlayer.play().catch(() => {});
     }
+
+    if (stage && firstRect && firstRect.width > 0 && firstRect.height > 0) {
+      void stage.offsetWidth;
+      const lastRect = stage.getBoundingClientRect();
+      if (lastRect && lastRect.width > 0 && lastRect.height > 0) {
+        const dx = firstRect.left - lastRect.left;
+        const dy = firstRect.top - lastRect.top;
+        const sx = firstRect.width / lastRect.width;
+        const sy = firstRect.height / lastRect.height;
+        animateStageSpringPhysics(stage, dx, dy, sx, sy);
+      }
+    }
   }
 
   function exitMiniPlayerMode() {
@@ -4116,11 +4283,16 @@
     const currentTime = el.moviePlayer ? el.moviePlayer.currentTime : 0;
     const playbackRate = el.moviePlayer ? el.moviePlayer.playbackRate : 1;
 
+    const stage = el.cinemaStageWrapper;
+    const firstRect = stage ? stage.getBoundingClientRect() : null;
+    if (stage) cancelStageSpringPhysics(stage);
+
     state.isMiniPlayer = false;
     document.body.classList.remove('mini-player-active');
-    if (el.cinemaStageWrapper) {
-      el.cinemaStageWrapper.classList.remove('mini-player-active');
-      el.cinemaStageWrapper.style.transform = '';
+    if (stage) {
+      stage.style.setProperty('transition', 'none', 'important');
+      stage.style.setProperty('transform', 'none', 'important');
+      stage.classList.remove('mini-player-active');
     }
     if (el.stageSection) {
       el.stageSection.classList.remove('mini-player-active');
@@ -4130,6 +4302,18 @@
 
     if (wasPlaying && el.moviePlayer && el.moviePlayer.paused) {
       el.moviePlayer.play().catch(() => {});
+    }
+
+    if (stage && firstRect && firstRect.width > 0 && firstRect.height > 0) {
+      void stage.offsetWidth;
+      const lastRect = stage.getBoundingClientRect();
+      if (lastRect && lastRect.width > 0 && lastRect.height > 0) {
+        const dx = firstRect.left - lastRect.left;
+        const dy = firstRect.top - lastRect.top;
+        const sx = firstRect.width / lastRect.width;
+        const sy = firstRect.height / lastRect.height;
+        animateStageSpringPhysics(stage, dx, dy, sx, sy);
+      }
     }
   }
 
