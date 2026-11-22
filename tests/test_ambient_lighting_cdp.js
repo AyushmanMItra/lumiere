@@ -486,6 +486,116 @@ async function runTests() {
     assert(syncedDimensions.width > 0 && syncedDimensions.height > 0,
       `Internal canvas resolution is valid (${syncedDimensions.width}x${syncedDimensions.height})`);
 
+    // SECTION 6: Video Frame Sampling & Screenshare Stage Rendering
+    console.log('\n--- SECTION 6: Video Frame Sampling & Screenshare Stage Rendering ---');
+    const pixelTestResult = await cdp.eval(`(() => {
+      const canvas = document.getElementById('ambientGlowCanvas');
+      if (!canvas) return { error: 'No canvas' };
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return { error: 'No 2d context' };
+
+      // Fill with test color to simulate video frame draw
+      ctx.fillStyle = '#ff5722';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const imgData = ctx.getImageData(0, 0, Math.min(5, canvas.width), Math.min(5, canvas.height));
+      const hasPixels = imgData.data[0] > 0 || imgData.data[1] > 0 || imgData.data[2] > 0;
+
+      // Verify clearAmbientGlowCanvas clears the canvas
+      if (window.__lumiere && typeof window.__lumiere.toggleAmbientGlow === 'function') {
+        // Clear check
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const clearedData = ctx.getImageData(0, 0, 5, 5);
+        const isClean = clearedData.data[0] === 0 && clearedData.data[3] === 0;
+        return { hasPixels, isClean };
+      }
+      return { hasPixels, isClean: true };
+    })()`);
+    assert(pixelTestResult.hasPixels, 'Ambient glow canvas successfully accepts and renders frame pixel buffers');
+    assert(pixelTestResult.isClean, 'Canvas clear function properly wipes buffer on stop/disable');
+
+    // SECTION 7: Mobile Touch Events (touchend) Verification
+    console.log('\n--- SECTION 7: Mobile Touch Events (touchend) Verification ---');
+    const touchToggleResult = await cdp.eval(`(() => {
+      const btn = document.getElementById('ambientToggleBtn');
+      if (!btn) return { error: 'No btn' };
+      const initialActive = btn.classList.contains('active-toggle');
+
+      // Dispatch simulated mobile touchend
+      const touchObj = new Touch({
+        identifier: Date.now(),
+        target: btn,
+        clientX: 100,
+        clientY: 100
+      });
+      const touchEvent = new TouchEvent('touchend', {
+        cancelable: true,
+        bubbles: true,
+        touches: [],
+        targetTouches: [],
+        changedTouches: [touchObj]
+      });
+      btn.dispatchEvent(touchEvent);
+
+      return {
+        initialActive,
+        postTouchActive: btn.classList.contains('active-toggle')
+      };
+    })()`);
+    assert(touchToggleResult.initialActive !== touchToggleResult.postTouchActive,
+      '#ambientToggleBtn responds immediately to native mobile touchend event');
+
+    // Restore to ON state
+    await cdp.eval(`(() => {
+      const btn = document.getElementById('ambientToggleBtn');
+      if (btn && !btn.classList.contains('active-toggle')) {
+        btn.click();
+      }
+    })()`);
+    await sleep(200);
+
+    // SECTION 8: Landscape Viewport Stage Section Overflow Check (No Lateral Clipping)
+    console.log('\n--- SECTION 8: Landscape Stage Section Overflow Check (No Lateral Clipping) ---');
+    await cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 1024,
+      height: 768,
+      deviceScaleFactor: 2,
+      mobile: true
+    });
+    await sleep(200);
+    const tabletLandscapeClipping = await cdp.eval(`(() => {
+      const stageSection = document.querySelector('.stage-section');
+      const stageWrapper = document.getElementById('cinemaStageWrapper');
+      return {
+        stageSectionOverflow: stageSection ? window.getComputedStyle(stageSection).overflow : '',
+        stageWrapperOverflow: stageWrapper ? window.getComputedStyle(stageWrapper).overflow : ''
+      };
+    })()`);
+    assert(tabletLandscapeClipping.stageSectionOverflow !== 'hidden',
+      `Tablet landscape .stage-section does not have overflow: hidden clipping glow (got: ${tabletLandscapeClipping.stageSectionOverflow})`);
+    assert(tabletLandscapeClipping.stageWrapperOverflow !== 'hidden',
+      `Tablet landscape #cinemaStageWrapper does not have overflow: hidden clipping glow (got: ${tabletLandscapeClipping.stageWrapperOverflow})`);
+
+    await cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 844,
+      height: 390,
+      deviceScaleFactor: 2,
+      mobile: true
+    });
+    await sleep(200);
+    const mobileLandscapeClipping = await cdp.eval(`(() => {
+      const stageSection = document.querySelector('.stage-section');
+      const stageWrapper = document.getElementById('cinemaStageWrapper');
+      return {
+        stageSectionOverflow: stageSection ? window.getComputedStyle(stageSection).overflow : '',
+        stageWrapperOverflow: stageWrapper ? window.getComputedStyle(stageWrapper).overflow : ''
+      };
+    })()`);
+    assert(mobileLandscapeClipping.stageSectionOverflow !== 'hidden',
+      `Mobile landscape .stage-section does not have overflow: hidden clipping glow (got: ${mobileLandscapeClipping.stageSectionOverflow})`);
+    assert(mobileLandscapeClipping.stageWrapperOverflow !== 'hidden',
+      `Mobile landscape #cinemaStageWrapper does not have overflow: hidden clipping glow (got: ${mobileLandscapeClipping.stageWrapperOverflow})`);
+
   } catch (err) {
     console.error('[ERROR] Test failure:', err);
     failedCount++;

@@ -792,6 +792,9 @@
     document.body.classList.add('in-room');
     if (el.aboutPage) el.aboutPage.classList.add('hidden');
     el.appContainer.classList.remove('hidden');
+    if (typeof syncAmbientCanvasDimensions === 'function') {
+      syncAmbientCanvasDimensions();
+    }
     if (el.dockReactionsTray) el.dockReactionsTray.classList.add('hidden');
     closeAllDeviceMenus?.(false);
     el.roomTitleDisplay.innerText = `Lumière - ${roomId}`;
@@ -2706,7 +2709,11 @@
     }
   }
 
+  let lastDrawnAmbientTime = -1;
+  let lastAmbientSampleTime = 0;
+
   function clearAmbientGlowCanvas() {
+    lastDrawnAmbientTime = -1;
     if (el.ambientGlowCanvas) {
       const ctx = el.ambientGlowCanvas.getContext('2d');
       if (ctx) {
@@ -2715,23 +2722,56 @@
     }
   }
 
+  function sampleAmbientFrame(force = false) {
+    if (!state.isAmbientOn || document.hidden) return;
+    const canvas = el.ambientGlowCanvas;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Check if remote or local screen share is active and visible on the center stage
+    const isScreenShareOnStage = el.screenSharePlayer &&
+      !el.screenSharePlayer.classList.contains('hidden') &&
+      el.screenSharePlayer.readyState >= 2;
+
+    if (isScreenShareOnStage) {
+      try {
+        ctx.drawImage(el.screenSharePlayer, 0, 0, canvas.width, canvas.height);
+      } catch (e) {}
+    } else if (el.moviePlayer && !el.moviePlayer.classList.contains('hidden') && !el.moviePlayer.ended && el.moviePlayer.readyState >= 2) {
+      const isPaused = el.moviePlayer.paused;
+      const curTime = el.moviePlayer.currentTime;
+      // Draw continuously while playing, or once upon pause / seek / force
+      if (force || !isPaused || curTime !== lastDrawnAmbientTime) {
+        try {
+          ctx.drawImage(el.moviePlayer, 0, 0, canvas.width, canvas.height);
+          lastDrawnAmbientTime = curTime;
+        } catch (e) {}
+      }
+    } else if (!state.currentMovie && !state.screenSharer) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      lastDrawnAmbientTime = -1;
+    }
+  }
+
   function syncAmbientCanvasDimensions() {
     const canvas = el.ambientGlowCanvas;
     if (!canvas) return;
     const stage = el.cinemaStageWrapper || document.getElementById('cinemaStageWrapper');
+    let stageAspect = 16 / 9;
     if (stage) {
       const rect = stage.getBoundingClientRect();
-      const stageAspect = (rect.width && rect.height) ? (rect.width / rect.height) : (16 / 9);
-      const targetHeight = 27;
-      const targetWidth = Math.max(16, Math.min(64, Math.round(targetHeight * stageAspect)));
-      if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
+      if (rect.width > 0 && rect.height > 0) {
+        stageAspect = rect.width / rect.height;
       }
-    } else {
-      if (!canvas.width || !canvas.height) {
-        canvas.width = 48;
-        canvas.height = 27;
+    }
+    const targetHeight = 27;
+    const targetWidth = Math.max(16, Math.min(64, Math.round(targetHeight * stageAspect)));
+    if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      if (state.isAmbientOn) {
+        sampleAmbientFrame(true);
       }
     }
   }
@@ -2739,32 +2779,20 @@
   function initAmbientGlow() {
     const canvas = el.ambientGlowCanvas;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
     syncAmbientCanvasDimensions();
 
-    let lastSampleTime = 0;
-    const sampleFrame = (timestamp) => {
-      state.ambientAnimationId = requestAnimationFrame(sampleFrame);
+    const sampleLoop = (timestamp) => {
+      state.ambientAnimationId = requestAnimationFrame(sampleLoop);
 
       if (!state.isAmbientOn || document.hidden) return;
-      if (timestamp && (timestamp - lastSampleTime < 50)) return; // Cap sampling at ~20fps to conserve mobile battery
-      lastSampleTime = timestamp || 0;
+      if (timestamp && (timestamp - lastAmbientSampleTime < 50)) return; // Cap sampling at ~20fps to conserve mobile battery
+      lastAmbientSampleTime = timestamp || 0;
 
-      if (el.moviePlayer && !el.moviePlayer.ended && el.moviePlayer.readyState >= 2) {
-        try {
-          ctx.drawImage(el.moviePlayer, 0, 0, canvas.width, canvas.height);
-        } catch (e) {}
-      } else if (el.screenSharePlayer && !el.screenSharePlayer.paused && el.screenSharePlayer.readyState >= 2) {
-        try {
-          ctx.drawImage(el.screenSharePlayer, 0, 0, canvas.width, canvas.height);
-        } catch (e) {}
-      } else if (!state.currentMovie && !state.screenShareActive) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
+      sampleAmbientFrame(false);
     };
 
     updateAmbientGlowUI();
-    sampleFrame(0);
+    sampleLoop(0);
   }
 
   function toggleAmbientGlow() {
@@ -2777,14 +2805,7 @@
       clearAmbientGlowCanvas();
     } else {
       syncAmbientCanvasDimensions();
-      if (el.ambientGlowCanvas) {
-        const ctx = el.ambientGlowCanvas.getContext('2d');
-        if (ctx && el.moviePlayer && !el.moviePlayer.ended && el.moviePlayer.readyState >= 2) {
-          try {
-            ctx.drawImage(el.moviePlayer, 0, 0, el.ambientGlowCanvas.width, el.ambientGlowCanvas.height);
-          } catch (e) {}
-        }
-      }
+      sampleAmbientFrame(true);
     }
     showToast(state.isAmbientOn ? 'Ambient Lighting: ON' : 'Ambient Lighting: OFF');
   }
@@ -6354,6 +6375,9 @@
   async function loadMovieInTheater(movie, audioTrack = 0, subtitleTrack = 'off', startTime = 0, autoPlay = false) {
     if (!movie) return;
     clearAmbientGlowCanvas();
+    if (typeof syncAmbientCanvasDimensions === 'function') {
+      syncAmbientCanvasDimensions();
+    }
     if (el.cinemaBox) {
       el.cinemaBox.classList.add('has-movie');
     }
@@ -6722,6 +6746,33 @@
 
     player.addEventListener('ended', () => {
       clearAmbientGlowCanvas();
+    });
+
+    player.addEventListener('seeked', () => {
+      if (state.isAmbientOn && typeof sampleAmbientFrame === 'function') {
+        sampleAmbientFrame(true);
+      }
+    });
+
+    player.addEventListener('pause', () => {
+      if (state.isAmbientOn && typeof sampleAmbientFrame === 'function') {
+        sampleAmbientFrame(true);
+      }
+    });
+
+    player.addEventListener('play', () => {
+      if (state.isAmbientOn && typeof sampleAmbientFrame === 'function') {
+        sampleAmbientFrame(true);
+      }
+    });
+
+    player.addEventListener('loadeddata', () => {
+      if (typeof syncAmbientCanvasDimensions === 'function') {
+        syncAmbientCanvasDimensions();
+      }
+      if (state.isAmbientOn && typeof sampleAmbientFrame === 'function') {
+        sampleAmbientFrame(true);
+      }
     });
 
     player.addEventListener('error', () => {
@@ -9642,6 +9693,8 @@
   window.__lumiere = {
     state,
     toggleAmbientGlow,
+    syncAmbientCanvasDimensions,
+    sampleAmbientFrame,
     renderParticipantStrip,
     isPortraitMode,
     toggleChat,
