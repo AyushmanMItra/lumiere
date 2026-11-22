@@ -1107,6 +1107,18 @@ body.error-page-container {
   color: #f23f43;
 }
 
+/* Prevent inner SVG icons and child elements from capturing pointer events to avoid repeated hover triggers */
+.hud-circle-btn *,
+.hud-icon-btn *,
+.hud-sub-gear-btn *,
+.cinema-controls-hud button *,
+.mini-control-btn *,
+.window-action-btn *,
+#cinemaControls button *,
+#miniPlayerControls button * {
+  pointer-events: none;
+}
+
 /* Time Display */
 .hud-time {
   font-size: 13px;

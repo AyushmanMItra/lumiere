@@ -98,23 +98,33 @@ function launchEdge() {
 
 function getPageWSUrl() {
   return new Promise((resolve, reject) => {
-    http.get(`http://127.0.0.1:${CDP_PORT}/json`, res => {
-      let body = '';
-      res.on('data', chunk => body += chunk);
-      res.on('end', () => {
-        try {
-          const list = JSON.parse(body);
-          const page = list.find(t => t.type === 'page' && t.url && t.url.includes(String(PORT))) || list.find(t => t.type === 'page');
-          if (page && page.webSocketDebuggerUrl) {
-            resolve(page.webSocketDebuggerUrl);
-          } else {
-            reject(new Error('No page target found'));
+    const startTime = Date.now();
+    const poll = () => {
+      http.get(`http://127.0.0.1:${CDP_PORT}/json`, res => {
+        let body = '';
+        res.on('data', chunk => body += chunk);
+        res.on('end', () => {
+          try {
+            const list = JSON.parse(body);
+            const page = list.find(t => t.type === 'page' && t.url && t.url.includes(String(PORT)));
+            if (page && page.webSocketDebuggerUrl) {
+              resolve(page.webSocketDebuggerUrl);
+            } else if (Date.now() - startTime < 10000) {
+              setTimeout(poll, 150);
+            } else {
+              reject(new Error('Target page with PORT not found'));
+            }
+          } catch (e) {
+            if (Date.now() - startTime < 10000) setTimeout(poll, 150);
+            else reject(e);
           }
-        } catch (e) {
-          reject(e);
-        }
+        });
+      }).on('error', err => {
+        if (Date.now() - startTime < 10000) setTimeout(poll, 150);
+        else reject(err);
       });
-    }).on('error', reject);
+    };
+    poll();
   });
 }
 

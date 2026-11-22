@@ -4458,6 +4458,7 @@
       // AudioContext unavailable or autoplay prevented
     }
   }
+  window.playUIAudio = playUIAudio;
 
   function getSoundName(id) {
     const names = {
@@ -7769,10 +7770,39 @@
     }
 
     // Attach procedural hover sound to all dock and HUD buttons with throttle
+    let currentHoveredButton = null;
+    const mediaControlSelector = '.pill-btn, .hud-circle-btn, .hud-icon-btn, .hud-sub-gear-btn, .pill-chevron-btn, .dock-reaction-item, .mini-control-btn, .window-action-btn, #cinemaControls button, #miniPlayerControls button';
+
     document.addEventListener('mouseover', (e) => {
-      const target = e.target.closest && e.target.closest('.pill-btn, .hud-circle-btn, .hud-icon-btn, .pill-chevron-btn, .dock-reaction-item');
+      const rawTarget = e.target && (e.target.nodeType === 3 ? e.target.parentElement : e.target);
+      const target = rawTarget && rawTarget.closest && rawTarget.closest(mediaControlSelector);
+      if (!target) {
+        currentHoveredButton = null;
+        return;
+      }
+      if (target === currentHoveredButton) {
+        return;
+      }
+      if (e.relatedTarget) {
+        const rawRelated = e.relatedTarget.nodeType === 3 ? e.relatedTarget.parentElement : e.relatedTarget;
+        if (rawRelated && (target === rawRelated || (target.contains && target.contains(rawRelated)))) {
+          return;
+        }
+      }
+      currentHoveredButton = target;
+      (window.playUIAudio || playUIAudio)('hover', target);
+    });
+
+    document.addEventListener('mouseout', (e) => {
+      const rawTarget = e.target && (e.target.nodeType === 3 ? e.target.parentElement : e.target);
+      const target = rawTarget && rawTarget.closest && rawTarget.closest(mediaControlSelector);
       if (target) {
-        playUIAudio('hover');
+        const rawNext = e.relatedTarget && (e.relatedTarget.nodeType === 3 ? e.relatedTarget.parentElement : e.relatedTarget);
+        if (!rawNext || !(target === rawNext || (target.contains && target.contains(rawNext)))) {
+          if (currentHoveredButton === target) {
+            currentHoveredButton = null;
+          }
+        }
       }
     });
 
