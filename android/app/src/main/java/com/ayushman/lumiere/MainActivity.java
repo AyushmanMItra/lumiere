@@ -31,6 +31,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,6 +51,17 @@ public class MainActivity extends Activity {
     private View customView;
     private WebChromeClient.CustomViewCallback customViewCallback;
 
+    // Dedicated Cinema Starting Page Views
+    private ScrollView startPageView;
+    private EditText startServerUrlInput;
+    private Button btnStartPresetHotspot;
+    private Button btnStartPresetTailscale;
+    private Button btnStartPresetLocalhost;
+    private ProgressBar startProgressBar;
+    private TextView startStatusText;
+    private Button btnStartConnect;
+
+    // Legacy fallback error views
     private View errorView;
     private TextView errorStatusText;
     private Button btnRetry;
@@ -57,7 +69,8 @@ public class MainActivity extends Activity {
 
     private SharedPreferences prefs;
     private String currentServerUrl;
-    private boolean isMoviePlaying = false;
+    private boolean isConnectedToWebsite = false;
+    private boolean isConnectionInProgress = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,7 +79,7 @@ public class MainActivity extends Activity {
         // Keep screen on during cinema playback
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        // Immersive dark status bar & navigation bar
+        // Immersive dark status bar and navigation bar
         Window window = getWindow();
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
@@ -82,7 +95,7 @@ public class MainActivity extends Activity {
         setupWebView();
         requestMediaPermissions();
 
-        // Check if deep linked with custom URL or load saved server
+        // Check if deep linked with custom URL
         if (getIntent() != null && getIntent().getData() != null) {
             String deepLink = getIntent().getData().toString();
             if (deepLink.startsWith("lumiere://")) {
@@ -90,9 +103,12 @@ public class MainActivity extends Activity {
             }
             currentServerUrl = deepLink;
             saveServerUrl(currentServerUrl);
+            startServerUrlInput.setText(currentServerUrl);
+            attemptConnect(currentServerUrl);
+        } else {
+            // Display dedicated starting page initially
+            showStartPage();
         }
-
-        loadServerUrl(currentServerUrl);
     }
 
     private void initViews() {
@@ -101,14 +117,58 @@ public class MainActivity extends Activity {
         btnServerSettings = findViewById(R.id.btnServerSettings);
         customViewContainer = findViewById(R.id.customViewContainer);
 
+        // Dedicated Cinema Starting Page View bindings
+        startPageView = findViewById(R.id.startPageView);
+        startServerUrlInput = findViewById(R.id.startServerUrlInput);
+        btnStartPresetHotspot = findViewById(R.id.btnStartPresetHotspot);
+        btnStartPresetTailscale = findViewById(R.id.btnStartPresetTailscale);
+        btnStartPresetLocalhost = findViewById(R.id.btnStartPresetLocalhost);
+        startProgressBar = findViewById(R.id.startProgressBar);
+        startStatusText = findViewById(R.id.startStatusText);
+        btnStartConnect = findViewById(R.id.btnStartConnect);
+
+        startServerUrlInput.setText(currentServerUrl);
+
+        // Quick Preset click listeners
+        btnStartPresetHotspot.setOnClickListener(v -> {
+            startServerUrlInput.setText("http://192.168.43.1:3000");
+            startServerUrlInput.setSelection(startServerUrlInput.getText().length());
+        });
+
+        btnStartPresetTailscale.setOnClickListener(v -> {
+            startServerUrlInput.setText("https://192.168.43.1:3443");
+            startServerUrlInput.setSelection(startServerUrlInput.getText().length());
+        });
+
+        btnStartPresetLocalhost.setOnClickListener(v -> {
+            startServerUrlInput.setText("http://127.0.0.1:3000");
+            startServerUrlInput.setSelection(startServerUrlInput.getText().length());
+        });
+
+        // Primary Connect Button on Starting Page
+        btnStartConnect.setOnClickListener(v -> {
+            String target = startServerUrlInput.getText().toString().trim();
+            if (!target.isEmpty()) {
+                attemptConnect(target);
+            } else {
+                startStatusText.setVisibility(View.VISIBLE);
+                startStatusText.setTextColor(0xFFED4245);
+                startStatusText.setText("Please enter a valid server address.");
+            }
+        });
+
+        // The floating settings button is strictly hidden when connected to website
+        btnServerSettings.setVisibility(View.GONE);
+        btnServerSettings.setOnClickListener(v -> showStartPage());
+
+        // Error view fallback
         errorView = findViewById(R.id.errorView);
         errorStatusText = findViewById(R.id.errorStatusText);
         btnRetry = findViewById(R.id.btnRetry);
         btnChangeServerFromError = findViewById(R.id.btnChangeServerFromError);
 
-        btnServerSettings.setOnClickListener(v -> showServerConnectDialog());
-        btnRetry.setOnClickListener(v -> loadServerUrl(currentServerUrl));
-        btnChangeServerFromError.setOnClickListener(v -> showServerConnectDialog());
+        btnRetry.setOnClickListener(v -> attemptConnect(currentServerUrl));
+        btnChangeServerFromError.setOnClickListener(v -> showStartPage());
     }
 
     private void setupWebView() {
@@ -130,14 +190,14 @@ public class MainActivity extends Activity {
         // Hardware acceleration
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
-        // Custom User-Agent tag so the frontend knows it's the native Android app
+        // Custom User-Agent tag so the frontend knows it is the native Android app
         String defaultUa = settings.getUserAgentString();
         settings.setUserAgentString(defaultUa + " LumiereAndroidApp/1.0");
 
         // JavaScript interface
         webView.addJavascriptInterface(new WebAppInterface(this), "LumiereNative");
 
-        // WebChromeClient for WebRTC permissions & HTML5 video fullscreen
+        // WebChromeClient for WebRTC permissions and HTML5 video fullscreen
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onPermissionRequest(final PermissionRequest request) {
@@ -180,7 +240,7 @@ public class MainActivity extends Activity {
                 customView = null;
                 customViewContainer.setVisibility(View.GONE);
                 webView.setVisibility(View.VISIBLE);
-                btnServerSettings.setVisibility(View.VISIBLE);
+                btnServerSettings.setVisibility(View.GONE);
                 if (customViewCallback != null) {
                     customViewCallback.onCustomViewHidden();
                     customViewCallback = null;
@@ -188,17 +248,16 @@ public class MainActivity extends Activity {
             }
         });
 
-        // WebViewClient with self-signed SSL bypass for local network & Tailscale
+        // WebViewClient with self-signed SSL bypass for local network and Tailscale
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
                 // Lumière uses self-signed SSL certificates for HTTPS (port 3443) on local Wi-Fi / Tailscale.
-                // Allow proceed for private LAN IPs, Tailscale 100.x IPs, and localhost
                 String url = error.getUrl();
                 if (url != null && isLocalOrPrivateNetwork(url)) {
                     handler.proceed();
                 } else {
-                    handler.proceed(); // Allow in local cinema context
+                    handler.proceed();
                 }
             }
 
@@ -210,7 +269,22 @@ public class MainActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 errorView.setVisibility(View.GONE);
-                // Inject native Android styling helpers if needed
+
+                // Check if page load was genuine
+                if (isConnectionInProgress) {
+                    isConnectionInProgress = false;
+                    isConnectedToWebsite = true;
+
+                    // Transition to website: Hide starting page, show webView, hide settings button
+                    startPageView.setVisibility(View.GONE);
+                    webView.setVisibility(View.VISIBLE);
+                    btnServerSettings.setVisibility(View.GONE);
+                    btnStartConnect.setEnabled(true);
+                    startProgressBar.setVisibility(View.GONE);
+                    startStatusText.setVisibility(View.GONE);
+                }
+
+                // Inject native Android styling helpers
                 view.evaluateJavascript(
                     "if (window.__lumiere) { window.__lumiere.isAndroidNative = true; }",
                     null
@@ -220,7 +294,9 @@ public class MainActivity extends Activity {
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 if (request.isForMainFrame()) {
-                    showErrorState("Could not connect to:\n" + currentServerUrl + "\n\nEnsure Lumière server is running.");
+                    isConnectionInProgress = false;
+                    isConnectedToWebsite = false;
+                    showErrorOnStartPage("Could not connect to:\n" + currentServerUrl + "\n\nPlease ensure your Lumière server is running and accessible on this network.");
                 }
             }
         });
@@ -274,6 +350,23 @@ public class MainActivity extends Activity {
         }
     }
 
+    public void attemptConnect(String url) {
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            url = "http://" + url;
+        }
+        currentServerUrl = url;
+        saveServerUrl(url);
+
+        isConnectionInProgress = true;
+        startProgressBar.setVisibility(View.VISIBLE);
+        startStatusText.setVisibility(View.VISIBLE);
+        startStatusText.setTextColor(0xFF5865F2);
+        startStatusText.setText("Connecting to " + url + "...");
+        btnStartConnect.setEnabled(false);
+
+        loadServerUrl(url);
+    }
+
     public void loadServerUrl(String url) {
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
             url = "http://" + url;
@@ -288,46 +381,41 @@ public class MainActivity extends Activity {
         prefs.edit().putString(KEY_SERVER_URL, url).apply();
     }
 
+    public void showStartPage() {
+        isConnectedToWebsite = false;
+        isConnectionInProgress = false;
+
+        webView.setVisibility(View.GONE);
+        errorView.setVisibility(View.GONE);
+        btnServerSettings.setVisibility(View.GONE);
+
+        startPageView.setVisibility(View.VISIBLE);
+        startProgressBar.setVisibility(View.GONE);
+        startStatusText.setVisibility(View.GONE);
+        btnStartConnect.setEnabled(true);
+        startServerUrlInput.setText(currentServerUrl);
+        startServerUrlInput.setSelection(currentServerUrl.length());
+    }
+
+    private void showErrorOnStartPage(String message) {
+        webView.setVisibility(View.GONE);
+        errorView.setVisibility(View.GONE);
+        btnServerSettings.setVisibility(View.GONE);
+
+        startPageView.setVisibility(View.VISIBLE);
+        btnStartConnect.setEnabled(true);
+        startProgressBar.setVisibility(View.GONE);
+        startStatusText.setVisibility(View.VISIBLE);
+        startStatusText.setTextColor(0xFFED4245);
+        startStatusText.setText(message);
+    }
+
     private void showErrorState(String message) {
-        errorStatusText.setText(message);
-        errorView.setVisibility(View.VISIBLE);
+        showErrorOnStartPage(message);
     }
 
     public void showServerConnectDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_connect, null);
-        builder.setView(dialogView);
-
-        AlertDialog dialog = builder.create();
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        }
-
-        EditText editServerUrl = dialogView.findViewById(R.id.editServerUrl);
-        editServerUrl.setText(currentServerUrl);
-        editServerUrl.setSelection(currentServerUrl.length());
-
-        Button btnPresetLocalhost = dialogView.findViewById(R.id.btnPresetLocalhost);
-        Button btnPresetHotspot = dialogView.findViewById(R.id.btnPresetHotspot);
-        Button btnPresetHttps = dialogView.findViewById(R.id.btnPresetHttps);
-        Button btnCancel = dialogView.findViewById(R.id.btnCancel);
-        Button btnConnect = dialogView.findViewById(R.id.btnConnect);
-
-        btnPresetLocalhost.setOnClickListener(v -> editServerUrl.setText("http://127.0.0.1:3000"));
-        btnPresetHotspot.setOnClickListener(v -> editServerUrl.setText("http://192.168.43.1:3000"));
-        btnPresetHttps.setOnClickListener(v -> editServerUrl.setText("https://192.168.43.1:3443"));
-
-        btnCancel.setOnClickListener(v -> dialog.dismiss());
-        btnConnect.setOnClickListener(v -> {
-            String target = editServerUrl.getText().toString().trim();
-            if (!target.isEmpty()) {
-                loadServerUrl(target);
-                dialog.dismiss();
-            }
-        });
-
-        dialog.show();
+        showStartPage();
     }
 
     public void enterPiPMode() {
@@ -356,7 +444,7 @@ public class MainActivity extends Activity {
     protected void onUserLeaveHint() {
         super.onUserLeaveHint();
         // Automatically drop into PiP when user hits Home or switches apps during playback
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && isConnectedToWebsite) {
             enterPiPMode();
         }
     }
@@ -364,11 +452,10 @@ public class MainActivity extends Activity {
     @Override
     public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, Configuration newConfig) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+        // btnServerSettings is kept strictly GONE
+        btnServerSettings.setVisibility(View.GONE);
         if (isInPictureInPictureMode) {
-            btnServerSettings.setVisibility(View.GONE);
             progressBar.setVisibility(View.GONE);
-        } else {
-            btnServerSettings.setVisibility(View.VISIBLE);
         }
     }
 
@@ -381,7 +468,7 @@ public class MainActivity extends Activity {
                 customView = null;
                 customViewContainer.setVisibility(View.GONE);
                 webView.setVisibility(View.VISIBLE);
-                btnServerSettings.setVisibility(View.VISIBLE);
+                btnServerSettings.setVisibility(View.GONE);
                 if (customViewCallback != null) {
                     customViewCallback.onCustomViewHidden();
                 }
@@ -389,10 +476,18 @@ public class MainActivity extends Activity {
             return;
         }
 
+        // If currently on the Dedicated Starting Page, back exits the application
+        if (startPageView != null && startPageView.getVisibility() == View.VISIBLE) {
+            super.onBackPressed();
+            return;
+        }
+
+        // If inside the web application:
         if (webView.canGoBack()) {
             webView.goBack();
         } else {
-            super.onBackPressed();
+            // At root landing page of the website: return to the Starting Page
+            showStartPage();
         }
     }
 }

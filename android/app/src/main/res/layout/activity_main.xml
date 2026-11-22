@@ -9,7 +9,8 @@
         android:id="@+id/webView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/bg_dark" />
+        android:background="@color/bg_dark"
+        android:visibility="gone" />
 
     <!-- Sleek Top Loading Bar -->
     <ProgressBar
@@ -30,7 +31,183 @@
         android:background="#000000"
         android:visibility="gone" />
 
-    <!-- Unobtrusive Floating Server Switcher Pill -->
+    <!-- Dedicated Cinema Starting Page -->
+    <ScrollView
+        android:id="@+id/startPageView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:background="@color/bg_dark"
+        android:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="36dp"
+            android:paddingBottom="48dp">
+
+            <!-- Lumiere Branding Header -->
+            <ImageView
+                android:layout_width="76dp"
+                android:layout_height="76dp"
+                android:src="@mipmap/ic_launcher"
+                android:contentDescription="Lumiere Logo" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="@string/start_title"
+                android:textColor="@color/text_white"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.02" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/start_subtitle"
+                android:textColor="@color/text_muted"
+                android:textSize="13sp"
+                android:gravity="center" />
+
+            <!-- Server Setup Card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:orientation="vertical"
+                android:background="@drawable/card_start_background"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/start_card_title"
+                    android:textColor="@color/text_white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/start_card_desc"
+                    android:textColor="@color/text_muted"
+                    android:textSize="12.5sp" />
+
+                <!-- Server Address Input -->
+                <EditText
+                    android:id="@+id/startServerUrlInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/input_background"
+                    android:hint="@string/server_url_hint"
+                    android:textColorHint="#6b7280"
+                    android:textColor="@color/text_white"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:singleLine="true"
+                    android:inputType="textUri"
+                    android:textSize="14sp" />
+
+                <!-- Presets Section -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/btn_presets"
+                    android:textColor="@color/text_muted"
+                    android:textSize="11.5sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="vertical">
+
+                    <Button
+                        android:id="@+id/btnStartPresetHotspot"
+                        android:layout_width="match_parent"
+                        android:layout_height="38dp"
+                        android:layout_marginBottom="6dp"
+                        android:background="@drawable/btn_preset_bg"
+                        android:text="@string/preset_hotspot"
+                        android:textColor="@color/text_white"
+                        android:textSize="12sp"
+                        android:gravity="center_vertical|start"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp" />
+
+                    <Button
+                        android:id="@+id/btnStartPresetTailscale"
+                        android:layout_width="match_parent"
+                        android:layout_height="38dp"
+                        android:layout_marginBottom="6dp"
+                        android:background="@drawable/btn_preset_bg"
+                        android:text="@string/preset_tailscale"
+                        android:textColor="@color/text_white"
+                        android:textSize="12sp"
+                        android:gravity="center_vertical|start"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp" />
+
+                    <Button
+                        android:id="@+id/btnStartPresetLocalhost"
+                        android:layout_width="match_parent"
+                        android:layout_height="38dp"
+                        android:background="@drawable/btn_preset_bg"
+                        android:text="@string/preset_localhost"
+                        android:textColor="@color/text_white"
+                        android:textSize="12sp"
+                        android:gravity="center_vertical|start"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp" />
+                </LinearLayout>
+
+                <!-- Connection Progress & Status -->
+                <ProgressBar
+                    android:id="@+id/startProgressBar"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="12dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/startStatusText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:textColor="@color/primary_accent"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
+
+                <!-- Primary Connect Button -->
+                <Button
+                    android:id="@+id/btnStartConnect"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/btn_primary_bg"
+                    android:text="@string/btn_connect_cinema"
+                    android:textColor="@color/text_white"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Floating Server Switcher Pill: HIDDEN by default when connected to website -->
     <ImageButton
         android:id="@+id/btnServerSettings"
         android:layout_width="42dp"
@@ -43,7 +220,8 @@
         android:scaleType="centerInside"
         android:padding="9dp"
         android:contentDescription="Server Settings"
-        android:elevation="6dp" />
+        android:elevation="6dp"
+        android:visibility="gone" />
 
     <!-- Offline / Connection Fallback Overlay -->
     <LinearLayout

@@ -1009,7 +1009,7 @@
           </div>
 
           <!-- Cinema Stage Wrapper (Houses ambient glow canvas strictly behind cinema box) -->
-          <div class="cinema-stage-wrapper" id="cinemaStageWrapper">
+          <div class="cinema-stage-wrapper ambient-glow-active" id="cinemaStageWrapper">
             <!-- Windows-Style App Title Bar for Movie Screen -->
             <div class="window-title-bar hidden" id="movieWindowTitleBar">
               <div class="window-title-left">
@@ -1041,8 +1041,10 @@
             <div class="window-resize-handle handle-se" data-direction="se"></div>
             <div class="window-resize-handle handle-sw" data-direction="sw"></div>
 
-            <!-- Ambient Cinema Glow Canvas (Radiates dynamic blurred color glow strictly behind stage) -->
-            <canvas id="ambientGlowCanvas" class="ambient-glow-canvas"></canvas>
+            <!-- Ambient Cinema Glow Canvas & Wrapper (Radiates dynamic blurred color glow strictly behind stage) -->
+            <div id="ambientGlowWrapper" class="ambient-glow-wrapper ambient-glow-active">
+              <canvas id="ambientGlowCanvas" class="ambient-glow-canvas ambient-glow-active"></canvas>
+            </div>
 
           <!-- Main Cinema Frame (Image 1 Center) -->
           <div class="cinema-box" id="cinemaBox">

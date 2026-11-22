@@ -364,6 +364,7 @@
     movieLibraryList: document.getElementById('movieLibraryList'),
 
     // Ambiance, Subtitles & Activities
+    ambientGlowWrapper: document.getElementById('ambientGlowWrapper'),
     ambientGlowCanvas: document.getElementById('ambientGlowCanvas'),
     ambientToggleBtn: document.getElementById('ambientToggleBtn'),
     pipBtn: document.getElementById('pipBtn'),
@@ -2675,18 +2676,33 @@
   // ==========================================================================
 
   function updateAmbientGlowUI() {
+    const isGlowActive = Boolean(state.isAmbientOn);
+
     if (el.ambientGlowCanvas) {
-      el.ambientGlowCanvas.classList.toggle('hidden', !state.isAmbientOn);
+      el.ambientGlowCanvas.classList.toggle('hidden', !isGlowActive);
+      el.ambientGlowCanvas.classList.toggle('ambient-glow-active', isGlowActive);
+    }
+    if (el.ambientGlowWrapper) {
+      el.ambientGlowWrapper.classList.toggle('hidden', !isGlowActive);
+      el.ambientGlowWrapper.classList.toggle('ambient-glow-active', isGlowActive);
+    }
+    if (el.cinemaStageWrapper) {
+      el.cinemaStageWrapper.classList.toggle('ambient-glow-active', isGlowActive);
     }
     if (el.ambientToggleBtn) {
-      el.ambientToggleBtn.classList.toggle('active-toggle', state.isAmbientOn);
-      el.ambientToggleBtn.title = state.isAmbientOn
+      el.ambientToggleBtn.classList.toggle('active-toggle', isGlowActive);
+      el.ambientToggleBtn.setAttribute('aria-pressed', isGlowActive ? 'true' : 'false');
+      el.ambientToggleBtn.title = isGlowActive
         ? 'Ambient Cinema Glow: ON (Click to turn off)'
         : 'Ambient Cinema Glow: OFF (Click to turn on)';
     }
+    if (el.menuAmbientGlowBtn) {
+      el.menuAmbientGlowBtn.classList.toggle('active-toggle', isGlowActive);
+      el.menuAmbientGlowBtn.setAttribute('aria-pressed', isGlowActive ? 'true' : 'false');
+    }
     if (el.moreMenuAmbientStatus) {
-      el.moreMenuAmbientStatus.innerText = state.isAmbientOn ? 'ON' : 'OFF';
-      el.moreMenuAmbientStatus.classList.toggle('badge-active', state.isAmbientOn);
+      el.moreMenuAmbientStatus.innerText = isGlowActive ? 'ON' : 'OFF';
+      el.moreMenuAmbientStatus.classList.toggle('badge-active', isGlowActive);
     }
   }
 
@@ -2699,12 +2715,32 @@
     }
   }
 
+  function syncAmbientCanvasDimensions() {
+    const canvas = el.ambientGlowCanvas;
+    if (!canvas) return;
+    const stage = el.cinemaStageWrapper || document.getElementById('cinemaStageWrapper');
+    if (stage) {
+      const rect = stage.getBoundingClientRect();
+      const stageAspect = (rect.width && rect.height) ? (rect.width / rect.height) : (16 / 9);
+      const targetHeight = 27;
+      const targetWidth = Math.max(16, Math.min(64, Math.round(targetHeight * stageAspect)));
+      if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+      }
+    } else {
+      if (!canvas.width || !canvas.height) {
+        canvas.width = 48;
+        canvas.height = 27;
+      }
+    }
+  }
+
   function initAmbientGlow() {
     const canvas = el.ambientGlowCanvas;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    canvas.width = 48;
-    canvas.height = 27;
+    syncAmbientCanvasDimensions();
 
     let lastSampleTime = 0;
     const sampleFrame = (timestamp) => {
@@ -2714,7 +2750,7 @@
       if (timestamp && (timestamp - lastSampleTime < 50)) return; // Cap sampling at ~20fps to conserve mobile battery
       lastSampleTime = timestamp || 0;
 
-      if (el.moviePlayer && !el.moviePlayer.paused && !el.moviePlayer.ended && el.moviePlayer.readyState >= 2) {
+      if (el.moviePlayer && !el.moviePlayer.ended && el.moviePlayer.readyState >= 2) {
         try {
           ctx.drawImage(el.moviePlayer, 0, 0, canvas.width, canvas.height);
         } catch (e) {}
@@ -2739,6 +2775,16 @@
     updateAmbientGlowUI();
     if (!state.isAmbientOn) {
       clearAmbientGlowCanvas();
+    } else {
+      syncAmbientCanvasDimensions();
+      if (el.ambientGlowCanvas) {
+        const ctx = el.ambientGlowCanvas.getContext('2d');
+        if (ctx && el.moviePlayer && !el.moviePlayer.ended && el.moviePlayer.readyState >= 2) {
+          try {
+            ctx.drawImage(el.moviePlayer, 0, 0, el.ambientGlowCanvas.width, el.ambientGlowCanvas.height);
+          } catch (e) {}
+        }
+      }
     }
     showToast(state.isAmbientOn ? 'Ambient Lighting: ON' : 'Ambient Lighting: OFF');
   }
@@ -8863,7 +8909,7 @@
       el.speedSelect.onchange = handleSpeedChange;
     }
     if (el.ambientToggleBtn) {
-      el.ambientToggleBtn.onclick = toggleAmbientGlow;
+      bindTap(el.ambientToggleBtn, toggleAmbientGlow);
     }
     // menuAmbientGlowBtn is already bound via bindTap above
     if (el.pipBtn) {
@@ -9567,6 +9613,7 @@
 
     const handleOrientationOrResize = () => {
       if (state.inRoom) renderParticipantStrip();
+      syncAmbientCanvasDimensions();
     };
 
     let orientationTimer = null;
@@ -9594,6 +9641,7 @@
 
   window.__lumiere = {
     state,
+    toggleAmbientGlow,
     renderParticipantStrip,
     isPortraitMode,
     toggleChat,
@@ -9601,6 +9649,8 @@
     updateChatViewportBounds: (...args) => updateChatViewportBounds(...args),
     closeAllDeviceMenus: (...args) => closeAllDeviceMenus && closeAllDeviceMenus(...args)
   };
+  window.state = state;
+  window.toggleAmbientGlow = toggleAmbientGlow;
 
   window.addEventListener('DOMContentLoaded', init);
 })();

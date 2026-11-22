@@ -31,7 +31,12 @@ public class WebAppInterface {
 
     @JavascriptInterface
     public void openServerDialog() {
-        activity.runOnUiThread(activity::showServerConnectDialog);
+        activity.runOnUiThread(activity::showStartPage);
+    }
+
+    @JavascriptInterface
+    public void returnToStartPage() {
+        activity.runOnUiThread(activity::showStartPage);
     }
 
     @JavascriptInterface

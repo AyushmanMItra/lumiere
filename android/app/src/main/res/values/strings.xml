@@ -1,11 +1,17 @@
 <resources>
     <string name="app_name">Lumière</string>
+    <string name="start_title">Lumière Cinema</string>
+    <string name="start_subtitle">Synchronized Watch Party &amp; Video Lounge</string>
+    <string name="start_card_title">Cinema Server Connection</string>
+    <string name="start_card_desc">Connect to your theater host over local Wi-Fi or Tailscale network:</string>
     <string name="connect_dialog_title">Lumière Theater Connection</string>
     <string name="server_url_hint">Server Address (e.g. 192.168.1.100:3000)</string>
     <string name="btn_connect">Connect to Theater</string>
+    <string name="btn_connect_cinema">Enter Cinema Theater</string>
     <string name="btn_cancel">Cancel</string>
     <string name="btn_presets">Quick Connect Presets:</string>
-    <string name="preset_localhost">Localhost (127.0.0.1:3000)</string>
-    <string name="preset_hotspot">Hotspot (192.168.43.1:3000)</string>
+    <string name="preset_localhost">Localhost / Termux (http://127.0.0.1:3000)</string>
+    <string name="preset_hotspot">Hotspot Wi-Fi (http://192.168.43.1:3000)</string>
+    <string name="preset_tailscale">Tailscale HTTPS (https://192.168.43.1:3443)</string>
     <string name="preset_https">Local HTTPS (192.168.43.1:3443)</string>
 </resources>
