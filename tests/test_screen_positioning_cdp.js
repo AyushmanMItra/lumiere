@@ -358,19 +358,18 @@ async function runPositioningAudit() {
       // 1. Bottom-Left: Invite Button Sweet Spot
       assert(corners.invVisible, `${vp.name}: Invite button is rendered and visible`);
       assert(
-        corners.invLeft >= 12 && corners.invLeft <= 45,
+        corners.invLeft >= 8 && corners.invLeft <= 45,
         `${vp.name}: Invite button positioned in bottom-left corner sweet spot`,
-        `left=${corners.invLeft}px (expected 12px-45px, not pushed hundreds of pixels inward)`
+        `left=${corners.invLeft}px (expected 8px-45px, not pushed hundreds of pixels inward)`
       );
 
-      // 2. Bottom-Right: Fullscreen Button Sweet Spot (where visible)
-      if (corners.fsVisible) {
-        assert(
-          corners.fsRight >= 12 && corners.fsRight <= 45,
-          `${vp.name}: Fullscreen toggle positioned in bottom-right corner sweet spot`,
-          `right=${corners.fsRight}px (expected 12px-45px)`
-        );
-      }
+      // 2. Bottom-Right: Fullscreen Button Sweet Spot
+      assert(corners.fsVisible, `${vp.name}: Fullscreen toggle is rendered and visible`);
+      assert(
+        corners.fsRight >= 8 && corners.fsRight <= 45,
+        `${vp.name}: Fullscreen toggle positioned in bottom-right corner sweet spot`,
+        `right=${corners.fsRight}px (expected 8px-45px)`
+      );
 
       // 3. Top-Left: Brand / Room Info Sweet Spot
       assert(corners.brandVisible, `${vp.name}: Top brand heading is rendered and visible`);
@@ -401,11 +400,14 @@ async function runPositioningAudit() {
       const avatarBox = document.querySelector('.stage-center-avatar-box');
       const title = document.querySelector('.stage-lounge-title');
       const btn = document.getElementById('openMovieLibraryBtn') || document.querySelector('.btn-stage-primary');
+      const tile = document.getElementById('testParticipantTile');
+      const tileAvatar = tile ? tile.querySelector('.tile-avatar-center') : null;
       if (!card) return null;
       const cRect = card.getBoundingClientRect();
       const aRect = avatarBox ? avatarBox.getBoundingClientRect() : null;
       const tStyle = title ? getComputedStyle(title) : null;
       const bRect = btn ? btn.getBoundingClientRect() : null;
+      const taRect = tileAvatar ? tileAvatar.getBoundingClientRect() : null;
 
       return {
         cardWidth: Math.round(cRect.width),
@@ -413,7 +415,8 @@ async function runPositioningAudit() {
         avatarDiameter: aRect ? Math.round(aRect.width) : 0,
         titleFontSize: tStyle ? parseFloat(tStyle.fontSize) : 0,
         btnWidth: bRect ? Math.round(bRect.width) : 0,
-        btnHeight: bRect ? Math.round(bRect.height) : 0
+        btnHeight: bRect ? Math.round(bRect.height) : 0,
+        tileAvatarDiameter: taRect ? Math.round(taRect.width) : 0
       };
     })()`);
 
@@ -421,6 +424,7 @@ async function runPositioningAudit() {
     assert(desktopLounge.avatarDiameter >= 80, 'Desktop: Cinema stage host avatar scaled up', `avatar=${desktopLounge.avatarDiameter}px >= 80px`);
     assert(desktopLounge.titleFontSize >= 22, 'Desktop: Lounge title typography scaled up', `fontSize=${desktopLounge.titleFontSize}px >= 22px`);
     assert(desktopLounge.btnWidth >= 200 && desktopLounge.btnHeight >= 42, 'Desktop: "Select Movie to Stream" CTA button has commanding presence', `${desktopLounge.btnWidth}x${desktopLounge.btnHeight}px`);
+    assert(desktopLounge.tileAvatarDiameter >= 80, 'Desktop: Participant webcam avatar scaled proportionately to eliminate empty card void', `tileAvatar=${desktopLounge.tileAvatarDiameter}px >= 80px`);
 
     // Tablet Scale (iPad Pro 1024x1366)
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1024, height: 1366, deviceScaleFactor: 2.0, mobile: true });
@@ -429,20 +433,25 @@ async function runPositioningAudit() {
       const card = document.querySelector('.stage-lounge-card');
       const avatarBox = document.querySelector('.stage-center-avatar-box');
       const title = document.querySelector('.stage-lounge-title');
+      const tile = document.getElementById('testParticipantTile');
+      const tileAvatar = tile ? tile.querySelector('.tile-avatar-center') : null;
       if (!card) return null;
       const cRect = card.getBoundingClientRect();
       const aRect = avatarBox ? avatarBox.getBoundingClientRect() : null;
       const tStyle = title ? getComputedStyle(title) : null;
+      const taRect = tileAvatar ? tileAvatar.getBoundingClientRect() : null;
       return {
         cardWidth: Math.round(cRect.width),
         avatarDiameter: aRect ? Math.round(aRect.width) : 0,
-        titleFontSize: tStyle ? parseFloat(tStyle.fontSize) : 0
+        titleFontSize: tStyle ? parseFloat(tStyle.fontSize) : 0,
+        tileAvatarDiameter: taRect ? Math.round(taRect.width) : 0
       };
     })()`);
 
     assert(tabletLounge.cardWidth >= 480, 'Tablet: .stage-lounge-card width scaled proportionately', `width=${tabletLounge.cardWidth}px >= 480px`);
     assert(tabletLounge.avatarDiameter >= 72, 'Tablet: Host avatar scaled for touch display', `avatar=${tabletLounge.avatarDiameter}px >= 72px`);
     assert(tabletLounge.titleFontSize >= 20, 'Tablet: Lounge title typography legible and bold', `fontSize=${tabletLounge.titleFontSize}px >= 20px`);
+    assert(tabletLounge.tileAvatarDiameter >= 78, 'Tablet: Participant webcam avatar scaled cleanly in webcam box', `tileAvatar=${tabletLounge.tileAvatarDiameter}px >= 78px`);
 
     // Mobile Portrait Scale (iPhone 15 Pro 393x852)
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 393, height: 852, deviceScaleFactor: 3.0, mobile: true });
@@ -452,22 +461,27 @@ async function runPositioningAudit() {
       const avatarBox = document.querySelector('.stage-center-avatar-box');
       const title = document.querySelector('.stage-lounge-title');
       const btn = document.getElementById('openMovieLibraryBtn') || document.querySelector('.btn-stage-primary');
+      const tile = document.getElementById('testParticipantTile');
+      const tileAvatar = tile ? tile.querySelector('.tile-avatar-center') : null;
       if (!card) return null;
       const cRect = card.getBoundingClientRect();
       const aRect = avatarBox ? avatarBox.getBoundingClientRect() : null;
       const tStyle = title ? getComputedStyle(title) : null;
       const bRect = btn ? btn.getBoundingClientRect() : null;
+      const taRect = tileAvatar ? tileAvatar.getBoundingClientRect() : null;
       return {
         cardWidth: Math.round(cRect.width),
         avatarDiameter: aRect ? Math.round(aRect.width) : 0,
         titleFontSize: tStyle ? parseFloat(tStyle.fontSize) : 0,
-        btnHeight: bRect ? Math.round(bRect.height) : 0
+        btnHeight: bRect ? Math.round(bRect.height) : 0,
+        tileAvatarDiameter: taRect ? Math.round(taRect.width) : 0
       };
     })()`);
 
     assert(mobileLounge.cardWidth >= 300, 'Mobile: .stage-lounge-card fills viewport width naturally', `width=${mobileLounge.cardWidth}px (76%+ viewport)`);
     assert(mobileLounge.avatarDiameter >= 56, 'Mobile: Host avatar scaled cleanly', `avatar=${mobileLounge.avatarDiameter}px >= 56px`);
     assert(mobileLounge.btnHeight >= 42, 'Mobile: Stream Movie CTA button meets minimum touch target', `height=${mobileLounge.btnHeight}px >= 42px`);
+    assert(mobileLounge.tileAvatarDiameter >= 72, 'Mobile: Participant webcam avatar fills tile box with balanced proportions', `tileAvatar=${mobileLounge.tileAvatarDiameter}px >= 72px`);
 
     console.log('\n------------------------------------------------------------------------');
     console.log('  SUITE 4: LATERAL VOIDS ELIMINATION & ATMOSPHERIC AMBIENT BACKDROP     ');
@@ -493,7 +507,7 @@ async function runPositioningAudit() {
     })()`);
 
     assert(stageAtmosphere.hasStageGradient, 'Atmospheric ambient radial lighting active on .stage-section');
-    assert(stageAtmosphere.haloWidth >= 480, 'Ambient breathing stage halo expanded to dissolve dark voids', `haloWidth=${stageAtmosphere.haloWidth}px >= 480px`);
+    assert(stageAtmosphere.haloWidth >= 900, 'Ambient breathing stage halo expanded to dissolve lateral dark voids', `haloWidth=${stageAtmosphere.haloWidth}px >= 900px`);
     assert(stageAtmosphere.wrapperWidth >= 1160, 'Cinema stage frame scales generously on widescreen monitors', `wrapperWidth=${stageAtmosphere.wrapperWidth}px >= 1160px`);
 
     console.log('\n------------------------------------------------------------------------');

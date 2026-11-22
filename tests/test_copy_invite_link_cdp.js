@@ -329,7 +329,7 @@ async function runTests() {
       assert(metrics.width >= 44 && metrics.height >= 44, `${vp.name}: meets 44px minimum touch target threshold (got: ${metrics.width}x${metrics.height})`, `${metrics.width}x${metrics.height}`);
       assert(metrics.zIndex >= 40, `${vp.name}: proper z-index priority (got: ${metrics.zIndex})`, metrics.zIndex);
       assert(metrics.hasSvg, `${vp.name}: contains user-plus invite SVG graphic`);
-      assert(metrics.inBounds, `${vp.name}: positioned fully inside viewport bounds`);
+      assert(metrics.inBounds, `${vp.name}: positioned fully inside viewport bounds`, `rect=[${metrics.left},${metrics.top},${metrics.right},${metrics.bottom}] vs win=[${vp.w},${vp.h}]`);
       assert(!metrics.dockOverlap, `${vp.name}: zero overlap with floating pill dock`, `overlapping: ${metrics.overlappingButtons.join(', ')}`);
       assert(metrics.overlappingButtons.length === 0, `${vp.name}: zero overlap with any pill buttons`, `overlapping: ${metrics.overlappingButtons.join(', ')}`);
     }
