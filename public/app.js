@@ -502,16 +502,226 @@
     setupIdleDetection(); // 3-second auto-hide feature (Image 2)
   }
 
-  function showToast(msg, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.innerText = msg;
-    el.toastContainer.appendChild(toast);
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      setTimeout(() => toast.remove(), 250);
-    }, 2800);
+  // ==========================================================================
+  // UNIVERSAL FLOATING HUD TOAST CAPSULE (Compact Glassmorphic HUD Pill)
+  // Single active HUD capsule with in-place deduplication, accumulation, & bounce
+  // ==========================================================================
+
+  let activeToastEl = null;
+  let activeToastTimer = null;
+  let activeToastDismissTimer = null;
+  const activeToastAccumulator = {
+    type: null, // 'forward' | 'rewind'
+    seconds: 0
+  };
+
+  function getToastIconSvg(iconType) {
+    switch (iconType) {
+      case 'forward':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></svg>';
+      case 'rewind':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></svg>';
+      case 'play':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>';
+      case 'pause':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>';
+      case 'stop':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>';
+      case 'movie':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>';
+      case 'volume':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>';
+      case 'mute':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>';
+      case 'success':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      case 'warning':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+      case 'error':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+      case 'link':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>';
+      case 'ambient':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line></svg>';
+      case 'dialogue':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line></svg>';
+      case 'screen':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>';
+      case 'subtitle':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M7 15h3"></path><path d="M7 11h2"></path><path d="M14 15h3"></path><path d="M14 11h2"></path></svg>';
+      case 'mic':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>';
+      case 'camera':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>';
+      case 'poll':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path></svg>';
+      case 'window':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>';
+      case 'user':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
+      case 'speed':
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>';
+      case 'info':
+      default:
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+    }
   }
+
+  function escapeToastHtml(str) {
+    if (typeof str !== 'string') return String(str);
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function showToast(msg, type = 'info') {
+    if (msg == null) return;
+    const rawMsg = (typeof msg === 'string') ? msg.trim() : String(msg).trim();
+    if (!rawMsg) return;
+
+    const container = el.toastContainer || document.getElementById('toastContainer');
+    if (!container) return;
+
+    // In cinema fullscreen, reparent container to fullscreen element so toasts remain visible
+    const targetParent = document.fullscreenElement || document.body;
+    if (container.parentNode !== targetParent) {
+      targetParent.appendChild(container);
+    }
+
+    let displayMsg = rawMsg;
+    let iconType = 'info';
+
+    // 1. Detect Seek Forward (+10s, + 10s, 10s, Forwarded 10s, Forward 10s, Forward 10 sec, Forward, etc.)
+    const forwardMatch = rawMsg.match(/^(?:\+\s*(\d+)\s*(?:s|sec|secs|seconds?)?|(?:forward(?:ed)?|skip\s+forward)\s*(?:\+?\s*(\d+))?\s*(?:s|sec|secs|seconds?)?|(\d+)\s*(?:s|sec|secs|seconds?))$/i);
+    // 2. Detect Seek Rewind (-10s, - 10s, Rewound 10s, Rewind 10s, Rewind 10 sec, Rewind, Back 10s, etc.)
+    const rewindMatch = rawMsg.match(/^(?:-\s*(\d+)\s*(?:s|sec|secs|seconds?)?|(?:rewind|rewound|skip\s+(?:back|backward)|back)\s*(?:-?\s*(\d+))?\s*(?:s|sec|secs|seconds?)?)$/i);
+
+    if (forwardMatch) {
+      const numStr = forwardMatch[1] || forwardMatch[2] || forwardMatch[3];
+      const step = (numStr && !isNaN(parseInt(numStr, 10))) ? parseInt(numStr, 10) : 10;
+      if (activeToastEl && activeToastAccumulator.type === 'forward') {
+        activeToastAccumulator.seconds += step;
+      } else {
+        activeToastAccumulator.type = 'forward';
+        activeToastAccumulator.seconds = step;
+      }
+      displayMsg = `+${activeToastAccumulator.seconds}s`;
+      iconType = 'forward';
+    } else if (rewindMatch) {
+      const numStr = rewindMatch[1] || rewindMatch[2];
+      const step = (numStr && !isNaN(parseInt(numStr, 10))) ? Math.abs(parseInt(numStr, 10)) : 10;
+      if (activeToastEl && activeToastAccumulator.type === 'rewind') {
+        activeToastAccumulator.seconds += step;
+      } else {
+        activeToastAccumulator.type = 'rewind';
+        activeToastAccumulator.seconds = step;
+      }
+      displayMsg = `-${activeToastAccumulator.seconds}s`;
+      iconType = 'rewind';
+    } else {
+      // Non-seek: reset accumulator
+      activeToastAccumulator.type = null;
+      activeToastAccumulator.seconds = 0;
+
+      // Classify icon type and semantic toast variant
+      const lower = rawMsg.toLowerCase();
+      if (type === 'warning' || lower.includes('warning') || lower.includes('caution') || lower.includes('alert')) {
+        iconType = 'warning';
+        type = 'warning';
+      } else if (type === 'success' || lower.includes('copied') || lower.includes('uploaded') || lower.includes('sent')) {
+        iconType = 'success';
+        type = 'success';
+      } else if (type === 'error' || lower.includes('failed') || lower.includes('denied') || lower.includes('invalid') || lower.includes('could not')) {
+        iconType = 'error';
+        type = 'error';
+      } else if (lower.startsWith('playing') || lower === 'play' || lower.includes('resume')) {
+        iconType = 'play';
+      } else if (lower.startsWith('paused') || lower === 'pause') {
+        iconType = 'pause';
+      } else if (lower.includes('stopped')) {
+        iconType = 'stop';
+      } else if (lower.includes('now playing') || lower.includes('loaded youtube') || lower.includes('loaded streaming')) {
+        iconType = 'movie';
+      } else if (lower.includes('mute') && !lower.includes('unmute')) {
+        iconType = 'mute';
+      } else if (lower.includes('volume') || lower.includes('unmute')) {
+        iconType = 'volume';
+      } else if (lower.includes('ambient')) {
+        iconType = 'ambient';
+      } else if (lower.includes('dialogue') || lower.includes('audio track') || lower.includes('sound')) {
+        iconType = 'dialogue';
+      } else if (lower.includes('speed')) {
+        iconType = 'speed';
+      } else if (lower.includes('screen share') || lower.includes('sharing their screen')) {
+        iconType = 'screen';
+      } else if (lower.includes('subtitle') || lower.includes('.srt') || lower.includes('.vtt') || lower.includes('captions')) {
+        iconType = 'subtitle';
+      } else if (lower.includes('microphone') || lower.includes('mic')) {
+        iconType = 'mic';
+      } else if (lower.includes('camera') || lower.includes('webcam')) {
+        iconType = 'camera';
+      } else if (lower.includes('poll')) {
+        iconType = 'poll';
+      } else if (lower.includes('popped out') || lower.includes('docked') || lower.includes('reset to center') || lower.includes('mini-player')) {
+        iconType = 'window';
+      } else if (lower.includes('joined') || lower.includes('left') || lower.includes('host:') || lower.includes('spotlight') || lower.includes('unpin')) {
+        iconType = 'user';
+      } else if (lower.includes('invite') || lower.includes('link') || lower.includes('code')) {
+        iconType = 'link';
+      } else {
+        iconType = 'info';
+      }
+    }
+
+    // Cancel pending dismissals
+    clearTimeout(activeToastTimer);
+    clearTimeout(activeToastDismissTimer);
+
+    const iconHtml = `<span class="toast-icon">${getToastIconSvg(iconType)}</span>`;
+    const msgHtml = `<span class="toast-message">${escapeToastHtml(displayMsg)}</span>`;
+
+    if (activeToastEl && activeToastEl.parentNode === container) {
+      // In-place update of existing HUD capsule
+      // Purge any accidental sibling nodes
+      while (container.firstChild !== activeToastEl && container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
+      while (container.lastChild !== activeToastEl && container.lastChild) {
+        container.removeChild(container.lastChild);
+      }
+      activeToastEl.className = `toast toast-${type}`;
+      activeToastEl.innerHTML = `${iconHtml}${msgHtml}`;
+      activeToastEl.classList.remove('toast-hiding');
+      activeToastEl.classList.remove('toast-bounce');
+      // Trigger browser reflow to restart subtle bounce animation
+      void activeToastEl.offsetWidth;
+      activeToastEl.classList.add('toast-bounce');
+    } else {
+      // Clean up any stale toast elements in container
+      container.innerHTML = '';
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `${iconHtml}${msgHtml}`;
+      container.appendChild(toast);
+      activeToastEl = toast;
+    }
+
+    // Auto-dismiss after 2400ms
+    const currentToast = activeToastEl;
+    activeToastTimer = setTimeout(() => {
+      if (!currentToast) return;
+      currentToast.classList.add('toast-hiding');
+      activeToastDismissTimer = setTimeout(() => {
+        if (currentToast && currentToast.parentNode) {
+          currentToast.remove();
+        }
+        if (activeToastEl === currentToast) {
+          activeToastEl = null;
+          activeToastAccumulator.type = null;
+          activeToastAccumulator.seconds = 0;
+        }
+      }, 240);
+    }, 2400);
+  }
+  window.showToast = showToast;
 
   // ==========================================================================
   // IDLE DETECTOR (Matching Image 3: Controls drop after 3s inactivity)
@@ -696,6 +906,7 @@
         el.unmuteMovieBanner.classList.remove('hidden');
       });
       updatePlayPauseIcons(true);
+      showToast('Playing');
     });
 
     s.on('sync-pause', ({ time }) => {
@@ -708,6 +919,7 @@
       if (Math.abs(getEffectiveCurrentTime() - time) > 3.5) {
         seekMovie(time);
       }
+      showToast('Paused');
     });
 
     s.on('sync-seek', ({ time }) => {
@@ -2650,6 +2862,9 @@
       el.volumeSlider.value = pct;
     }
     updateVolumeUI(pct, el.moviePlayer.muted, showHUD);
+    if (showHUD) {
+      showToast(el.moviePlayer.muted || pct === 0 ? 'Muted' : `Volume ${pct}%`);
+    }
   }
 
   function toggleMute() {
@@ -2661,10 +2876,12 @@
           const restorePct = lastVolumePct > 0 ? lastVolumePct : 100;
           if (el.volumeSlider) el.volumeSlider.value = restorePct;
           updateVolumeUI(restorePct, false, !state.isMiniPlayer);
+          showToast(`Volume ${restorePct}%`);
         } else {
           state.ytPlayer.mute();
           if (el.volumeSlider) el.volumeSlider.value = 0;
           updateVolumeUI(0, true, !state.isMiniPlayer);
+          showToast('Muted');
         }
       } catch (e) {}
       return;
@@ -2679,6 +2896,7 @@
         el.volumeSlider.value = 0;
       }
       updateVolumeUI(0, true, !state.isMiniPlayer);
+      showToast('Muted');
     } else {
       const restorePct = lastVolumePct > 0 ? lastVolumePct : 50;
       setVolume(restorePct, true, !state.isMiniPlayer);
@@ -2694,7 +2912,7 @@
         if (state.socket) {
           state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'seek', time: t });
         }
-        showToast('Rewound 10s');
+        showToast('-10s');
       } catch (e) {}
       return;
     }
@@ -2705,7 +2923,7 @@
       if (state.socket) {
         state.socket.emit('host-streaming-sync', { roomId: state.roomId, action: 'rewind10', time: newTime });
       }
-      showToast('Rewound 10s');
+      showToast('-10s');
       return;
     }
     const cur = getEffectiveCurrentTime();
@@ -2714,7 +2932,7 @@
     if (state.socket) {
       state.socket.emit('host-seek', { roomId: state.roomId, time: newTime });
     }
-    showToast('Rewound 10s');
+    showToast('-10s');
   }
 
   function forward10Seconds() {
@@ -2726,7 +2944,7 @@
         if (state.socket) {
           state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'seek', time: t });
         }
-        showToast('Forwarded 10s');
+        showToast('+10s');
       } catch (e) {}
       return;
     }
@@ -2737,7 +2955,7 @@
       if (state.socket) {
         state.socket.emit('host-streaming-sync', { roomId: state.roomId, action: 'forward10', time: newTime });
       }
-      showToast('Forwarded 10s');
+      showToast('+10s');
       return;
     }
     const cur = getEffectiveCurrentTime();
@@ -2747,7 +2965,7 @@
     if (state.socket) {
       state.socket.emit('host-seek', { roomId: state.roomId, time: newTime });
     }
-    showToast('Forwarded 10s');
+    showToast('+10s');
   }
 
   function initMobileGestures() {
@@ -5734,12 +5952,14 @@
           if (state.socket) {
             state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'pause', time: state.ytPlayer.getCurrentTime() });
           }
+          showToast('Paused');
         } else { // Paused / Ended / Other -> Play
           state.ytPlayer.playVideo();
           updatePlayPauseIcons(true);
           if (state.socket) {
             state.socket.emit('host-youtube-sync', { roomId: state.roomId, action: 'play', time: state.ytPlayer.getCurrentTime() });
           }
+          showToast('Playing');
         }
       } catch (e) {}
       return;
@@ -5755,6 +5975,7 @@
           time: state.streamingCurrentTime || 0
         });
       }
+      showToast(nextPlaying ? 'Playing' : 'Paused');
       return;
     }
 
@@ -5772,6 +5993,7 @@
         if (state.socket) {
           state.socket.emit('host-play', { roomId: state.roomId, time: curTime });
         }
+        showToast('Playing');
       }).catch(() => {});
     } else {
       el.moviePlayer.pause();
@@ -5779,6 +6001,7 @@
       if (state.socket) {
         state.socket.emit('host-pause', { roomId: state.roomId, time: curTime });
       }
+      showToast('Paused');
     }
   }
 
@@ -8249,6 +8472,12 @@
     document.addEventListener('fullscreenchange', () => {
       const isCinemaFull = (document.fullscreenElement === el.cinemaBox);
       const isDocFull = (document.fullscreenElement === document.documentElement);
+
+      const container = el.toastContainer || document.getElementById('toastContainer');
+      const targetParent = document.fullscreenElement || document.body;
+      if (container && container.parentNode !== targetParent) {
+        targetParent.appendChild(container);
+      }
 
       if (el.hudFullscreenExpand && el.hudFullscreenCompress) {
         el.hudFullscreenExpand.classList.toggle('hidden', isCinemaFull);
