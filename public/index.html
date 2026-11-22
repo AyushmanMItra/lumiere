@@ -1643,7 +1643,7 @@
         <div class="floating-pill-dock">
 
           <!-- 1. Mic Button with Chevron -->
-          <div class="split-dock-btn" id="micSplitBtn" title="Microphone Controls" aria-label="Microphone Controls">
+          <div class="split-dock-btn pill-split-group" id="micSplitBtn" title="Microphone Controls" aria-label="Microphone Controls">
             <button id="toggleMicBtn" class="pill-btn pill-btn-muted" title="Mute/Unmute" aria-label="Mute or Unmute Microphone">
               <!-- Mic on icon -->
               <svg id="micOnIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -1654,7 +1654,7 @@
                 <path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.12L12 8.14V5a3 3 0 0 1 3 3v3.12zM4.41 2.86L3 4.27l6 6V11a3 3 0 0 0 3 3c.39 0 .76-.08 1.1-.21l2.45 2.45C14.39 16.73 13.24 17 12 17c-3.87 0-7-3.13-7-7H3a9 9 0 0 0 8 8.94V21h2v-2.06c1.38-.17 2.66-.67 3.75-1.42l2.84 2.84 1.41-1.41L4.41 2.86z"/>
               </svg>
             </button>
-            <button id="micDeviceDropdownBtn" class="pill-chevron-btn" title="Microphone Settings" aria-label="Microphone Settings">
+            <button id="micDeviceDropdownBtn" class="pill-chevron-btn" title="Microphone Settings" aria-label="Microphone Settings" data-alias="micDeviceBtn" data-id="micDeviceBtn">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
@@ -1676,7 +1676,7 @@
           </div>
 
           <!-- 2. Video Camera Button with Chevron -->
-          <div class="split-dock-btn" id="cameraSplitBtn" title="Camera Controls" aria-label="Camera Controls">
+          <div class="split-dock-btn pill-split-group" id="cameraSplitBtn" title="Camera Controls" aria-label="Camera Controls">
             <button id="toggleCameraBtn" class="pill-btn pill-btn-off" title="Camera On/Off" aria-label="Turn Camera On or Off">
               <!-- Camera on icon -->
               <svg id="camOnIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -1687,7 +1687,7 @@
                 <path d="M21 6.5l-4 4V7c0-.55-.45-1-1-1H9.82L21 17.18V6.5zM3.27 2L2 3.27 4.73 6H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.21 0 .39-.08.55-.18L19.73 21 21 19.73 3.27 2zM15 16H6c-.55 0-1-.45-1-1V8.27L12.73 16H15z"/>
               </svg>
             </button>
-            <button id="camDeviceDropdownBtn" class="pill-chevron-btn" title="Camera Settings" aria-label="Camera Settings">
+            <button id="camDeviceDropdownBtn" class="pill-chevron-btn" title="Camera Settings" aria-label="Camera Settings" data-alias="camDeviceBtn" data-id="camDeviceBtn">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>

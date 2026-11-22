@@ -104,6 +104,26 @@
     ]
   };
 
+  // DOM element ID alias fallback helper for backward compatibility
+  const _origGetElementById = document.getElementById.bind(document);
+  document.getElementById = function(id) {
+    let elem = _origGetElementById(id);
+    if (!elem) {
+      if (id === 'micDeviceBtn') elem = _origGetElementById('micDeviceDropdownBtn');
+      else if (id === 'camDeviceBtn') elem = _origGetElementById('camDeviceDropdownBtn');
+    }
+    return elem;
+  };
+  const _origQuerySelector = document.querySelector.bind(document);
+  document.querySelector = function(selector) {
+    let elem = _origQuerySelector(selector);
+    if (!elem) {
+      if (selector === '#micDeviceBtn') elem = _origQuerySelector('#micDeviceDropdownBtn');
+      else if (selector === '#camDeviceBtn') elem = _origQuerySelector('#camDeviceDropdownBtn');
+    }
+    return elem;
+  };
+
   // DOM Elements
   const el = {
     joinModal: document.getElementById('joinModal'),
@@ -213,14 +233,14 @@
     toggleMicBtn: document.getElementById('toggleMicBtn'),
     micOnIcon: document.getElementById('micOnIcon'),
     micOffIcon: document.getElementById('micOffIcon'),
-    micDeviceDropdownBtn: document.getElementById('micDeviceDropdownBtn'),
+    micDeviceDropdownBtn: document.getElementById('micDeviceDropdownBtn') || document.getElementById('micDeviceBtn'),
     micDeviceMenu: document.getElementById('micDeviceMenu'),
     micDeviceList: document.getElementById('micDeviceList'),
 
     toggleCameraBtn: document.getElementById('toggleCameraBtn'),
     camOnIcon: document.getElementById('camOnIcon'),
     camOffIcon: document.getElementById('camOffIcon'),
-    camDeviceDropdownBtn: document.getElementById('camDeviceDropdownBtn'),
+    camDeviceDropdownBtn: document.getElementById('camDeviceDropdownBtn') || document.getElementById('camDeviceBtn'),
     camDeviceMenu: document.getElementById('camDeviceMenu'),
     camDeviceList: document.getElementById('camDeviceList'),
 
@@ -7400,7 +7420,7 @@
         if (e.target.closest('#moreOptionsBtn') || e.target.closest('#moreOptionsGroup')) {
           return;
         }
-        if (e.target.closest('#micDeviceDropdownBtn') || e.target.closest('#camDeviceDropdownBtn')) {
+        if (e.target.closest('#micDeviceDropdownBtn') || e.target.closest('#micDeviceBtn') || e.target.closest('#camDeviceDropdownBtn') || e.target.closest('#camDeviceBtn') || e.target.closest('.pill-chevron-btn')) {
           return;
         }
       }

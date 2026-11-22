@@ -1784,8 +1784,9 @@ body:not(.has-participants) .cinema-stage-wrapper {
   transform: scale(0.92);
 }
 
-/* Split Button with Chevron (Image 1 Mic & Cam) */
-.split-dock-btn {
+/* Split Button with Chevron Overlay Badge */
+.split-dock-btn,
+.pill-split-group {
   position: relative;
   display: flex;
   align-items: center;
@@ -1819,7 +1820,7 @@ body:not(.has-participants) .cinema-stage-wrapper {
   pointer-events: none;
 }
 
-/* Muted / Red State (Image 1 mic button) */
+/* Muted / Red State */
 .pill-btn-muted {
   background-color: rgba(218, 55, 60, 0.22);
   border-color: rgba(218, 55, 60, 0.4);
@@ -1844,7 +1845,11 @@ body:not(.has-participants) .cinema-stage-wrapper {
   box-shadow: 0 6px 20px rgba(218, 55, 60, 0.6);
 }
 
-.pill-chevron-btn {
+.pill-chevron-btn,
+#micDeviceDropdownBtn,
+#micDeviceBtn,
+#camDeviceDropdownBtn,
+#camDeviceBtn {
   position: absolute;
   bottom: -2px;
   right: -5px;
@@ -1858,10 +1863,30 @@ body:not(.has-participants) .cinema-stage-wrapper {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  z-index: 2;
+  box-sizing: border-box;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
-.pill-chevron-btn:hover {
+.pill-chevron-btn:hover,
+#micDeviceDropdownBtn:hover,
+#micDeviceBtn:hover,
+#camDeviceDropdownBtn:hover,
+#camDeviceBtn:hover {
   background-color: #43464d;
   color: #fff;
+}
+.pill-chevron-btn:active,
+#micDeviceDropdownBtn:active,
+#micDeviceBtn:active,
+#camDeviceDropdownBtn:active,
+#camDeviceBtn:active {
+  background-color: #43464d;
+  color: #fff;
+  transform: scale(0.92);
+}
+.pill-chevron-btn svg,
+.pill-chevron-btn svg * {
+  pointer-events: none;
 }
 
 /* Device Dropdown Menu */
@@ -4557,10 +4582,20 @@ body:not(.has-participants) .cinema-stage-wrapper {
   }
 
   /* Touch Target Expansions (44x44px rule per Apple HIG & Google Material) */
-  .pill-btn, .pill-chevron-btn, .corner-icon-btn, .icon-btn {
+  .pill-btn, .corner-icon-btn, .icon-btn {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
     position: relative;
+  }
+  .pill-chevron-btn,
+  #micDeviceDropdownBtn,
+  #micDeviceBtn,
+  #camDeviceDropdownBtn,
+  #camDeviceBtn {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    position: absolute !important;
+    z-index: 2 !important;
   }
   .pill-btn::after {
     content: '';
@@ -4573,10 +4608,10 @@ body:not(.has-participants) .cinema-stage-wrapper {
   .pill-chevron-btn::after {
     content: '';
     position: absolute;
-    top: -5px;
-    bottom: -5px;
-    left: -4px;
-    right: -4px;
+    top: -6px;
+    bottom: -6px;
+    left: -6px;
+    right: -6px;
   }
 }
 
@@ -5070,9 +5105,32 @@ body:not(.has-participants) .cinema-stage-wrapper {
     pointer-events: none;
   }
 
-  .pill-chevron-btn {
-    width: 14px;
-    height: 40px;
+  .pill-chevron-btn,
+  #micDeviceDropdownBtn,
+  #micDeviceBtn,
+  #camDeviceDropdownBtn,
+  #camDeviceBtn {
+    position: absolute !important;
+    bottom: -2px !important;
+    right: -4px !important;
+    width: 17px !important;
+    height: 17px !important;
+    border-radius: var(--radius-full) !important;
+    border: 2px solid var(--bg-surface) !important;
+    background-color: var(--bg-tertiary) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 2 !important;
+  }
+
+  .pill-chevron-btn svg,
+  #micDeviceDropdownBtn svg,
+  #camDeviceDropdownBtn svg {
+    width: 9px !important;
+    height: 9px !important;
+    stroke-width: 3;
+    pointer-events: none !important;
   }
 
   /* Fullscreen Chat in Portrait */
@@ -5275,9 +5333,32 @@ body:not(.has-participants) .cinema-stage-wrapper {
     height: 18px;
   }
 
-  .pill-chevron-btn {
-    width: 13px;
-    height: 36px;
+  .pill-chevron-btn,
+  #micDeviceDropdownBtn,
+  #micDeviceBtn,
+  #camDeviceDropdownBtn,
+  #camDeviceBtn {
+    position: absolute !important;
+    bottom: -2px !important;
+    right: -3px !important;
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: var(--radius-full) !important;
+    border: 1.5px solid var(--bg-surface) !important;
+    background-color: var(--bg-tertiary) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 2 !important;
+  }
+
+  .pill-chevron-btn svg,
+  #micDeviceDropdownBtn svg,
+  #camDeviceDropdownBtn svg {
+    width: 8px !important;
+    height: 8px !important;
+    stroke-width: 3;
+    pointer-events: none !important;
   }
 
   /* Compact, tap-friendly HUD pills for phone portrait */
@@ -5406,9 +5487,32 @@ body:not(.has-participants) .cinema-stage-wrapper {
     height: 15px !important;
   }
 
-  .pill-chevron-btn {
-    width: 11px !important;
-    height: 32px !important;
+  .pill-chevron-btn,
+  #micDeviceDropdownBtn,
+  #micDeviceBtn,
+  #camDeviceDropdownBtn,
+  #camDeviceBtn {
+    position: absolute !important;
+    bottom: -2px !important;
+    right: -2px !important;
+    width: 14px !important;
+    height: 14px !important;
+    border-radius: var(--radius-full) !important;
+    border: 1.5px solid var(--bg-surface) !important;
+    background-color: var(--bg-tertiary) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 2 !important;
+  }
+
+  .pill-chevron-btn svg,
+  #micDeviceDropdownBtn svg,
+  #camDeviceDropdownBtn svg {
+    width: 7px !important;
+    height: 7px !important;
+    stroke-width: 3;
+    pointer-events: none !important;
   }
 
   .participant-tile:only-child {
@@ -5983,21 +6087,42 @@ body:not(.has-participants) .cinema-stage-wrapper {
     pointer-events: none;
   }
 
-  .pill-chevron-btn {
-    width: 12px;
-    height: 34px;
-    position: relative;
+  .pill-chevron-btn,
+  #micDeviceDropdownBtn,
+  #micDeviceBtn,
+  #camDeviceDropdownBtn,
+  #camDeviceBtn {
+    position: absolute !important;
+    bottom: -2px !important;
+    right: -3px !important;
+    width: 15px !important;
+    height: 15px !important;
+    border-radius: var(--radius-full) !important;
+    border: 1.5px solid var(--bg-surface) !important;
+    background-color: var(--bg-tertiary) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     touch-action: manipulation;
+    z-index: 2 !important;
   }
 
   .pill-chevron-btn::after {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 24px;
-    height: 40px;
+    top: -6px;
+    bottom: -6px;
+    left: -6px;
+    right: -6px;
+  }
+
+  .pill-chevron-btn svg,
+  #micDeviceDropdownBtn svg,
+  #camDeviceDropdownBtn svg {
+    width: 8px !important;
+    height: 8px !important;
+    stroke-width: 3;
+    pointer-events: none !important;
   }
 
   /* Concurrent Watch + Chat Split Mode in Landscape */
@@ -10115,9 +10240,32 @@ html, body, .app-container {
     height: 14px !important;
   }
 
-  .floating-pill-dock .pill-chevron-btn {
-    width: 8px !important;
-    height: 28px !important;
+  .floating-pill-dock .pill-chevron-btn,
+  .floating-pill-dock #micDeviceDropdownBtn,
+  .floating-pill-dock #micDeviceBtn,
+  .floating-pill-dock #camDeviceDropdownBtn,
+  .floating-pill-dock #camDeviceBtn {
+    position: absolute !important;
+    bottom: -2px !important;
+    right: -2px !important;
+    width: 13px !important;
+    height: 13px !important;
+    border-radius: var(--radius-full) !important;
+    border: 1.5px solid var(--bg-surface) !important;
+    background-color: var(--bg-tertiary) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 2 !important;
+  }
+
+  .floating-pill-dock .pill-chevron-btn svg,
+  .floating-pill-dock #micDeviceDropdownBtn svg,
+  .floating-pill-dock #camDeviceDropdownBtn svg {
+    width: 7px !important;
+    height: 7px !important;
+    stroke-width: 3;
+    pointer-events: none !important;
   }
 
   .stage-lounge-card {
