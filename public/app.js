@@ -409,6 +409,7 @@
     menuSoundboardBtn: document.getElementById('menuSoundboardBtn'),
 
     pollModal: document.getElementById('pollModal'),
+    closePollModalBtn: document.getElementById('closePollModalBtn'),
     createPollForm: document.getElementById('createPollForm'),
     pollQuestionInput: document.getElementById('pollQuestionInput'),
     pollOpt1: document.getElementById('pollOpt1'),
@@ -4836,21 +4837,31 @@
   // ==========================================================================
 
   function openPollModal() {
+    closeTriviaModal();
     if (el.pollModal) {
       el.pollModal.classList.remove('hidden');
+      if (el.createPollForm) {
+        el.createPollForm.reset();
+      }
       if (el.pollQuestionInput) {
-        el.pollQuestionInput.value = '';
-        if (el.pollOpt1) el.pollOpt1.value = '';
-        if (el.pollOpt2) el.pollOpt2.value = '';
-        if (el.pollOpt3) el.pollOpt3.value = '';
-        if (el.pollOpt4) el.pollOpt4.value = '';
         setTimeout(() => el.pollQuestionInput.focus(), 80);
       }
     }
+    if (el.moreOptionsBtn) {
+      el.moreOptionsBtn.classList.remove('active-status-ring');
+    }
+    closeAllDeviceMenus(false);
   }
 
   function closePollModal() {
     if (el.pollModal) el.pollModal.classList.add('hidden');
+    if (el.createPollForm) {
+      el.createPollForm.reset();
+    }
+    if (el.moreOptionsBtn) {
+      el.moreOptionsBtn.classList.remove('active-status-ring');
+    }
+    closeAllDeviceMenus(false);
   }
 
   function handleCreatePoll(e) {
@@ -4922,57 +4933,635 @@
     }
   }
 
-  const TRIVIA_BANK = [
+  // HTML entity decoder for dynamic questions and answers
+  const NAMED_HTML_ENTITIES = {
+    '&quot;': '"',
+    '&#039;': "'",
+    '&apos;': "'",
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&nbsp;': ' ',
+    '&eacute;': 'e',
+    '&egrave;': 'e',
+    '&aacute;': 'a',
+    '&agrave;': 'a',
+    '&oacute;': 'o',
+    '&ograve;': 'o',
+    '&iacute;': 'i',
+    '&igrave;': 'i',
+    '&uacute;': 'u',
+    '&ugrave;': 'u',
+    '&ntilde;': 'n',
+    '&uuml;': 'u',
+    '&ouml;': 'o',
+    '&auml;': 'a',
+    '&ldquo;': '"',
+    '&rdquo;': '"',
+    '&lsquo;': "'",
+    '&rsquo;': "'",
+    '&ndash;': '-',
+    '&mdash;': '--',
+    '&hellip;': '...',
+    '&trade;': '(TM)',
+    '&copy;': '(c)',
+    '&reg;': '(R)'
+  };
+
+  function decodeHtmlEntities(str) {
+    if (!str || typeof str !== 'string') return '';
+    let result = str;
+    for (let pass = 0; pass < 2; pass++) {
+      if (!result.includes('&')) break;
+
+      if (typeof document !== 'undefined' && document.createElement) {
+        try {
+          const txt = document.createElement('textarea');
+          txt.innerHTML = result;
+          result = txt.value;
+        } catch (e) {}
+      }
+
+      result = result.replace(/&[a-z0-9#]+;/gi, (match) => {
+        const lower = match.toLowerCase();
+        if (NAMED_HTML_ENTITIES[lower] !== undefined) {
+          return NAMED_HTML_ENTITIES[lower];
+        }
+        const decMatch = match.match(/^&#(\d+);$/);
+        if (decMatch) {
+          try {
+            return String.fromCharCode(parseInt(decMatch[1], 10));
+          } catch (e) {
+            return match;
+          }
+        }
+        const hexMatch = match.match(/^&#x([0-9a-f]+);$/i);
+        if (hexMatch) {
+          try {
+            return String.fromCharCode(parseInt(hexMatch[1], 16));
+          } catch (e) {
+            return match;
+          }
+        }
+        return match;
+      });
+    }
+    return result;
+  }
+
+  // Fisher-Yates array shuffle helper
+  function shuffleArray(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // Diverse 50+ cinema questions pool (Hollywood, World Cinema, Oscars, Directors, Quotes, Genres)
+  const TRIVIA_FALLBACK_BANK = [
     {
-      q: "Which movie features the famous quote: 'Here's looking at you, kid'?",
-      options: ["Casablanca", "Citizen Kane", "Gone with the Wind", "Sunset Boulevard"],
-      answer: 0
+      q: "Which film won the Academy Award for Best Picture in 2020, becoming the first non-English language film to do so?",
+      correct: "Parasite",
+      incorrect: ["Roma", "1917", "Minari"]
     },
     {
-      q: "What is the highest-grossing film of all time (unadjusted for inflation)?",
-      options: ["Titanic", "Avengers: Endgame", "Avatar", "Star Wars: The Force Awakens"],
-      answer: 2
+      q: "Who directed the 1994 masterpiece 'Pulp Fiction'?",
+      correct: "Quentin Tarantino",
+      incorrect: ["Martin Scorsese", "David Fincher", "Paul Thomas Anderson"]
     },
     {
-      q: "In 'The Matrix', what color pill does Neo take to wake up in reality?",
-      options: ["Blue", "Red", "Green", "Yellow"],
-      answer: 1
+      q: "What is the name of the fictional African country ruled by King T'Challa in 'Black Panther'?",
+      correct: "Wakanda",
+      incorrect: ["Genosha", "Latveria", "Sokovia"]
     },
     {
-      q: "Which Christopher Nolan movie features dreams nested within dreams?",
-      options: ["Interstellar", "Tenet", "Memento", "Inception"],
-      answer: 3
+      q: "Which 1982 sci-fi film directed by Ridley Scott features humanoid androids known as 'replicants'?",
+      correct: "Blade Runner",
+      incorrect: ["Total Recall", "The Terminator", "RoboCop"]
     },
     {
-      q: "Who voiced Woody in the original Pixar movie 'Toy Story' (1995)?",
-      options: ["Tom Hanks", "Tim Allen", "Robin Williams", "Billy Crystal"],
-      answer: 0
+      q: "In 'The Lord of the Rings', what is the name of the volcanic mountain where the One Ring must be destroyed?",
+      correct: "Mount Doom",
+      incorrect: ["Erebor", "Caradhras", "Gundabad"]
     },
     {
-      q: "Which movie won the first ever Academy Award for Best Animated Feature?",
-      options: ["Monsters, Inc.", "Shrek", "Ice Age", "Finding Nemo"],
-      answer: 1
+      q: "Which animated film by Studio Ghibli won the Academy Award for Best Animated Feature in 2003?",
+      correct: "Spirited Away",
+      incorrect: ["Princess Mononoke", "Howl's Moving Castle", "My Neighbor Totoro"]
     },
     {
-      q: "In 'Pulp Fiction', what is the dance performed by Vincent Vega and Mia Wallace?",
-      options: ["The Twist", "The Macarena", "The Charleston", "The Tango"],
-      answer: 0
+      q: "Who played the iconic role of Vito Corleone in 'The Godfather' (1972)?",
+      correct: "Marlon Brando",
+      incorrect: ["Al Pacino", "Robert De Niro", "James Caan"]
+    },
+    {
+      q: "Which movie features the famous line: 'Here's looking at you, kid'?",
+      correct: "Casablanca",
+      incorrect: ["Citizen Kane", "Gone with the Wind", "Sunset Boulevard"]
+    },
+    {
+      q: "Who became the first woman to win the Academy Award for Best Director for 'The Hurt Locker' in 2010?",
+      correct: "Kathryn Bigelow",
+      incorrect: ["Sofia Coppola", "Jane Campion", "Greta Gerwig"]
+    },
+    {
+      q: "What is the highest-grossing film of all time worldwide (unadjusted for inflation)?",
+      correct: "Avatar",
+      incorrect: ["Avengers: Endgame", "Titanic", "Star Wars: The Force Awakens"]
+    },
+    {
+      q: "Which 1968 Stanley Kubrick film features the sentient supercomputer HAL 9000?",
+      correct: "2001: A Space Odyssey",
+      incorrect: ["A Clockwork Orange", "Solaris", "Dr. Strangelove"]
+    },
+    {
+      q: "In 'The Matrix' (1999), what color pill does Neo choose to see reality?",
+      correct: "Red",
+      incorrect: ["Blue", "Green", "Yellow"]
+    },
+    {
+      q: "Which Christopher Nolan film depicts an astronaut team traveling through a wormhole near Saturn?",
+      correct: "Interstellar",
+      incorrect: ["Inception", "Tenet", "The Prestige"]
+    },
+    {
+      q: "Who directed the groundbreaking Japanese samurai film 'Seven Samurai' (1954)?",
+      correct: "Akira Kurosawa",
+      incorrect: ["Yasujiro Ozu", "Kenji Mizoguchi", "Masaki Kobayashi"]
+    },
+    {
+      q: "Which movie won 11 Academy Awards in 1998, tying 'Ben-Hur' for the most wins in Oscar history?",
+      correct: "Titanic",
+      incorrect: ["Braveheart", "Forrest Gump", "Gladiator"]
+    },
+    {
+      q: "In 'Star Wars: A New Hope', what is the name of Han Solo's starship?",
+      correct: "Millennium Falcon",
+      incorrect: ["Star Destroyer", "Razor Crest", "Slave I"]
+    },
+    {
+      q: "Who played the Joker in Christopher Nolan's 'The Dark Knight' (2008), earning a posthumous Oscar?",
+      correct: "Heath Ledger",
+      incorrect: ["Joaquin Phoenix", "Jack Nicholson", "Jared Leto"]
+    },
+    {
+      q: "Which Mexican filmmaker directed 'Pan's Labyrinth' (2006) and 'The Shape of Water' (2017)?",
+      correct: "Guillermo del Toro",
+      incorrect: ["Alfonso Cuaron", "Alejandro Gonzalez Inarritu", "Robert Rodriguez"]
+    },
+    {
+      q: "What is the first rule of Fight Club in the 1999 film directed by David Fincher?",
+      correct: "You do not talk about Fight Club",
+      incorrect: ["Always bring a partner", "No weapons allowed", "Fights only last one round"]
+    },
+    {
+      q: "In 'Jurassic Park' (1993), what type of ancient insect was fossilized in amber with dinosaur blood?",
+      correct: "Mosquito",
+      incorrect: ["Spider", "Dragonfly", "Tick"]
+    },
+    {
+      q: "Which 1994 prison drama starring Tim Robbins and Morgan Freeman is ranked #1 on IMDb's Top 250?",
+      correct: "The Shawshank Redemption",
+      incorrect: ["Pulp Fiction", "Forrest Gump", "Schindler's List"]
+    },
+    {
+      q: "Which French romantic comedy directed by Jean-Pierre Jeunet stars Audrey Tautou as a Parisian waitress?",
+      correct: "Amelie",
+      incorrect: ["La Haine", "Blue Is the Warmest Color", "The Artist"]
+    },
+    {
+      q: "Who directed the suspenseful 1975 blockbuster 'Jaws'?",
+      correct: "Steven Spielberg",
+      incorrect: ["George Lucas", "Brian De Palma", "Francis Ford Coppola"]
+    },
+    {
+      q: "What iconic quote does Arnold Schwarzenegger utter in 'The Terminator' (1984)?",
+      correct: "I'll be back",
+      incorrect: ["Hasta la vista, baby", "Get to the chopper", "Consider that a divorce"]
+    },
+    {
+      q: "Which 1939 musical fantasy features Dorothy Gale and the song 'Over the Rainbow'?",
+      correct: "The Wizard of Oz",
+      incorrect: ["Singin' in the Rain", "Meet Me in St. Louis", "The Sound of Music"]
+    },
+    {
+      q: "In Disney's 'The Lion King' (1994), what does the Swahili phrase 'Hakuna Matata' translate to?",
+      correct: "No worries",
+      incorrect: ["Welcome home", "Be strong", "Circle of life"]
+    },
+    {
+      q: "Who voiced Woody the cowboy doll in the original Pixar film 'Toy Story' (1995)?",
+      correct: "Tom Hanks",
+      incorrect: ["Tim Allen", "Billy Crystal", "Robin Williams"]
+    },
+    {
+      q: "Which psychological horror film directed by Alfred Hitchcock in 1960 features the Bates Motel shower scene?",
+      correct: "Psycho",
+      incorrect: ["Vertigo", "The Birds", "Rear Window"]
+    },
+    {
+      q: "In 'Goodfellas' (1990), who played Tommy DeVito, famous for the line 'Funny how? How am I funny?'?",
+      correct: "Joe Pesci",
+      incorrect: ["Robert De Niro", "Ray Liotta", "Paul Sorvino"]
+    },
+    {
+      q: "Which 2002 Brazilian crime drama directed by Fernando Meirelles depicts gang warfare in Rio de Janeiro?",
+      correct: "City of God",
+      incorrect: ["Elite Squad", "Central Station", "Amores Perros"]
+    },
+    {
+      q: "What totem object does Dom Cobb spin in 'Inception' (2010) to test reality?",
+      correct: "A spinning top",
+      incorrect: ["A loaded die", "A brass token", "A poker chip"]
+    },
+    {
+      q: "Which legendary film saga features the phrase: 'May the Force be with you'?",
+      correct: "Star Wars",
+      incorrect: ["Star Trek", "Dune", "Guardians of the Galaxy"]
+    },
+    {
+      q: "Who directed the 2023 biographical epic 'Oppenheimer', winning Best Director and Best Picture?",
+      correct: "Christopher Nolan",
+      incorrect: ["Denis Villeneuve", "Ridley Scott", "Sam Mendes"]
+    },
+    {
+      q: "In 'Back to the Future' (1985), what speed must the DeLorean reach to activate time travel?",
+      correct: "88 mph",
+      incorrect: ["75 mph", "99 mph", "100 mph"]
+    },
+    {
+      q: "Which film won the inaugural Academy Award for Best Animated Feature in 2002?",
+      correct: "Shrek",
+      incorrect: ["Monsters, Inc.", "Ice Age", "Jimmy Neutron: Boy Genius"]
+    },
+    {
+      q: "Who played the whip-wielding archaeologist Indiana Jones in 'Raiders of the Lost Ark' (1981)?",
+      correct: "Harrison Ford",
+      incorrect: ["Tom Selleck", "Kurt Russell", "Mel Gibson"]
+    },
+    {
+      q: "In 'The Silence of the Lambs' (1991), what is the medical profession of Dr. Hannibal Lecter?",
+      correct: "Psychiatrist",
+      incorrect: ["Neurosurgeon", "Cardiologist", "Forensic Pathologist"]
+    },
+    {
+      q: "Which Italian drama directed by Giuseppe Tornatore won the Oscar for Best Foreign Language Film in 1990?",
+      correct: "Cinema Paradiso",
+      incorrect: ["Life is Beautiful", "La Dolce Vita", "The Great Beauty"]
+    },
+    {
+      q: "What is the name of the fictional Scandinavian kingdom in Disney's 'Frozen'?",
+      correct: "Arendelle",
+      incorrect: ["Corona", "DunBroch", "Genovia"]
+    },
+    {
+      q: "In 'Forrest Gump' (1994), what does Forrest's mama say life is like?",
+      correct: "A box of chocolates",
+      incorrect: ["A deck of cards", "A marathon race", "A rolling stone"]
+    },
+    {
+      q: "Which Denis Villeneuve sci-fi film is based on Frank Herbert's epic 1965 novel about the desert planet Arrakis?",
+      correct: "Dune",
+      incorrect: ["Arrival", "Blade Runner 2049", "Solaris"]
+    },
+    {
+      q: "Who directed the legendary mafia film 'The Godfather' (1972)?",
+      correct: "Francis Ford Coppola",
+      incorrect: ["Martin Scorsese", "Sergio Leone", "Brian De Palma"]
+    },
+    {
+      q: "What giant prehistoric ape is captured on Skull Island and taken to New York in the 1933 cinema classic?",
+      correct: "King Kong",
+      incorrect: ["Mighty Joe Young", "Godzilla", "Yeti"]
+    },
+    {
+      q: "Which courtroom drama features Jack Nicholson roaring: 'You can't handle the truth!'?",
+      correct: "A Few Good Men",
+      incorrect: ["The Shining", "One Flew Over the Cuckoo's Nest", "Chinatown"]
+    },
+    {
+      q: "Who composed the iconic musical themes for 'Star Wars', 'Jaws', and 'Indiana Jones'?",
+      correct: "John Williams",
+      incorrect: ["Hans Zimmer", "Ennio Morricone", "Alan Silvestri"]
+    },
+    {
+      q: "In 'The Shining' (1980), what is the name of the haunted mountain hotel where Jack Torrance goes mad?",
+      correct: "The Overlook Hotel",
+      incorrect: ["The Bates Motel", "The Grand Budapest", "The Continental"]
+    },
+    {
+      q: "Which 1999 sci-fi action film pioneered the multi-camera slow-motion effect known as 'Bullet Time'?",
+      correct: "The Matrix",
+      incorrect: ["Dark City", "Equilibrium", "Minority Report"]
+    },
+    {
+      q: "In Ridley Scott's 'Alien' (1979), what is the name of the commercial towing spaceship?",
+      correct: "USCSS Nostromo",
+      incorrect: ["USCSS Prometheus", "USS Sulaco", "Discovery One"]
+    },
+    {
+      q: "Which actor portrayed Roman general Maximus Decimus Meridius in 'Gladiator' (2000)?",
+      correct: "Russell Crowe",
+      incorrect: ["Joaquin Phoenix", "Gerard Butler", "Christian Bale"]
+    },
+    {
+      q: "What Marvel film became the highest-grossing R-rated movie of all time worldwide in 2024?",
+      correct: "Deadpool & Wolverine",
+      incorrect: ["Joker", "Oppenheimer", "The Passion of the Christ"]
+    },
+    {
+      q: "Which Wes Anderson comedy-drama chronicles the adventures of concierge Gustave H. at an alpine hotel?",
+      correct: "The Grand Budapest Hotel",
+      incorrect: ["Moonrise Kingdom", "The French Dispatch", "The Royal Tenenbaums"]
+    },
+    {
+      q: "In 'Pulp Fiction' (1994), what dance do Vincent Vega and Mia Wallace enter at Jack Rabbit Slim's?",
+      correct: "The Twist",
+      incorrect: ["The Charleston", "The Tango", "The Macarena"]
+    },
+    {
+      q: "Who portrayed the calculating mob boss Michael Corleone across 'The Godfather' trilogy?",
+      correct: "Al Pacino",
+      incorrect: ["Robert De Niro", "James Caan", "Joe Pesci"]
+    },
+    {
+      q: "Which 1941 Orson Welles masterpiece tells the story of Charles Foster Kane and the mystery of 'Rosebud'?",
+      correct: "Citizen Kane",
+      incorrect: ["The Magnificent Ambersons", "Touch of Evil", "The Third Man"]
+    },
+    {
+      q: "Who directed the 1993 historical Holocaust drama 'Schindler's List'?",
+      correct: "Steven Spielberg",
+      incorrect: ["Roman Polanski", "Oliver Stone", "Clint Eastwood"]
     }
   ];
 
+  let triviaSessionCounter = 0;
+  let currentTriviaSessionId = 0;
+  const dynamicTriviaReservoir = [];
+  const usedTriviaQuestionKeys = new Set();
   let triviaTimerInterval = null;
+  let triviaFetchAbortController = null;
 
-  function openTriviaModal() {
-    const shuffled = [...TRIVIA_BANK].sort(() => 0.5 - Math.random()).slice(0, 5);
+  function formatTriviaQuestion(item) {
+    const q = decodeHtmlEntities(item.q || item.question);
+    let options = [];
+    let answerIndex = 0;
+
+    if (item.correct !== undefined && Array.isArray(item.incorrect)) {
+      const correct = decodeHtmlEntities(item.correct);
+      const incorrect = item.incorrect.map(decodeHtmlEntities);
+      options = shuffleArray([correct, ...incorrect]);
+      answerIndex = options.indexOf(correct);
+    } else if (item.correct_answer && Array.isArray(item.incorrect_answers)) {
+      const correct = decodeHtmlEntities(item.correct_answer);
+      const incorrect = item.incorrect_answers.map(decodeHtmlEntities);
+      options = shuffleArray([correct, ...incorrect]);
+      answerIndex = options.indexOf(correct);
+    } else if (Array.isArray(item.options)) {
+      const correctVal = decodeHtmlEntities(item.options[item.answer !== undefined ? item.answer : 0]);
+      options = shuffleArray(item.options.map(decodeHtmlEntities));
+      answerIndex = options.indexOf(correctVal);
+    }
+    return { q, options, answer: answerIndex };
+  }
+
+  function getFallbackTriviaQuestions(count = 5) {
+    let available = TRIVIA_FALLBACK_BANK.filter(item => {
+      const key = (item.q || item.question || '').trim().toLowerCase();
+      return !usedTriviaQuestionKeys.has(key);
+    });
+    if (available.length < count) {
+      usedTriviaQuestionKeys.clear();
+      available = [...TRIVIA_FALLBACK_BANK];
+    }
+    const chosen = shuffleArray(available).slice(0, count);
+    chosen.forEach(item => {
+      const key = (item.q || item.question || '').trim().toLowerCase();
+      if (key) usedTriviaQuestionKeys.add(key);
+    });
+    return chosen.map(formatTriviaQuestion);
+  }
+
+  async function fetchDynamicTriviaQuestions(count = 5, sessionId = null) {
+    if (sessionId !== null && sessionId !== currentTriviaSessionId) {
+      return [];
+    }
+
+    // 0. Dispense from client dynamic reservoir if unconsumed questions available
+    const availableReservoir = dynamicTriviaReservoir.filter(item => {
+      const key = (item.question || item.q || '').trim().toLowerCase();
+      return key && !usedTriviaQuestionKeys.has(key);
+    });
+
+    if (availableReservoir.length >= count) {
+      const chosen = shuffleArray(availableReservoir).slice(0, count);
+      chosen.forEach(item => {
+        const key = (item.question || item.q || '').trim().toLowerCase();
+        if (key) usedTriviaQuestionKeys.add(key);
+      });
+      return chosen.map(formatTriviaQuestion);
+    }
+
+    if (triviaFetchAbortController) {
+      try { triviaFetchAbortController.abort(); } catch (e) {}
+    }
+    triviaFetchAbortController = new AbortController();
+    const currentController = triviaFetchAbortController;
+
+    const timeoutId = setTimeout(() => {
+      try { currentController.abort(); } catch (e) {}
+    }, 2800);
+
+    // 1. Try public OpenTDB Film Trivia API
+    try {
+      const opentdbUrl = 'https://opentdb.com/api.php?amount=15&category=11&type=multiple';
+      const res = await fetch(opentdbUrl, { signal: currentController.signal });
+      clearTimeout(timeoutId);
+
+      if (sessionId !== null && sessionId !== currentTriviaSessionId) {
+        return [];
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.response_code === 0 && Array.isArray(data.results) && data.results.length > 0) {
+          data.results.forEach(qItem => {
+            const key = (qItem.question || '').trim().toLowerCase();
+            const exists = dynamicTriviaReservoir.some(r => (r.question || r.q || '').trim().toLowerCase() === key);
+            if (!exists) {
+              dynamicTriviaReservoir.push(qItem);
+            }
+          });
+
+          let pool = dynamicTriviaReservoir.filter(item => {
+            const key = (item.question || item.q || '').trim().toLowerCase();
+            return key && !usedTriviaQuestionKeys.has(key);
+          });
+          if (pool.length < count) {
+            const fallbackPool = TRIVIA_FALLBACK_BANK.filter(item => {
+              const key = (item.question || item.q || '').trim().toLowerCase();
+              return key && !usedTriviaQuestionKeys.has(key);
+            });
+            pool = [...pool, ...shuffleArray(fallbackPool)];
+          }
+          if (pool.length < count) pool = dynamicTriviaReservoir;
+
+          const chosen = shuffleArray(pool).slice(0, count);
+          chosen.forEach(item => {
+            const key = (item.question || item.q || '').trim().toLowerCase();
+            if (key) usedTriviaQuestionKeys.add(key);
+          });
+          return chosen.map(formatTriviaQuestion);
+        }
+      }
+    } catch (err) {
+      // Aborted or offline
+    } finally {
+      clearTimeout(timeoutId);
+      if (triviaFetchAbortController === currentController) {
+        triviaFetchAbortController = null;
+      }
+    }
+
+    // Check cancellation
+    if (sessionId !== null && sessionId !== currentTriviaSessionId) {
+      return [];
+    }
+
+    // 2. Try server route /api/trivia
+    try {
+      const serverRes = await fetch(`/api/trivia?count=${count}`);
+      if (sessionId !== null && sessionId !== currentTriviaSessionId) {
+        return [];
+      }
+      if (serverRes.ok) {
+        const serverData = await serverRes.json();
+        if (serverData && serverData.success && Array.isArray(serverData.questions) && serverData.questions.length >= count) {
+          serverData.questions.forEach(qItem => {
+            const key = (qItem.question || qItem.q || '').trim().toLowerCase();
+            const exists = dynamicTriviaReservoir.some(r => (r.question || r.q || '').trim().toLowerCase() === key);
+            if (!exists) {
+              dynamicTriviaReservoir.push(qItem);
+            }
+          });
+
+          let pool = serverData.questions.filter(item => {
+            const key = (item.question || item.q || '').trim().toLowerCase();
+            return key && !usedTriviaQuestionKeys.has(key);
+          });
+          if (pool.length < count) {
+            const fallbackPool = TRIVIA_FALLBACK_BANK.filter(item => {
+              const key = (item.question || item.q || '').trim().toLowerCase();
+              return key && !usedTriviaQuestionKeys.has(key);
+            });
+            pool = [...pool, ...shuffleArray(fallbackPool)];
+          }
+          if (pool.length < count) {
+            usedTriviaQuestionKeys.clear();
+            pool = TRIVIA_FALLBACK_BANK;
+          }
+
+          const chosen = shuffleArray(pool).slice(0, count);
+          chosen.forEach(item => {
+            const key = (item.question || item.q || '').trim().toLowerCase();
+            if (key) usedTriviaQuestionKeys.add(key);
+          });
+          return chosen.map(formatTriviaQuestion);
+        }
+      }
+    } catch (e) {}
+
+    // Check cancellation
+    if (sessionId !== null && sessionId !== currentTriviaSessionId) {
+      return [];
+    }
+
+    // 3. Fallback to rich 55-question offline pool
+    return getFallbackTriviaQuestions(count);
+  }
+
+  function closeTriviaModal() {
+    currentTriviaSessionId = ++triviaSessionCounter;
+
+    if (triviaFetchAbortController) {
+      try {
+        triviaFetchAbortController.abort();
+      } catch (err) {}
+      triviaFetchAbortController = null;
+    }
+    if (triviaTimerInterval) {
+      clearInterval(triviaTimerInterval);
+      triviaTimerInterval = null;
+    }
+    if (el.triviaModal) {
+      el.triviaModal.classList.add('hidden');
+    }
+    if (el.triviaTimerCountdown) {
+      el.triviaTimerCountdown.textContent = '';
+    }
+    if (el.triviaTimerFill) {
+      el.triviaTimerFill.style.width = '100%';
+    }
+    if (state.isHost && state.socket && state.activeTrivia) {
+      state.socket.emit('end-trivia', { roomId: state.roomId });
+    }
+    state.activeTrivia = null;
+    if (el.moreOptionsBtn) {
+      el.moreOptionsBtn.classList.remove('active-status-ring');
+    }
+    closeAllDeviceMenus(false);
+  }
+
+  async function openTriviaModal() {
+    closePollModal();
+    const thisSessionId = ++triviaSessionCounter;
+    currentTriviaSessionId = thisSessionId;
+
+    if (el.triviaModal) {
+      el.triviaModal.classList.remove('hidden');
+    }
+    if (el.moreOptionsBtn) {
+      el.moreOptionsBtn.classList.remove('active-status-ring');
+    }
+    closeAllDeviceMenus(false);
+
+    if (el.triviaRoundText) el.triviaRoundText.textContent = 'Movie Trivia Challenge';
+    if (el.triviaTimerCountdown) el.triviaTimerCountdown.textContent = '';
+    if (el.triviaTimerFill) el.triviaTimerFill.style.width = '100%';
+    if (el.triviaQuestionText) el.triviaQuestionText.textContent = 'Fetching fresh cinema trivia questions...';
+    if (el.triviaOptionsGrid) el.triviaOptionsGrid.innerHTML = '';
+    if (el.triviaFeedback) el.triviaFeedback.classList.add('hidden');
+
+    const questions = await fetchDynamicTriviaQuestions(5, thisSessionId);
+
+    if (thisSessionId !== currentTriviaSessionId || !el.triviaModal || el.triviaModal.classList.contains('hidden')) {
+      return;
+    }
+
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return;
+    }
+
     const triviaRound = {
       id: 'trivia_' + Date.now(),
-      questions: shuffled,
+      questions,
       currentQuestion: 0
     };
+
     if (state.socket) {
       state.socket.emit('start-trivia', { roomId: state.roomId, triviaRound });
+    } else {
+      startTriviaRound(triviaRound);
     }
   }
+
+  window.decodeHtmlEntities = decodeHtmlEntities;
+  window.getFallbackTriviaQuestions = getFallbackTriviaQuestions;
+  window.fetchDynamicTriviaQuestions = fetchDynamicTriviaQuestions;
+  window.TRIVIA_FALLBACK_BANK = TRIVIA_FALLBACK_BANK;
 
   function startTriviaRound(trivia) {
     state.activeTrivia = trivia;
@@ -5068,7 +5657,12 @@
   }
 
   function finishTriviaRound(scores) {
-    clearInterval(triviaTimerInterval);
+    if (triviaTimerInterval) {
+      clearInterval(triviaTimerInterval);
+      triviaTimerInterval = null;
+    }
+    if (el.triviaTimerCountdown) el.triviaTimerCountdown.textContent = '';
+    if (el.triviaTimerFill) el.triviaTimerFill.style.width = '0%';
     if (el.triviaFeedback) {
       el.triviaFeedback.classList.remove('hidden');
       el.triviaFeedback.textContent = 'Round Finished! Great game!';
@@ -6759,8 +7353,17 @@
         if (pickerOpen || trayOpen) {
           closeEmojiPicker();
           closeReactionsTray();
-        } else if (state.chatOpen) {
-          toggleChat(false);
+        } else {
+          const isAnyModalOpen = Boolean(
+            (el.pollModal && !el.pollModal.classList.contains('hidden')) ||
+            (el.triviaModal && !el.triviaModal.classList.contains('hidden')) ||
+            (el.movieModal && !el.movieModal.classList.contains('hidden')) ||
+            (el.feedbackModal && !el.feedbackModal.classList.contains('hidden')) ||
+            (el.soundboardModal && !el.soundboardModal.classList.contains('hidden'))
+          );
+          if (!isAnyModalOpen && state.chatOpen) {
+            toggleChat(false);
+          }
         }
       }
     });
@@ -7734,6 +8337,11 @@
         if (el.movieModal && !el.movieModal.classList.contains('hidden')) closeMovieModal();
         if (tailscaleModal && !tailscaleModal.classList.contains('hidden')) closeTailscaleModal();
         if (communityModal && !communityModal.classList.contains('hidden')) closeCommunityModal();
+        if (el.pollModal && !el.pollModal.classList.contains('hidden')) closePollModal();
+        if (el.triviaModal && !el.triviaModal.classList.contains('hidden')) closeTriviaModal();
+        if (el.soundboardModal && !el.soundboardModal.classList.contains('hidden')) el.soundboardModal.classList.add('hidden');
+        if (el.moreOptionsBtn) el.moreOptionsBtn.classList.remove('active-status-ring');
+        closeAllDeviceMenus(false);
       }
     });
 
@@ -7917,6 +8525,7 @@
 
     closeAllDeviceMenus = (animate = true) => {
       if (el.dockReactionsBtn) el.dockReactionsBtn.classList.remove('active-status-ring', 'ring-reactions');
+      if (el.moreOptionsBtn) el.moreOptionsBtn.classList.remove('active-status-ring');
       const allMenus = [el.micDeviceMenu, el.camDeviceMenu, el.moreOptionsMenu, el.activityMenu, el.dockReactionsTray];
       const activeMenus = allMenus.filter(m => m && !m.classList.contains('hidden'));
       if (activeMenus.length === 0) return;
@@ -7981,6 +8590,9 @@
       if (isCurrentlyHidden) {
         menuToOpen.classList.remove('hidden', 'sheet-closing');
         menuToOpen.classList.add('sheet-opening');
+        if (menuToOpen === el.moreOptionsMenu && el.moreOptionsBtn) {
+          el.moreOptionsBtn.classList.add('active-status-ring');
+        }
         if (state.resetIdleTimer) state.resetIdleTimer();
         updateMobileSheetBackdrop();
       } else {
@@ -8056,10 +8668,12 @@
     // Activity Menu Items (Poll, Trivia, Soundboard)
     bindTap(el.menuPollBtn, () => {
       closeAllDeviceMenus(false);
+      if (el.moreOptionsBtn) el.moreOptionsBtn.classList.remove('active-status-ring');
       openPollModal();
     });
     bindTap(el.menuTriviaBtn, () => {
       closeAllDeviceMenus(false);
+      if (el.moreOptionsBtn) el.moreOptionsBtn.classList.remove('active-status-ring');
       openTriviaModal();
     });
     bindTap(el.menuSoundboardBtn, () => {
@@ -8257,8 +8871,12 @@
     }
 
     // Poll Modal & Poll Widget
-    if (el.closePollModalBtn) el.closePollModalBtn.onclick = closePollModal;
-    if (el.cancelPollBtn) el.cancelPollBtn.onclick = closePollModal;
+    if (el.closePollModalBtn) {
+      bindTap(el.closePollModalBtn, closePollModal);
+    }
+    if (el.cancelPollBtn) {
+      bindTap(el.cancelPollBtn, closePollModal);
+    }
     if (el.createPollForm) el.createPollForm.onsubmit = handleCreatePoll;
     if (el.closePollWidgetBtn) {
       el.closePollWidgetBtn.onclick = () => {
@@ -8269,15 +8887,24 @@
         }
       };
     }
+    if (el.pollModal) {
+      el.pollModal.addEventListener('click', (e) => {
+        if (e.target === el.pollModal || e.target.closest('#closePollModalBtn') || e.target.closest('#cancelPollBtn')) {
+          closePollModal();
+        }
+      });
+    }
 
     // Trivia Modal
     if (el.closeTriviaModalBtn) {
-      el.closeTriviaModalBtn.onclick = () => {
-        if (state.isHost && state.socket) {
-          state.socket.emit('end-trivia', { roomId: state.roomId });
+      bindTap(el.closeTriviaModalBtn, closeTriviaModal);
+    }
+    if (el.triviaModal) {
+      el.triviaModal.addEventListener('click', (e) => {
+        if (e.target === el.triviaModal || e.target.closest('#closeTriviaModalBtn')) {
+          closeTriviaModal();
         }
-        finishTriviaRound();
-      };
+      });
     }
 
     // Audio Processing Constraints Toggles (Noise Suppression, Echo Cancellation)

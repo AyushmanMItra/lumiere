@@ -4442,8 +4442,22 @@ body:not(.has-participants) .cinema-stage-wrapper {
   border: none;
   color: var(--text-muted);
   cursor: pointer;
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  min-width: 32px;
+  min-height: 32px;
+  transition: color 0.15s ease, background-color 0.15s ease;
 }
-.modal-x-btn:hover { color: #fff; }
+.modal-x-btn:hover {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+.modal-x-btn:active {
+  background-color: rgba(255, 255, 255, 0.16);
+}
 
 .modal-sub-row {
   display: flex;

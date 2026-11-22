@@ -245,6 +245,131 @@ app.get('/api/info', (req, res) => {
   });
 });
 
+// Movie Trivia Questions API (proxies OpenTDB with dynamic reservoir fallback)
+const SERVER_CINEMA_TRIVIA_SEED = [
+  { question: "Which film won the Academy Award for Best Picture in 2020, becoming the first non-English language film to do so?", correct_answer: "Parasite", incorrect_answers: ["Roma", "1917", "Minari"] },
+  { question: "Who directed the 1994 masterpiece 'Pulp Fiction'?", correct_answer: "Quentin Tarantino", incorrect_answers: ["Martin Scorsese", "David Fincher", "Paul Thomas Anderson"] },
+  { question: "What is the name of the fictional African country ruled by King T'Challa in 'Black Panther'?", correct_answer: "Wakanda", incorrect_answers: ["Genosha", "Latveria", "Sokovia"] },
+  { question: "Which 1982 sci-fi film directed by Ridley Scott features humanoid androids known as 'replicants'?", correct_answer: "Blade Runner", incorrect_answers: ["Total Recall", "The Terminator", "RoboCop"] },
+  { question: "In 'The Lord of the Rings', what is the name of the volcanic mountain where the One Ring must be destroyed?", correct_answer: "Mount Doom", incorrect_answers: ["Erebor", "Caradhras", "Gundabad"] },
+  { question: "Which animated film by Studio Ghibli won the Academy Award for Best Animated Feature in 2003?", correct_answer: "Spirited Away", incorrect_answers: ["Princess Mononoke", "Howl's Moving Castle", "My Neighbor Totoro"] },
+  { question: "Who played the iconic role of Vito Corleone in 'The Godfather' (1972)?", correct_answer: "Marlon Brando", incorrect_answers: ["Al Pacino", "Robert De Niro", "James Caan"] },
+  { question: "Which movie features the famous line: 'Here's looking at you, kid'?", correct_answer: "Casablanca", incorrect_answers: ["Citizen Kane", "Gone with the Wind", "Sunset Boulevard"] },
+  { question: "Who became the first woman to win the Academy Award for Best Director for 'The Hurt Locker' in 2010?", correct_answer: "Kathryn Bigelow", incorrect_answers: ["Sofia Coppola", "Jane Campion", "Greta Gerwig"] },
+  { question: "What is the highest-grossing film of all time worldwide (unadjusted for inflation)?", correct_answer: "Avatar", incorrect_answers: ["Avengers: Endgame", "Titanic", "Star Wars: The Force Awakens"] },
+  { question: "Which 1968 Stanley Kubrick film features the sentient supercomputer HAL 9000?", correct_answer: "2001: A Space Odyssey", incorrect_answers: ["A Clockwork Orange", "Solaris", "Dr. Strangelove"] },
+  { question: "In 'The Matrix' (1999), what color pill does Neo choose to see reality?", correct_answer: "Red", incorrect_answers: ["Blue", "Green", "Yellow"] },
+  { question: "Which Christopher Nolan film depicts an astronaut team traveling through a wormhole near Saturn?", correct_answer: "Interstellar", incorrect_answers: ["Inception", "Tenet", "The Prestige"] },
+  { question: "Who directed the groundbreaking Japanese samurai film 'Seven Samurai' (1954)?", correct_answer: "Akira Kurosawa", incorrect_answers: ["Yasujiro Ozu", "Kenji Mizoguchi", "Masaki Kobayashi"] },
+  { question: "Which movie won 11 Academy Awards in 1998, tying 'Ben-Hur' for the most wins in Oscar history?", correct_answer: "Titanic", incorrect_answers: ["Braveheart", "Forrest Gump", "Gladiator"] },
+  { question: "In 'Star Wars: A New Hope', what is the name of Han Solo's starship?", correct_answer: "Millennium Falcon", incorrect_answers: ["Star Destroyer", "Razor Crest", "Slave I"] },
+  { question: "Who played the Joker in Christopher Nolan's 'The Dark Knight' (2008), earning a posthumous Oscar?", correct_answer: "Heath Ledger", incorrect_answers: ["Joaquin Phoenix", "Jack Nicholson", "Jared Leto"] },
+  { question: "Which Mexican filmmaker directed 'Pan's Labyrinth' (2006) and 'The Shape of Water' (2017)?", correct_answer: "Guillermo del Toro", incorrect_answers: ["Alfonso Cuaron", "Alejandro Gonzalez Inarritu", "Robert Rodriguez"] },
+  { question: "What is the first rule of Fight Club in the 1999 film directed by David Fincher?", correct_answer: "You do not talk about Fight Club", incorrect_answers: ["Always bring a partner", "No weapons allowed", "Fights only last one round"] },
+  { question: "In 'Jurassic Park' (1993), what type of ancient insect was fossilized in amber with dinosaur blood?", correct_answer: "Mosquito", incorrect_answers: ["Spider", "Dragonfly", "Tick"] },
+  { question: "Which 1994 prison drama starring Tim Robbins and Morgan Freeman is ranked #1 on IMDb's Top 250?", correct_answer: "The Shawshank Redemption", incorrect_answers: ["Pulp Fiction", "Forrest Gump", "Schindler's List"] },
+  { question: "Which French romantic comedy directed by Jean-Pierre Jeunet stars Audrey Tautou as a Parisian waitress?", correct_answer: "Amelie", incorrect_answers: ["La Haine", "Blue Is the Warmest Color", "The Artist"] },
+  { question: "Who directed the suspenseful 1975 blockbuster 'Jaws'?", correct_answer: "Steven Spielberg", incorrect_answers: ["George Lucas", "Brian De Palma", "Francis Ford Coppola"] },
+  { question: "What iconic quote does Arnold Schwarzenegger utter in 'The Terminator' (1984)?", correct_answer: "I'll be back", incorrect_answers: ["Hasta la vista, baby", "Get to the chopper", "Consider that a divorce"] },
+  { question: "Which 1939 musical fantasy features Dorothy Gale and the song 'Over the Rainbow'?", correct_answer: "The Wizard of Oz", incorrect_answers: ["Singin' in the Rain", "Meet Me in St. Louis", "The Sound of Music"] },
+  { question: "In Disney's 'The Lion King' (1994), what does the Swahili phrase 'Hakuna Matata' translate to?", correct_answer: "No worries", incorrect_answers: ["Welcome home", "Be strong", "Circle of life"] },
+  { question: "Who voiced Woody the cowboy doll in the original Pixar film 'Toy Story' (1995)?", correct_answer: "Tom Hanks", incorrect_answers: ["Tim Allen", "Billy Crystal", "Robin Williams"] },
+  { question: "Which psychological horror film directed by Alfred Hitchcock in 1960 features the Bates Motel shower scene?", correct_answer: "Psycho", incorrect_answers: ["Vertigo", "The Birds", "Rear Window"] },
+  { question: "In 'Goodfellas' (1990), who played Tommy DeVito, famous for the line 'Funny how? How am I funny?'?", correct_answer: "Joe Pesci", incorrect_answers: ["Robert De Niro", "Ray Liotta", "Paul Sorvino"] },
+  { question: "Which 2002 Brazilian crime drama directed by Fernando Meirelles depicts gang warfare in Rio de Janeiro?", correct_answer: "City of God", incorrect_answers: ["Elite Squad", "Central Station", "Amores Perros"] },
+  { question: "What totem object does Dom Cobb spin in 'Inception' (2010) to test reality?", correct_answer: "A spinning top", incorrect_answers: ["A loaded die", "A brass token", "A poker chip"] },
+  { question: "Which legendary film saga features the phrase: 'May the Force be with you'?", correct_answer: "Star Wars", incorrect_answers: ["Star Trek", "Dune", "Guardians of the Galaxy"] },
+  { question: "Who directed the 2023 biographical epic 'Oppenheimer', winning Best Director and Best Picture?", correct_answer: "Christopher Nolan", incorrect_answers: ["Denis Villeneuve", "Ridley Scott", "Sam Mendes"] },
+  { question: "In 'Back to the Future' (1985), what speed must the DeLorean reach to activate time travel?", correct_answer: "88 mph", incorrect_answers: ["75 mph", "99 mph", "100 mph"] },
+  { question: "Which film won the inaugural Academy Award for Best Animated Feature in 2002?", correct_answer: "Shrek", incorrect_answers: ["Monsters, Inc.", "Ice Age", "Jimmy Neutron: Boy Genius"] },
+  { question: "Who played the whip-wielding archaeologist Indiana Jones in 'Raiders of the Lost Ark' (1981)?", correct_answer: "Harrison Ford", incorrect_answers: ["Tom Selleck", "Kurt Russell", "Mel Gibson"] },
+  { question: "In 'The Silence of the Lambs' (1991), what is the medical profession of Dr. Hannibal Lecter?", correct_answer: "Psychiatrist", incorrect_answers: ["Neurosurgeon", "Cardiologist", "Forensic Pathologist"] },
+  { question: "Which Italian drama directed by Giuseppe Tornatore won the Oscar for Best Foreign Language Film in 1990?", correct_answer: "Cinema Paradiso", incorrect_answers: ["Life is Beautiful", "La Dolce Vita", "The Great Beauty"] },
+  { question: "What is the name of the fictional Scandinavian kingdom in Disney's 'Frozen'?", correct_answer: "Arendelle", incorrect_answers: ["Corona", "DunBroch", "Genovia"] },
+  { question: "In 'Forrest Gump' (1994), what does Forrest's mama say life is like?", correct_answer: "A box of chocolates", incorrect_answers: ["A deck of cards", "A marathon race", "A rolling stone"] },
+  { question: "Which Denis Villeneuve sci-fi film is based on Frank Herbert's epic 1965 novel about the desert planet Arrakis?", correct_answer: "Dune", incorrect_answers: ["Arrival", "Blade Runner 2049", "Solaris"] },
+  { question: "Who directed the legendary mafia film 'The Godfather' (1972)?", correct_answer: "Francis Ford Coppola", incorrect_answers: ["Martin Scorsese", "Sergio Leone", "Brian De Palma"] },
+  { question: "What giant prehistoric ape is captured on Skull Island and taken to New York in the 1933 cinema classic?", correct_answer: "King Kong", incorrect_answers: ["Mighty Joe Young", "Godzilla", "Yeti"] },
+  { question: "Which courtroom drama features Jack Nicholson roaring: 'You can't handle the truth!'?", correct_answer: "A Few Good Men", incorrect_answers: ["The Shining", "One Flew Over the Cuckoo's Nest", "Chinatown"] },
+  { question: "Who composed the iconic musical themes for 'Star Wars', 'Jaws', and 'Indiana Jones'?", correct_answer: "John Williams", incorrect_answers: ["Hans Zimmer", "Ennio Morricone", "Alan Silvestri"] },
+  { question: "In 'The Shining' (1980), what is the name of the haunted mountain hotel where Jack Torrance goes mad?", correct_answer: "The Overlook Hotel", incorrect_answers: ["The Bates Motel", "The Grand Budapest", "The Continental"] },
+  { question: "Which 1999 sci-fi action film pioneered the multi-camera slow-motion effect known as 'Bullet Time'?", correct_answer: "The Matrix", incorrect_answers: ["Dark City", "Equilibrium", "Minority Report"] },
+  { question: "In Ridley Scott's 'Alien' (1979), what is the name of the commercial towing spaceship?", correct_answer: "USCSS Nostromo", incorrect_answers: ["USCSS Prometheus", "USS Sulaco", "Discovery One"] },
+  { question: "Which actor portrayed Roman general Maximus Decimus Meridius in 'Gladiator' (2000)?", correct_answer: "Russell Crowe", incorrect_answers: ["Joaquin Phoenix", "Gerard Butler", "Christian Bale"] },
+  { question: "What Marvel film became the highest-grossing R-rated movie of all time worldwide in 2024?", correct_answer: "Deadpool & Wolverine", incorrect_answers: ["Joker", "Oppenheimer", "The Passion of the Christ"] },
+  { question: "Which Wes Anderson comedy-drama chronicles the adventures of concierge Gustave H. at an alpine hotel?", correct_answer: "The Grand Budapest Hotel", incorrect_answers: ["Moonrise Kingdom", "The French Dispatch", "The Royal Tenenbaums"] },
+  { question: "In 'Pulp Fiction' (1994), what dance do Vincent Vega and Mia Wallace enter at Jack Rabbit Slim's?", correct_answer: "The Twist", incorrect_answers: ["The Charleston", "The Tango", "The Macarena"] },
+  { question: "Who portrayed the calculating mob boss Michael Corleone across 'The Godfather' trilogy?", correct_answer: "Al Pacino", incorrect_answers: ["Robert De Niro", "James Caan", "Joe Pesci"] },
+  { question: "Which 1941 Orson Welles masterpiece tells the story of Charles Foster Kane and the mystery of 'Rosebud'?", correct_answer: "Citizen Kane", incorrect_answers: ["The Magnificent Ambersons", "Touch of Evil", "The Third Man"] },
+  { question: "Who directed the 1993 historical Holocaust drama 'Schindler's List'?", correct_answer: "Steven Spielberg", incorrect_answers: ["Roman Polanski", "Oliver Stone", "Clint Eastwood"] }
+];
+
+const serverTriviaReservoir = [...SERVER_CINEMA_TRIVIA_SEED];
+const serverUsedQuestionKeys = new Set();
+let lastServerOpenTdbFetchTime = 0;
+
+function shuffleServerArray(arr) {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+app.get('/api/trivia', async (req, res) => {
+  const count = parseInt(req.query.count, 10) || 5;
+
+  // Opportunistically refresh reservoir from OpenTDB if rate limit window has passed (5s)
+  if (Date.now() - lastServerOpenTdbFetchTime > 6000) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2200);
+      const opentdbUrl = `https://opentdb.com/api.php?amount=15&category=11&type=multiple`;
+      const response = await fetch(opentdbUrl, { signal: controller.signal });
+      clearTimeout(timeout);
+      lastServerOpenTdbFetchTime = Date.now();
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.response_code === 0 && Array.isArray(data.results)) {
+          data.results.forEach(item => {
+            const key = (item.question || '').trim().toLowerCase();
+            const exists = serverTriviaReservoir.some(r => (r.question || '').trim().toLowerCase() === key);
+            if (!exists) {
+              serverTriviaReservoir.push({
+                question: item.question,
+                correct_answer: item.correct_answer,
+                incorrect_answers: item.incorrect_answers
+              });
+            }
+          });
+        }
+      }
+    } catch (err) {
+      // Offline or network timeout - proceed to dispense from reservoir
+    }
+  }
+
+  // Pick non-repetitive questions from server reservoir
+  let available = serverTriviaReservoir.filter(item => {
+    const key = (item.question || '').trim().toLowerCase();
+    return !serverUsedQuestionKeys.has(key);
+  });
+
+  if (available.length < count) {
+    serverUsedQuestionKeys.clear();
+    available = [...serverTriviaReservoir];
+  }
+
+  const chosen = shuffleServerArray(available).slice(0, count);
+  chosen.forEach(item => {
+    const key = (item.question || '').trim().toLowerCase();
+    if (key) serverUsedQuestionKeys.add(key);
+  });
+
+  return res.json({ success: true, questions: chosen });
+});
+
 // 2. List Movies (shows all MKV, MP4, WebM movies)
 app.get('/api/movies', (req, res) => {
   try {
