@@ -1511,17 +1511,25 @@
 
       </section>
 
+      <!-- Mobile Backdrop for Chat (tap to dismiss on mobile) -->
+      <div class="chat-backdrop hidden" id="chatBackdrop" aria-label="Dismiss chat"></div>
+
       <!-- Chat Sidebar (Matching Image 3) -->
-      <aside class="chat-panel hidden" id="chatSidebar">
+      <aside class="chat-panel hidden" id="chatSidebar" aria-label="Theater Chat">
+        <!-- Mobile Drawer Drag Handle -->
+        <div class="chat-mobile-drag-handle" aria-hidden="true"></div>
+
         <div class="chat-panel-header">
           <div class="chat-panel-title">
+            <span class="chat-live-pulse-dot" title="Live stream channel"></span>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
             </svg>
             <span>Stream Room</span>
+            <span class="chat-status-pill">LIVE</span>
           </div>
-          <button id="closeChatBtn" class="chat-close-btn" title="Close Chat">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <button id="closeChatBtn" class="chat-close-btn" title="Close Chat" aria-label="Close Chat">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -1532,13 +1540,40 @@
         <div class="chat-messages-scroll" id="chatMessages">
           <div class="chat-welcome-hero" id="chatWelcomeHero">
             <div class="welcome-icon-circle">
+              <div class="welcome-icon-glow"></div>
               <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
               </svg>
             </div>
             <h3>Welcome to Stream Room!</h3>
-            <p>This is the start of the Stream Room channel.</p>
+            <p>Voice and chat are live with your party. Start the conversation or send a live reaction.</p>
+            <div class="chat-welcome-chips" id="chatWelcomeChips">
+              <button type="button" class="chat-starter-chip" data-text=":popcorn: Ready for the movie!">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbf24"><path d="M7 3a2.5 2.5 0 0 0-2.45 2.05A2.5 2.5 0 0 0 3 7.5a2.5 2.5 0 0 0 2 2.45V10l1.8 11h10.4L19 10v-.05A2.5 2.5 0 0 0 21 7.5a2.5 2.5 0 0 0-1.55-2.45A2.5 2.5 0 0 0 17 3a2.5 2.5 0 0 0-2.12 1.18A2.5 2.5 0 0 0 12 3a2.5 2.5 0 0 0-2.88 1.18A2.5 2.5 0 0 0 7 3z"/></svg>
+                <span>Popcorn</span>
+              </button>
+              <button type="button" class="chat-starter-chip" data-text=":fire: This stream is fire!">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.61 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67z"/></svg>
+                <span>Fire</span>
+              </button>
+              <button type="button" class="chat-starter-chip" data-text=":clap: Great scene!">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#38bdf8"><path d="M19 13.5l-6-6-1.5 1.5 4.5 4.5H6.5c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5h10l-1.5 1.5 1.5 1.5 5-5-2.5-2.5z"/></svg>
+                <span>Clap</span>
+              </button>
+              <button type="button" class="chat-starter-chip" data-text=":heart: Love it!">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#f43f5e"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                <span>Heart</span>
+              </button>
+            </div>
           </div>
+          <!-- Floating New Messages Pill -->
+          <button type="button" class="chat-new-messages-pill hidden" id="chatNewMessagesPill" aria-label="Scroll to new messages">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <polyline points="19 12 12 19 5 12"></polyline>
+            </svg>
+            <span>New messages</span>
+          </button>
         </div>
 
         <!-- Chat Reaction Particles Container -->
@@ -1549,12 +1584,20 @@
           <!-- Emoji Picker Popover -->
           <div class="chat-emoji-picker hidden" id="chatEmojiPicker">
             <div class="emoji-picker-header">
-              <span class="emoji-picker-title">EMOJIS</span>
+              <span class="emoji-picker-title">EMOJIS &amp; STICKERS</span>
               <div class="emoji-picker-tabs">
-                <button type="button" class="emoji-tab-btn active" data-category="cinema" title="Cinema & Vibes">[Cinema]</button>
-                <button type="button" class="emoji-tab-btn" data-category="popular" title="Reactions">[Reactions]</button>
-                <button type="button" class="emoji-tab-btn" data-category="hype" title="Hype & Love">[Hype]</button>
-                <button type="button" class="emoji-tab-btn" data-category="gestures" title="Gestures">[Gestures]</button>
+                <button type="button" class="emoji-tab-btn active" data-category="cinema" title="Cinema &amp; Vibes" aria-label="Cinema">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </button>
+                <button type="button" class="emoji-tab-btn" data-category="popular" title="Popular Reactions" aria-label="Popular">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="#eab308"/><path d="M7 13.5c1 2.5 3 4 5 4s4-1.5 5-4H7z" fill="#1f2232"/><circle cx="9" cy="9.5" r="1.5" fill="#1f2232"/><circle cx="15" cy="9.5" r="1.5" fill="#1f2232"/></svg>
+                </button>
+                <button type="button" class="emoji-tab-btn" data-category="hype" title="Hype &amp; Energy" aria-label="Hype">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.61 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67z" fill="#f59e0b"/></svg>
+                </button>
+                <button type="button" class="emoji-tab-btn" data-category="gestures" title="Claps &amp; Gestures" aria-label="Gestures">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13.5l-6-6-1.5 1.5 4.5 4.5H6.5c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5h10l-1.5 1.5 1.5 1.5 5-5-2.5-2.5z" fill="#38bdf8"/></svg>
+                </button>
               </div>
             </div>
             <div class="emoji-picker-search-bar">
@@ -1562,7 +1605,7 @@
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
-              <input type="text" id="emojiSearchInput" placeholder="Search emojis..." autocomplete="off">
+              <input type="text" id="emojiSearchInput" placeholder="Search emojis &amp; stickers..." autocomplete="off">
             </div>
             <div class="emoji-picker-grid" id="emojiPickerGrid">
               <!-- Rendered dynamically -->
@@ -1603,18 +1646,24 @@
             </div>
           </div>
 
-          <form class="chat-compose-bar" id="chatForm">
+          <form class="chat-compose-bar" id="chatForm" onsubmit="return false;">
             <div class="chat-pill-input-box">
-              <input type="text" id="chatInput" placeholder="Message Stream Room" autocomplete="off">
+              <input type="text" id="chatInput" placeholder="Message Stream Room..." autocomplete="off">
               <div class="chat-input-right-icons">
-                <button type="button" id="chatEmojiBtn" class="chat-action-icon-btn" title="Add Emoji">
+                <button type="button" id="chatEmojiBtn" class="chat-action-icon-btn" title="Add Emoji" aria-label="Add Emoji">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
                   </svg>
                 </button>
-                <button type="button" id="chatReactionBtn" class="chat-action-icon-btn chat-reaction-trigger-btn" title="Send Live Reaction">
+                <button type="button" id="chatReactionBtn" class="chat-action-icon-btn chat-reaction-trigger-btn" title="Send Live Reaction" aria-label="Send Live Reaction">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  </svg>
+                </button>
+                <button type="submit" id="chatSendBtn" class="chat-action-icon-btn chat-send-btn" title="Send Message" aria-label="Send Message">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                   </svg>
                 </button>
               </div>

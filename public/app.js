@@ -333,11 +333,14 @@
     startUrlStreamBtn: document.getElementById('startUrlStreamBtn'),
 
     chatSidebar: document.getElementById('chatSidebar'),
+    chatBackdrop: document.getElementById('chatBackdrop'),
     closeChatBtn: document.getElementById('closeChatBtn'),
     chatMessages: document.getElementById('chatMessages'),
     chatWelcomeHero: document.getElementById('chatWelcomeHero'),
+    chatNewMessagesPill: document.getElementById('chatNewMessagesPill'),
     chatForm: document.getElementById('chatForm'),
     chatInput: document.getElementById('chatInput'),
+    chatSendBtn: document.getElementById('chatSendBtn'),
     chatEmojiBtn: document.getElementById('chatEmojiBtn'),
     chatReactionBtn: document.getElementById('chatReactionBtn'),
     chatEmojiPicker: document.getElementById('chatEmojiPicker'),
@@ -6103,6 +6106,12 @@
       if (el.chatSidebar) {
         el.chatSidebar.classList.remove('hidden', 'chat-panel-closing');
         el.chatSidebar.classList.add('chat-panel-opening');
+        el.chatSidebar.style.transform = '';
+        el.chatSidebar.style.transition = '';
+      }
+      if (el.chatBackdrop && (window.innerWidth <= 768 || (window.innerWidth <= 1024 && window.matchMedia('(orientation: portrait)').matches))) {
+        el.chatBackdrop.classList.remove('hidden');
+        requestAnimationFrame(() => el.chatBackdrop?.classList.add('active'));
       }
       document.body.classList.add('chat-is-open');
       document.body.classList.remove('chat-is-closing');
@@ -6111,6 +6120,7 @@
       if (window.innerWidth > 768 && !window.matchMedia('(pointer: coarse)').matches && el.chatInput) {
         el.chatInput.focus();
       }
+      updateChatViewportBounds();
       requestAnimationFrame(() => {
         if (el.chatMessages) el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
       });
@@ -6129,6 +6139,9 @@
       state.chatOpen = false;
       document.body.classList.remove('chat-is-open');
       document.body.classList.add('chat-is-closing');
+      if (el.chatBackdrop) {
+        el.chatBackdrop.classList.remove('active');
+      }
 
       const isAnyModalOpen = Boolean(document.querySelector('.modal-overlay:not(.hidden), .feedback-modal-overlay:not(.hidden)'));
       if (!isAnyModalOpen) {
@@ -6144,6 +6157,12 @@
             el.chatSidebar.classList.add('hidden');
             el.chatSidebar.classList.remove('chat-panel-closing');
             el.chatSidebar.style.height = '';
+            el.chatSidebar.style.top = '';
+            el.chatSidebar.style.transform = '';
+            el.chatSidebar.style.transition = '';
+          }
+          if (el.chatBackdrop) {
+            el.chatBackdrop.classList.add('hidden');
           }
           document.body.classList.remove('chat-is-closing');
           chatClosingTimer = null;
@@ -6153,6 +6172,12 @@
           el.chatSidebar.classList.add('hidden');
           el.chatSidebar.classList.remove('chat-panel-opening', 'chat-panel-closing');
           el.chatSidebar.style.height = '';
+          el.chatSidebar.style.top = '';
+          el.chatSidebar.style.transform = '';
+          el.chatSidebar.style.transition = '';
+        }
+        if (el.chatBackdrop) {
+          el.chatBackdrop.classList.add('hidden');
         }
         document.body.classList.remove('chat-is-closing');
       }
@@ -6160,52 +6185,104 @@
   }
 
   function sendChatMessage(e) {
-    if (e) e.preventDefault();
-    const text = el.chatInput.value.trim();
-    if (!text || !state.socket) return;
-
-    state.socket.emit('send-chat', { roomId: state.roomId, text });
-
-    el.chatInput.value = '';
-    if (window.innerWidth > 768 && !window.matchMedia('(pointer: coarse)').matches) {
-      el.chatInput.focus();
+    if (e) {
+      if (typeof e.preventDefault === 'function') e.preventDefault();
+      if (typeof e.stopPropagation === 'function') e.stopPropagation();
     }
+    closeEmojiPicker();
+    closeReactionsTray();
+    const text = el.chatInput ? el.chatInput.value.trim() : '';
+    if (!text) return false;
+
+    if (state.socket && state.socket.connected) {
+      state.socket.emit('send-chat', { roomId: state.roomId, text });
+    } else {
+      appendChatMessage({
+        senderId: 'self',
+        username: state.username || 'You',
+        text,
+        isHost: true,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+    }
+
+    if (el.chatInput) {
+      el.chatInput.value = '';
+      if (window.innerWidth > 768 && !window.matchMedia('(pointer: coarse)').matches) {
+        el.chatInput.focus();
+      }
+    }
+    return false;
   }
 
   function appendChatMessage(msg) {
+    if (!msg) return;
     // Hide welcome hero on first message
     if (el.chatWelcomeHero) {
       el.chatWelcomeHero.style.display = 'none';
     }
 
     const item = document.createElement('div');
-    item.className = 'chat-msg';
-
-    const isHost = Boolean(msg.isHost || (state.members && state.members.get(msg.senderId)?.isHost) || msg.role === 'host');
-    const roleBadgeHtml = isHost
-      ? '<span class="chat-role-badge role-host">HOST</span>'
-      : '<span class="chat-role-badge role-viewer">VIEWER</span>';
-
     const formattedText = formatChatMessageText(msg.text);
 
-    item.innerHTML = `
-      <div class="chat-msg-avatar" style="background-color: ${msg.color || '#5865F2'}">
-        ${escapeHtml((msg.username || 'U').charAt(0).toUpperCase())}
-      </div>
-      <div class="chat-msg-content">
-        <div class="chat-msg-header">
-          <span class="chat-msg-user" style="color: ${msg.color || '#5865F2'}">${escapeHtml(msg.username)}</span>
-          ${roleBadgeHtml}
-          <span class="chat-msg-time">${msg.timestamp}</span>
+    if (msg.isSystem || msg.type === 'system' || msg.senderId === 'system') {
+      item.className = 'chat-msg chat-msg-system';
+      item.innerHTML = `
+        <div class="chat-system-pill">
+          <span class="chat-system-icon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </span>
+          <span class="chat-system-text">${formattedText}</span>
+          ${msg.timestamp ? `<span class="chat-system-time">${escapeHtml(msg.timestamp)}</span>` : ''}
         </div>
-        <div class="chat-msg-text">${formattedText}</div>
-      </div>
-    `;
+      `;
+    } else {
+      item.className = 'chat-msg';
+      const isHost = Boolean(msg.isHost || (state.members && state.members.get(msg.senderId)?.isHost) || msg.role === 'host');
+      const roleBadgeHtml = isHost
+        ? '<span class="chat-role-badge role-host">HOST</span>'
+        : '<span class="chat-role-badge role-viewer">VIEWER</span>';
+
+      const username = msg.username || 'Anonymous';
+      const timestamp = msg.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const isJumbo = typeof msg.text === 'string' && /^(:[a-z0-9_]+:\s*){1,3}$/i.test(msg.text.trim());
+      const textClass = isJumbo ? 'chat-msg-text chat-msg-jumbo-emojis' : 'chat-msg-text';
+
+      item.innerHTML = `
+        <div class="chat-msg-avatar" style="background-color: ${msg.color || '#5865F2'}">
+          ${escapeHtml(username.charAt(0).toUpperCase())}
+        </div>
+        <div class="chat-msg-content">
+          <div class="chat-msg-header">
+            <span class="chat-msg-user" style="color: ${msg.color || '#5865F2'}">${escapeHtml(username)}</span>
+            ${roleBadgeHtml}
+            <span class="chat-msg-time">${escapeHtml(timestamp)}</span>
+          </div>
+          <div class="${textClass}">${formattedText}</div>
+        </div>
+      `;
+    }
+
+    const isNearBottom = el.chatMessages
+      ? (el.chatMessages.scrollHeight - el.chatMessages.scrollTop - el.chatMessages.clientHeight) < 65
+      : true;
 
     el.chatMessages.appendChild(item);
-    requestAnimationFrame(() => {
-      el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
-    });
+
+    const isSelf = Boolean(msg.senderId === state.socket?.id || msg.username === state.username || msg.senderId === 'self');
+
+    if (isNearBottom || isSelf) {
+      requestAnimationFrame(() => {
+        el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+      });
+      if (el.chatNewMessagesPill) el.chatNewMessagesPill.classList.add('hidden');
+    } else {
+      if (el.chatNewMessagesPill) el.chatNewMessagesPill.classList.remove('hidden');
+    }
   }
 
   function formatChatMessageText(text) {
@@ -6214,10 +6291,13 @@
     return escaped.replace(/:([a-z0-9_]+):/gi, (match, p1) => {
       const key = p1.toLowerCase();
       if (REACTION_SVGS[key]) {
-        return `<span class="chat-inline-reaction-svg">${REACTION_SVGS[key]}</span>`;
+        return `<span class="chat-inline-reaction-svg" data-emoji="${key}">${REACTION_SVGS[key]}</span>`;
       }
-      if (key === 'love') return `<span class="chat-inline-reaction-svg">${REACTION_SVGS.heart}</span>`;
-      if (key === 'skull') return `<span class="chat-inline-reaction-svg">${REACTION_SVGS.dead}</span>`;
+      if (key === 'love') return `<span class="chat-inline-reaction-svg" data-emoji="heart">${REACTION_SVGS.heart}</span>`;
+      if (key === 'skull') return `<span class="chat-inline-reaction-svg" data-emoji="dead">${REACTION_SVGS.dead}</span>`;
+      if (key === 'hype') return `<span class="chat-inline-reaction-svg" data-emoji="rocket">${REACTION_SVGS.rocket}</span>`;
+      if (key === 'wow') return `<span class="chat-inline-reaction-svg" data-emoji="shock">${REACTION_SVGS.shock}</span>`;
+      if (key === 'smile') return `<span class="chat-inline-reaction-svg" data-emoji="laugh">${REACTION_SVGS.laugh}</span>`;
       return match;
     });
   }
@@ -6385,6 +6465,59 @@
       });
     }
 
+    // Starter chips in welcome hero
+    document.querySelectorAll('.chat-starter-chip').forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const starterText = chip.getAttribute('data-text');
+        if (starterText && el.chatInput) {
+          el.chatInput.value = starterText;
+          sendChatMessage(e);
+        }
+      });
+    });
+
+    // Chat form submit & send button
+    if (el.chatForm) {
+      el.chatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        sendChatMessage(e);
+      });
+    }
+    if (el.chatSendBtn) {
+      el.chatSendBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        sendChatMessage(e);
+      });
+    }
+
+    // Floating new messages pill click
+    if (el.chatNewMessagesPill) {
+      el.chatNewMessagesPill.addEventListener('click', () => {
+        if (el.chatMessages) {
+          el.chatMessages.scrollTo({ top: el.chatMessages.scrollHeight, behavior: 'smooth' });
+        }
+        el.chatNewMessagesPill.classList.add('hidden');
+      });
+    }
+
+    // Chat messages scroll listener for floating pill
+    if (el.chatMessages) {
+      el.chatMessages.addEventListener('scroll', () => {
+        const isNearBottom = (el.chatMessages.scrollHeight - el.chatMessages.scrollTop - el.chatMessages.clientHeight) < 65;
+        if (isNearBottom && el.chatNewMessagesPill) {
+          el.chatNewMessagesPill.classList.add('hidden');
+        }
+      });
+    }
+
+    // Mobile chat backdrop click to dismiss
+    if (el.chatBackdrop) {
+      el.chatBackdrop.addEventListener('click', () => {
+        toggleChat(false);
+      });
+    }
+
     // Close on outside click
     document.addEventListener('click', (e) => {
       if (el.chatEmojiPicker && !el.chatEmojiPicker.contains(e.target) && e.target !== el.chatEmojiBtn && !el.chatEmojiBtn?.contains(e.target)) {
@@ -6398,24 +6531,133 @@
     // Close on Escape
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        closeEmojiPicker();
-        closeReactionsTray();
+        const pickerOpen = el.chatEmojiPicker && !el.chatEmojiPicker.classList.contains('hidden');
+        const trayOpen = el.chatReactionsTray && !el.chatReactionsTray.classList.contains('hidden');
+        if (pickerOpen || trayOpen) {
+          closeEmojiPicker();
+          closeReactionsTray();
+        } else if (state.chatOpen) {
+          toggleChat(false);
+        }
       }
     });
+
+    // Mobile touch drag handle to dismiss bottom sheet
+    initChatTouchDrag();
+  }
+
+  function initChatTouchDrag() {
+    if (!el.chatSidebar) return;
+    const dragHandle = el.chatSidebar.querySelector('.chat-mobile-drag-handle');
+    const header = el.chatSidebar.querySelector('.chat-panel-header');
+    if (!dragHandle && !header) return;
+
+    let startY = 0;
+    let currentY = 0;
+    let startTime = 0;
+    let isDragging = false;
+
+    function onTouchStart(e) {
+      if (window.innerWidth > 1024 && window.innerHeight > 600) return;
+      if (!state.chatOpen) return;
+      if (e.target.closest('#closeChatBtn, button, a, input')) return;
+      const touch = e.touches[0];
+      startY = touch.clientY;
+      currentY = touch.clientY;
+      startTime = Date.now();
+      isDragging = true;
+      el.chatSidebar.style.transition = 'none';
+    }
+
+    function onTouchMove(e) {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      currentY = touch.clientY;
+      const deltaY = currentY - startY;
+      if (deltaY > 0) {
+        if (e.cancelable) e.preventDefault();
+        el.chatSidebar.style.transform = `translate3d(0, ${deltaY}px, 0)`;
+        if (el.chatBackdrop) {
+          const progress = Math.max(0, 1 - deltaY / 300);
+          el.chatBackdrop.style.opacity = progress.toString();
+        }
+      }
+    }
+
+    function onTouchEnd() {
+      if (!isDragging) return;
+      isDragging = false;
+      const deltaY = currentY - startY;
+      const elapsed = Math.max(1, Date.now() - startTime);
+      const velocity = deltaY / elapsed;
+
+      el.chatSidebar.style.transition = 'transform 0.24s cubic-bezier(0.16, 1, 0.3, 1)';
+      if (el.chatBackdrop) {
+        el.chatBackdrop.style.opacity = '';
+      }
+
+      if (deltaY > 80 || velocity > 0.4) {
+        toggleChat(false);
+      } else {
+        el.chatSidebar.style.transform = 'translate3d(0, 0, 0)';
+        setTimeout(() => {
+          if (el.chatSidebar && state.chatOpen) {
+            el.chatSidebar.style.transition = '';
+            el.chatSidebar.style.transform = '';
+          }
+        }, 250);
+      }
+    }
+
+    [dragHandle, header].filter(Boolean).forEach(target => {
+      target.addEventListener('touchstart', onTouchStart, { passive: false });
+      target.addEventListener('touchmove', onTouchMove, { passive: false });
+      target.addEventListener('touchend', onTouchEnd, { passive: true });
+      target.addEventListener('touchcancel', onTouchEnd, { passive: true });
+    });
+  }
+
+  function updateChatViewportBounds() {
+    if (!state.chatOpen || !el.chatSidebar) return;
+    const isMobileOrTablet = window.innerWidth <= 1024 || window.innerHeight <= 600;
+    if (!isMobileOrTablet) {
+      el.chatSidebar.style.height = '';
+      el.chatSidebar.style.top = '';
+      return;
+    }
+    if (window.visualViewport) {
+      const vvHeight = window.visualViewport.height;
+      const vvTop = window.visualViewport.offsetTop || 0;
+      el.chatSidebar.style.height = `${vvHeight}px`;
+      if (vvTop > 0) {
+        el.chatSidebar.style.top = `${vvTop}px`;
+      } else {
+        el.chatSidebar.style.top = '';
+      }
+      if (el.chatMessages) {
+        el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+      }
+    }
   }
 
   function renderEmojiGrid(searchQuery = '') {
     if (!el.emojiPickerGrid) return;
     el.emojiPickerGrid.innerHTML = '';
+    const q = (searchQuery || '').trim().toLowerCase();
 
-    if (searchQuery) {
+    if (q) {
       // Search all categories
       let matches = [];
+      const seen = new Set();
       Object.keys(EMOJI_CATEGORIES).forEach(catKey => {
         const cat = EMOJI_CATEGORIES[catKey];
         cat.items.forEach(item => {
-          if (item.tags.includes(searchQuery) || item.e.includes(searchQuery)) {
-            matches.push(item);
+          if (!seen.has(item.e)) {
+            const cleanName = item.e.replace(/:/g, '').toLowerCase();
+            if (cleanName.includes(q) || item.tags.toLowerCase().includes(q) || item.e.toLowerCase().includes(q)) {
+              seen.add(item.e);
+              matches.push(item);
+            }
           }
         });
       });
@@ -6444,12 +6686,13 @@
     btn.type = 'button';
     btn.className = 'emoji-item-btn';
     const cleanKey = emoji.replace(/:/g, '').toLowerCase();
-    if (REACTION_SVGS[cleanKey]) {
-      btn.innerHTML = REACTION_SVGS[cleanKey];
-    } else {
-      btn.innerText = emoji;
-    }
-    btn.title = emoji;
+    btn.setAttribute('data-name', cleanKey);
+    btn.dataset.name = cleanKey;
+    const svgContent = REACTION_SVGS[cleanKey] || REACTION_SVGS.heart;
+    btn.innerHTML = svgContent;
+    const readableTitle = cleanKey.replace(/_/g, ' ');
+    btn.title = readableTitle.charAt(0).toUpperCase() + readableTitle.slice(1);
+    btn.setAttribute('aria-label', btn.title);
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       insertEmojiIntoChat(emoji);
@@ -6466,7 +6709,9 @@
     input.value = val.substring(0, start) + emoji + val.substring(end);
     const newPos = start + emoji.length;
     input.selectionStart = input.selectionEnd = newPos;
-    input.focus();
+    if (!window.matchMedia('(pointer: coarse)').matches && window.innerWidth > 768) {
+      input.focus();
+    }
   }
 
   function toggleEmojiPicker() {
@@ -6515,17 +6760,98 @@
   }
 
   const REACTION_SVGS = {
-    heart: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#f43f5e" aria-label="Heart"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>',
-    fire: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#f59e0b" aria-label="Fire"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.61 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>',
-    popcorn: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#fbbf24" aria-label="Popcorn"><path d="M7 3a2.5 2.5 0 0 0-2.45 2.05A2.5 2.5 0 0 0 3 7.5a2.5 2.5 0 0 0 2 2.45V10l1.8 11h10.4L19 10v-.05A2.5 2.5 0 0 0 21 7.5a2.5 2.5 0 0 0-1.55-2.45A2.5 2.5 0 0 0 17 3a2.5 2.5 0 0 0-2.12 1.18A2.5 2.5 0 0 0 12 3a2.5 2.5 0 0 0-2.88 1.18A2.5 2.5 0 0 0 7 3zm1.5 8h2l.7 8h-2l-.7-8zm4.5 0h2l-.7 8h-2l.7-8z"/></svg>',
-    clap: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#38bdf8" aria-label="Clap"><path d="M19 13.5l-6-6-1.5 1.5 4.5 4.5H6.5c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5h10l-1.5 1.5 1.5 1.5 5-5-2.5-2.5z"/><path d="M12 4l-1.4 1.4 2.6 2.6 1.4-1.4zM7 8l1.4-1.4 2.6 2.6L9.6 10.6z"/></svg>',
+    // Cinema & Vibes
+    popcorn: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Popcorn"><path d="M7 3a2.5 2.5 0 0 0-2.45 2.05A2.5 2.5 0 0 0 3 7.5a2.5 2.5 0 0 0 2 2.45V10l1.8 11h10.4L19 10v-.05A2.5 2.5 0 0 0 21 7.5a2.5 2.5 0 0 0-1.55-2.45A2.5 2.5 0 0 0 17 3a2.5 2.5 0 0 0-2.12 1.18A2.5 2.5 0 0 0 12 3a2.5 2.5 0 0 0-2.88 1.18A2.5 2.5 0 0 0 7 3z" fill="#fbbf24"/><path d="M8.5 11h2l.7 8h-2l-.7-8zm4.5 0h2l-.7 8h-2l.7-8z" fill="#f43f5e"/><path d="M5 10l1.8 11h10.4L19 10H5z" fill="#ef4444" opacity="0.35"/></svg>',
+    clapper: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Clapper"><path d="M19 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-3z" fill="#6366f1"/><rect x="4" y="9" width="16" height="10" rx="1" fill="#1e1b4b"/><line x1="8" y1="12" x2="16" y2="12" stroke="#818cf8" stroke-width="1.5"/><line x1="8" y1="15" x2="14" y2="15" stroke="#818cf8" stroke-width="1.5"/></svg>',
+    movie_camera: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Movie Camera"><circle cx="7" cy="6" r="3" fill="#a855f7"/><circle cx="15" cy="6" r="3" fill="#a855f7"/><rect x="3" y="9" width="13" height="11" rx="2" fill="#7c3aed"/><polygon points="17 12 22 8 22 18 17 14" fill="#c084fc"/></svg>',
+    film_strip: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Film Strip"><rect x="3" y="3" width="18" height="18" rx="2" fill="#334155"/><rect x="5" y="5" width="2" height="2" fill="#f8fafc"/><rect x="5" y="9" width="2" height="2" fill="#f8fafc"/><rect x="5" y="13" width="2" height="2" fill="#f8fafc"/><rect x="5" y="17" width="2" height="2" fill="#f8fafc"/><rect x="17" y="5" width="2" height="2" fill="#f8fafc"/><rect x="17" y="9" width="2" height="2" fill="#f8fafc"/><rect x="17" y="13" width="2" height="2" fill="#f8fafc"/><rect x="17" y="17" width="2" height="2" fill="#f8fafc"/><rect x="8.5" y="6" width="7" height="12" fill="#0f172a" rx="1"/></svg>',
+    ticket: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Ticket"><path d="M20 12c0-1.1.9-2 2-2V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v4c1.1 0 2 .9 2 2s-.9 2-2 2v4c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-4c-1.1 0-2-.9-2-2z" fill="#f59e0b"/><line x1="9" y1="5" x2="9" y2="19" stroke="#78350f" stroke-width="1.5" stroke-dasharray="2 2"/></svg>',
+    projector: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Projector"><rect x="2" y="8" width="15" height="9" rx="2" fill="#475569"/><circle cx="10" cy="12.5" r="3" fill="#38bdf8"/><circle cx="10" cy="12.5" r="1.5" fill="#e0f2fe"/><polygon points="17 11 22 9 22 16 17 14" fill="#64748b" opacity="0.6"/><circle cx="4.5" cy="5.5" r="2.5" fill="#94a3b8"/><circle cx="10.5" cy="5.5" r="2.5" fill="#94a3b8"/></svg>',
+    tv: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="TV"><rect x="2" y="7" width="20" height="13" rx="2" fill="#3b82f6"/><rect x="4" y="9" width="13" height="9" rx="1" fill="#0f172a"/><polyline points="8 3 12 7 16 3" stroke="#60a5fa" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+    pizza: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Pizza"><path d="M12 2l10 17a12 12 0 0 1-20 0L12 2z" fill="#f59e0b"/><path d="M2.5 18a12 12 0 0 0 19 0" stroke="#b45309" stroke-width="3" fill="none"/><circle cx="12" cy="11" r="1.5" fill="#ef4444"/><circle cx="9" cy="15" r="1.5" fill="#ef4444"/><circle cx="15" cy="14" r="1.5" fill="#ef4444"/></svg>',
+    burger: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Burger"><path d="M4 11h16a8 8 0 0 0-16 0z" fill="#f59e0b"/><rect x="3" y="12" width="18" height="2" rx="1" fill="#10b981"/><rect x="3" y="14" width="18" height="3" rx="1" fill="#78350f"/><path d="M4 18h16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="#f59e0b"/><ellipse cx="10" cy="7" rx="1" ry="0.5" fill="#fef3c7"/><ellipse cx="14" cy="8" rx="1" ry="0.5" fill="#fef3c7"/></svg>',
+    fries: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Fries"><rect x="6" y="3" width="2" height="9" rx="1" fill="#facc15"/><rect x="9" y="2" width="2" height="10" rx="1" fill="#facc15"/><rect x="12" y="4" width="2" height="8" rx="1" fill="#facc15"/><rect x="15" y="2" width="2" height="10" rx="1" fill="#facc15"/><path d="M5 10l2 11h10l2-11H5z" fill="#ef4444"/><polygon points="8 15 12 11 16 15 12 19" fill="#facc15"/></svg>',
+    hotdog: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Hotdog"><path d="M3 13c0 4 3 7 7 7l8-8c3-3 3-7 0-9s-6 0-9 3l-6 7z" fill="#f59e0b" opacity="0.8"/><rect x="4" y="9" width="18" height="5" rx="2.5" transform="rotate(-45 13 11.5)" fill="#ef4444"/><path d="M7 16q3-4 6-6t6-3" stroke="#facc15" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>',
+    drink: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Drink"><path d="M7 8l1.5 13h7L17 8H7z" fill="#ef4444"/><rect x="6" y="6" width="12" height="2" rx="1" fill="#f8fafc"/><line x1="13" y1="2" x2="11" y2="7" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="14" x2="15" y2="14" stroke="#ffffff" stroke-width="2" opacity="0.6"/></svg>',
+    beers: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Beers"><rect x="4" y="8" width="8" height="12" rx="2" fill="#f59e0b"/><rect x="12" y="8" width="8" height="12" rx="2" fill="#fbbf24"/><path d="M3 11h2v6H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z" fill="#d97706"/><path d="M21 11h-2v6h2a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1z" fill="#d97706"/><ellipse cx="8" cy="8" rx="4" ry="2" fill="#fef3c7"/><ellipse cx="16" cy="8" rx="4" ry="2" fill="#fef3c7"/></svg>',
+    cheers: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Cheers"><path d="M6 3l3 8v6h2v-6l3-8H6z" fill="#fbbf24"/><line x1="10" y1="17" x2="10" y2="21" stroke="#f59e0b" stroke-width="2"/><line x1="8" y1="21" x2="12" y2="21" stroke="#f59e0b" stroke-width="2"/><circle cx="16" cy="6" r="1.5" fill="#fef08a"/><circle cx="19" cy="4" r="1" fill="#fef08a"/></svg>',
+    chocolate: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Chocolate"><rect x="4" y="4" width="16" height="16" rx="2" fill="#78350f"/><line x1="4" y1="12" x2="20" y2="12" stroke="#451a03" stroke-width="1.5"/><line x1="12" y1="4" x2="12" y2="20" stroke="#451a03" stroke-width="1.5"/><rect x="5.5" y="5.5" width="5" height="5" rx="1" fill="#92400e"/><rect x="13.5" y="5.5" width="5" height="5" rx="1" fill="#92400e"/><rect x="5.5" y="13.5" width="5" height="5" rx="1" fill="#92400e"/><rect x="13.5" y="13.5" width="5" height="5" rx="1" fill="#92400e"/></svg>',
+    couch: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Couch"><path d="M3 11c0-1.5 1-2 2-2h14c1 0 2 .5 2 2v7H3v-7z" fill="#0284c7"/><rect x="2" y="11" width="3" height="7" rx="1.5" fill="#0369a1"/><rect x="19" y="11" width="3" height="7" rx="1.5" fill="#0369a1"/><line x1="4" y1="18" x2="4" y2="21" stroke="#0284c7" stroke-width="2"/><line x1="20" y1="18" x2="20" y2="21" stroke="#0284c7" stroke-width="2"/></svg>',
+    masks: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Masks"><circle cx="9" cy="11" r="7" fill="#fbbf24"/><circle cx="7" cy="10" r="1.2" fill="#1f2232"/><circle cx="11" cy="10" r="1.2" fill="#1f2232"/><path d="M6.5 13.5c.8 1.5 2 2 2.5 2s1.7-.5 2.5-2" stroke="#1f2232" stroke-width="1.5" fill="none" stroke-linecap="round"/><circle cx="17" cy="15" r="5" fill="#a855f7"/><circle cx="15.5" cy="14" r="1" fill="#1f2232"/><circle cx="18.5" cy="14" r="1" fill="#1f2232"/><path d="M15.5 17c.5-.8 1.2-1 1.5-1s1 .2 1.5 1" stroke="#1f2232" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>',
+    headphones: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Headphones"><path d="M3 14v-2a9 9 0 0 1 18 0v2" stroke="#818cf8" stroke-width="2.5" fill="none" stroke-linecap="round"/><rect x="2" y="13" width="4" height="7" rx="2" fill="#6366f1"/><rect x="18" y="13" width="4" height="7" rx="2" fill="#6366f1"/></svg>',
+    speaker: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Speaker"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="#38bdf8"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" stroke="#0284c7" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+    sunglasses: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Sunglasses"><path d="M2 9l2-2h16l2 2" stroke="#1e293b" stroke-width="2" fill="none"/><path d="M3 10h7v3c0 2-1.5 4-3.5 4S3 15 3 13v-3z" fill="#0f172a"/><path d="M14 10h7v3c0 2-1.5 4-3.5 4s-3.5-2-3.5-4v-3z" fill="#0f172a"/><line x1="10" y1="11" x2="14" y2="11" stroke="#475569" stroke-width="2"/></svg>',
+    cookie: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Cookie"><circle cx="12" cy="12" r="9" fill="#d97706"/><circle cx="9" cy="9" r="1.5" fill="#78350f"/><circle cx="15" cy="10" r="1.2" fill="#78350f"/><circle cx="11" cy="15" r="1.5" fill="#78350f"/><circle cx="15" cy="15" r="1" fill="#78350f"/><circle cx="8" cy="13" r="1" fill="#78350f"/></svg>',
+
+    // Popular Reactions
     laugh: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#eab308" aria-label="Laugh"><circle cx="12" cy="12" r="10" fill="#eab308"/><path d="M7 9.5c.5-1 1.8-1.5 3-1s1.5 1.8 1 2.5M17 9.5c-.5-1-1.8-1.5-3-1s-1.5 1.8-1 2.5" stroke="#1f2232" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M7 13.5c1 2.5 3 4 5 4s4-1.5 5-4H7z" fill="#1f2232"/><path d="M9 13.5c.8 1.2 2 1.8 3 1.8s2.2-.6 3-1.8H9z" fill="#fff"/></svg>',
-    shock: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#a855f7" aria-label="Shock"><circle cx="12" cy="12" r="10" fill="#a855f7"/><circle cx="8.5" cy="9.5" r="1.8" fill="#1f2232"/><circle cx="15.5" cy="9.5" r="1.8" fill="#1f2232"/><ellipse cx="12" cy="15.5" rx="3.2" ry="4" fill="#1f2232"/></svg>',
-    wow: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#a855f7" aria-label="Shock"><circle cx="12" cy="12" r="10" fill="#a855f7"/><circle cx="8.5" cy="9.5" r="1.8" fill="#1f2232"/><circle cx="15.5" cy="9.5" r="1.8" fill="#1f2232"/><ellipse cx="12" cy="15.5" rx="3.2" ry="4" fill="#1f2232"/></svg>',
+    rofl: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="ROFL"><circle cx="12" cy="12" r="10" fill="#eab308"/><path d="M6 10l4-2m8 2l-4-2" stroke="#1f2232" stroke-width="2" stroke-linecap="round"/><path d="M7 13.5c1.5 3 3.5 4.5 5 4.5s3.5-1.5 5-4.5H7z" fill="#1f2232"/><path d="M4 11c0 1.5 1 2 2 1s1-2 0-3-2 .5-2 2z" fill="#38bdf8"/><path d="M20 11c0 1.5-1 2-2 1s-1-2 0-3 2 .5 2 2z" fill="#38bdf8"/></svg>',
+    cry: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Cry"><circle cx="12" cy="12" r="10" fill="#eab308"/><circle cx="8.5" cy="9.5" r="1.5" fill="#1f2232"/><circle cx="15.5" cy="9.5" r="1.5" fill="#1f2232"/><path d="M9 16c1-1 2-1.5 3-1.5s2 .5 3 1.5" stroke="#1f2232" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M8.5 11v5c0 1-.5 1.5-1 1s-1-.5-1-1v-4c0-.5.5-1 2-1z" fill="#38bdf8"/><path d="M15.5 11v5c0 1 .5 1.5 1 1s1-.5 1-1v-4c0-.5-.5-1-2-1z" fill="#38bdf8"/></svg>',
+    skull: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#cbd5e1" aria-label="Skull"><path d="M12 2C7.58 2 4 5.58 4 10c0 2.76 1.4 5.18 3.53 6.6v2.4c0 .55.45 1 1 1h6.94c.55 0 1-.45 1-1v-2.4C18.6 15.18 20 12.76 20 10c0-4.42-3.58-8-8-8zm-3.5 10c-.83 0-1.5-.67-1.5-1.5S7.67 9 8.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm7 0c-.83 0-1.5-.67-1.5-1.5S14.67 9 15.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm-5 6.5h-1v-2h1v2zm2 0h-1v-2h1v2zm2 0h-1v-2h1v2z"/></svg>',
+    dead: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#cbd5e1" aria-label="Dead"><path d="M12 2C7.58 2 4 5.58 4 10c0 2.76 1.4 5.18 3.53 6.6v2.4c0 .55.45 1 1 1h6.94c.55 0 1-.45 1-1v-2.4C18.6 15.18 20 12.76 20 10c0-4.42-3.58-8-8-8zm-3.5 10c-.83 0-1.5-.67-1.5-1.5S7.67 9 8.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm7 0c-.83 0-1.5-.67-1.5-1.5S14.67 9 15.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm-5 6.5h-1v-2h1v2zm2 0h-1v-2h1v2zm2 0h-1v-2h1v2z"/></svg>',
+    emotional: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Emotional"><circle cx="12" cy="12" r="10" fill="#eab308"/><ellipse cx="8" cy="10" rx="2.5" ry="3" fill="#1f2232"/><ellipse cx="16" cy="10" rx="2.5" ry="3" fill="#1f2232"/><circle cx="9" cy="9" r="1.2" fill="#fff"/><circle cx="17" cy="9" r="1.2" fill="#fff"/><path d="M9 16c1-.8 2-1 3-1s2 .2 3 1" stroke="#1f2232" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="7" cy="13" r="1.2" fill="#38bdf8"/></svg>',
+    plead: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Pleading"><circle cx="12" cy="12" r="10" fill="#eab308"/><ellipse cx="8" cy="10.5" rx="3" ry="3.5" fill="#1f2232"/><ellipse cx="16" cy="10.5" rx="3" ry="3.5" fill="#1f2232"/><circle cx="9" cy="9.5" r="1.5" fill="#fff"/><circle cx="17" cy="9.5" r="1.5" fill="#fff"/><circle cx="7.5" cy="12" r="0.8" fill="#fff"/><circle cx="15.5" cy="12" r="0.8" fill="#fff"/><path d="M9.5 16.5c1-.8 1.5-1 2.5-1s1.5.2 2.5 1" stroke="#1f2232" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+    starstruck: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Starstruck"><circle cx="12" cy="12" r="10" fill="#eab308"/><polygon points="8.5 7.5 9.5 9.5 11.5 9.8 10 11.3 10.4 13.5 8.5 12.3 6.6 13.5 7 11.3 5.5 9.8 7.5 9.5" fill="#ef4444"/><polygon points="15.5 7.5 16.5 9.5 18.5 9.8 17 11.3 17.4 13.5 15.5 12.3 13.6 13.5 14 11.3 12.5 9.8 14.5 9.5" fill="#ef4444"/><path d="M8 15c1 2.5 2.5 3.5 4 3.5s3-1 4-3.5H8z" fill="#1f2232"/></svg>',
+    cool: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Cool"><circle cx="12" cy="12" r="10" fill="#eab308"/><path d="M4.5 9.5h15l-1 2.5c-.8 2-2.5 3-4.5 3s-3-1-3-2.5c0 1.5-1 2.5-3 2.5s-3.7-1-4.5-3L4.5 9.5z" fill="#0f172a"/><path d="M8.5 16c1 1.2 2.2 1.8 3.5 1.8s2.5-.6 3.5-1.8" stroke="#1f2232" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>',
+    party_face: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Party Face"><circle cx="12" cy="12" r="10" fill="#eab308"/><polygon points="6 6 12 1 14 7" fill="#ef4444"/><circle cx="9" cy="10" r="1.5" fill="#1f2232"/><circle cx="15" cy="10" r="1.5" fill="#1f2232"/><path d="M12 15h6l2 2-2 1h-6" stroke="#f59e0b" stroke-width="2" fill="none"/><circle cx="19" cy="8" r="1" fill="#ec4899"/><circle cx="5" cy="16" r="1" fill="#38bdf8"/></svg>',
+    mindblown: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Mind Blown"><circle cx="12" cy="14" r="8" fill="#eab308"/><path d="M6 9c-1-3 1-6 4-6 1.5 0 2.5.5 3 1.5.5-1 1.5-1.5 3-1.5 3 0 5 3 4 6H6z" fill="#f97316"/><circle cx="9" cy="13" r="1.5" fill="#1f2232"/><circle cx="15" cy="13" r="1.5" fill="#1f2232"/><ellipse cx="12" cy="17" rx="2" ry="1.5" fill="#1f2232"/></svg>',
+    melting: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Melting"><path d="M3 13c0-5 4-9 9-9s9 4 9 9c0 3-1.5 5-3 5-1.5 0-2 2-4 2s-2.5-2-4-2-3 2-4 0c-.8-1-1.5-2.5-1.5-5z" fill="#eab308"/><circle cx="8" cy="11" r="1.5" fill="#1f2232"/><circle cx="16" cy="11" r="1.5" fill="#1f2232"/><path d="M9 15c1 1 2 1.5 3 1.5s2-.5 3-1.5" stroke="#1f2232" stroke-width="1.8" fill="none"/></svg>',
+    cowboy: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Cowboy"><circle cx="12" cy="13" r="9" fill="#eab308"/><path d="M2 9c2-2 6-4 10-4s8 2 10 4c-3-1-6-1-10 1-4-2-7-2-10-1z" fill="#b45309"/><ellipse cx="12" cy="6" rx="6" ry="3" fill="#92400e"/><circle cx="9" cy="12" r="1.5" fill="#1f2232"/><circle cx="15" cy="12" r="1.5" fill="#1f2232"/><path d="M8.5 16c1 1.5 2.2 2 3.5 2s2.5-.5 3.5-2" stroke="#1f2232" stroke-width="1.8" fill="none"/></svg>',
+    devil: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Devil"><circle cx="12" cy="13" r="9" fill="#a855f7"/><polygon points="5 8 7 3 10 7" fill="#7e22ce"/><polygon points="19 8 17 3 14 7" fill="#7e22ce"/><circle cx="9" cy="12" r="1.5" fill="#1f2232"/><circle cx="15" cy="12" r="1.5" fill="#1f2232"/><path d="M8 16c1.5 2 2.5 2.5 4 2.5s2.5-.5 4-2.5" stroke="#1f2232" stroke-width="2" fill="none"/></svg>',
+    angel: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Angel"><ellipse cx="12" cy="3" rx="7" ry="1.8" fill="none" stroke="#facc15" stroke-width="2"/><circle cx="12" cy="13" r="9" fill="#eab308"/><circle cx="9" cy="12" r="1.5" fill="#1f2232"/><circle cx="15" cy="12" r="1.5" fill="#1f2232"/><path d="M9 16c1 1 2 1.5 3 1.5s2-.5 3-1.5" stroke="#1f2232" stroke-width="1.8" fill="none"/></svg>',
+    goofy: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Goofy"><circle cx="12" cy="12" r="10" fill="#eab308"/><circle cx="8" cy="9.5" r="2" fill="#1f2232"/><circle cx="8" cy="9.5" r="0.8" fill="#fff"/><line x1="14" y1="9.5" x2="18" y2="9.5" stroke="#1f2232" stroke-width="2" stroke-linecap="round"/><path d="M8 14c1 2 3 3 5 3s3-1 4-2" stroke="#1f2232" stroke-width="2" fill="none"/><path d="M12 16c0 2 1 3 2 3s2-1 2-3h-4z" fill="#ef4444"/></svg>',
+    drool: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Drool"><circle cx="12" cy="12" r="10" fill="#eab308"/><circle cx="8.5" cy="9.5" r="1.5" fill="#1f2232"/><circle cx="15.5" cy="9.5" r="1.5" fill="#1f2232"/><path d="M8.5 14c1 1.5 2.5 2 4.5 1.5" stroke="#1f2232" stroke-width="1.8" fill="none"/><path d="M14 15c0 2 1 3 1.5 3s1.5-1 1-3h-2.5z" fill="#38bdf8"/></svg>',
+    screaming: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Screaming"><circle cx="12" cy="12" r="10" fill="#38bdf8"/><circle cx="8.5" cy="9" r="2.2" fill="#fff"/><circle cx="8.5" cy="9" r="1.2" fill="#0f172a"/><circle cx="15.5" cy="9" r="2.2" fill="#fff"/><circle cx="15.5" cy="9" r="1.2" fill="#0f172a"/><ellipse cx="12" cy="16" rx="3.5" ry="5" fill="#0f172a"/></svg>',
+    yawn: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Yawn"><circle cx="12" cy="12" r="10" fill="#eab308"/><path d="M7 9l3-1m7 1l-3-1" stroke="#1f2232" stroke-width="1.8" stroke-linecap="round"/><ellipse cx="12" cy="15" rx="4" ry="4.5" fill="#991b1b"/></svg>',
+    sleep: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Sleep"><circle cx="12" cy="12" r="10" fill="#eab308"/><path d="M6 10q2 2 4 0m4 0q2 2 4 0" stroke="#1f2232" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="12" cy="16" rx="2" ry="1" fill="#1f2232"/><text x="17" y="7" font-size="6" font-weight="bold" fill="#38bdf8">Z</text></svg>',
+    cold: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Cold"><circle cx="12" cy="12" r="10" fill="#0284c7"/><circle cx="8.5" cy="9.5" r="1.5" fill="#fff"/><circle cx="15.5" cy="9.5" r="1.5" fill="#fff"/><path d="M8 15h8v2H8v-2z" fill="#fff"/><path d="M5 2q1 2 2 0m2 0q1 2 2 0m2 0q1 2 2 0" stroke="#e0f2fe" stroke-width="1.5" fill="none"/></svg>',
+    hot: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Hot"><circle cx="12" cy="12" r="10" fill="#dc2626"/><circle cx="8.5" cy="9.5" r="1.5" fill="#fff"/><circle cx="15.5" cy="9.5" r="1.5" fill="#fff"/><path d="M8 16c1-1.5 2.5-2 4-2s3 .5 4 2" stroke="#fff" stroke-width="2" fill="none"/><circle cx="18" cy="7" r="1.5" fill="#38bdf8"/></svg>',
+
+    // Hype & Love
+    fire: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#f59e0b" aria-label="Fire"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.61 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>',
+    lightning: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Lightning"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="#fbbf24"/></svg>',
+    100: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="100"><text x="1" y="16" font-size="14" font-weight="900" fill="#ef4444" font-family="sans-serif">100</text><line x1="2" y1="20" x2="22" y2="20" stroke="#ef4444" stroke-width="2.5"/><line x1="2" y1="23" x2="22" y2="23" stroke="#ef4444" stroke-width="1.5"/></svg>',
     rocket: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#818cf8" aria-label="Rocket"><path d="M9.19 6.35c-2.04 2.29-3.44 5.58-3.57 5.89l4.14 4.14c.31-.13 3.6-1.53 5.89-3.57C17.7 10.96 19 8.14 19 8.14s-2.82 1.3-4.67 3.35l-2.82-2.82c2.05-1.85 3.35-4.67 3.35-4.67s-2.82 1.3-5.67 2.35z"/><path d="M5.5 15.5l-2 2 1 3 3 1 2-2z" fill="#f59e0b"/></svg>',
     hype: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#818cf8" aria-label="Rocket"><path d="M9.19 6.35c-2.04 2.29-3.44 5.58-3.57 5.89l4.14 4.14c.31-.13 3.6-1.53 5.89-3.57C17.7 10.96 19 8.14 19 8.14s-2.82 1.3-4.67 3.35l-2.82-2.82c2.05-1.85 3.35-4.67 3.35-4.67s-2.82 1.3-5.67 2.35z"/><path d="M5.5 15.5l-2 2 1 3 3 1 2-2z" fill="#f59e0b"/></svg>',
+    sparkles: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Sparkles"><path d="M12 2l2.5 6.5L21 11l-6.5 2.5L12 20l-2.5-6.5L3 11l6.5-2.5L12 2z" fill="#facc15"/><circle cx="19" cy="5" r="1.5" fill="#38bdf8"/><circle cx="5" cy="18" r="1.5" fill="#ec4899"/></svg>',
+    boom: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Boom"><polygon points="12 2 15 7 21 6 18 11 22 15 16 16 16 22 11 18 7 21 8 15 2 14 7 10 4 5 10 7" fill="#f97316"/><circle cx="12" cy="12" r="4" fill="#fde047"/></svg>',
     party: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#ec4899" aria-label="Party"><path d="M3 21l3.5-9 5.5 5.5-9 3.5zm11.5-13.5l1.5-1.5M19 8l2-1M15 15l2 1M18 3l1 2M12 4l1 1" stroke="#ec4899" stroke-width="2.2" stroke-linecap="round"/><circle cx="19" cy="12" r="1.5" fill="#f59e0b"/><circle cx="14" cy="5" r="1.5" fill="#38bdf8"/><circle cx="8" cy="4" r="1.5" fill="#a855f7"/></svg>',
-    dead: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#cbd5e1" aria-label="Dead"><path d="M12 2C7.58 2 4 5.58 4 10c0 2.76 1.4 5.18 3.53 6.6v2.4c0 .55.45 1 1 1h6.94c.55 0 1-.45 1-1v-2.4C18.6 15.18 20 12.76 20 10c0-4.42-3.58-8-8-8zm-3.5 10c-.83 0-1.5-.67-1.5-1.5S7.67 9 8.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm7 0c-.83 0-1.5-.67-1.5-1.5S14.67 9 15.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm-5 6.5h-1v-2h1v2zm2 0h-1v-2h1v2zm2 0h-1v-2h1v2z"/></svg>'
+    confetti: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Confetti"><circle cx="12" cy="12" r="8" fill="#ec4899"/><circle cx="7" cy="8" r="1.5" fill="#facc15"/><circle cx="16" cy="7" r="1.5" fill="#38bdf8"/><circle cx="15" cy="15" r="1.5" fill="#10b981"/><circle cx="9" cy="16" r="1.5" fill="#a855f7"/><rect x="11" y="9" width="2" height="4" transform="rotate(25 12 11)" fill="#fff"/></svg>',
+    trophy: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Trophy"><path d="M6 3h12v6c0 3.3-2.7 6-6 6s-6-2.7-6-6V3z" fill="#facc15"/><path d="M6 5H2v3c0 2 1.5 3.5 3.5 3.5H6V5z" fill="#eab308"/><path d="M18 5h4v3c0 2-1.5 3.5-3.5 3.5H18V5z" fill="#eab308"/><rect x="11" y="15" width="2" height="4" fill="#ca8a04"/><rect x="7" y="19" width="10" height="3" rx="1.5" fill="#ca8a04"/></svg>',
+    sparkle_heart: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Sparkle Heart"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#ec4899"/><polygon points="17 4 18 6 20 7 18 8 17 10 16 8 14 7 16 6" fill="#fde047"/></svg>',
+    heart: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#f43f5e" aria-label="Heart"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>',
+    love: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#f43f5e" aria-label="Heart"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>',
+    black_heart: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Black Heart"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#1e293b" stroke="#475569" stroke-width="1.5"/></svg>',
+    white_heart: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="White Heart"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/></svg>',
+    crown: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Crown"><polygon points="2 8 6 18 18 18 22 8 16 12 12 4 8 12 2 8" fill="#facc15"/><circle cx="2" cy="7" r="1.5" fill="#ef4444"/><circle cx="12" cy="3" r="1.5" fill="#38bdf8"/><circle cx="22" cy="7" r="1.5" fill="#ef4444"/><rect x="6" y="18" width="12" height="2" rx="1" fill="#eab308"/></svg>',
+    star: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#fbbf24"/></svg>',
+    shooting_star: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Shooting Star"><polygon points="17 4 18.5 7.5 22 8 19.5 10.5 20 14 17 12 14 14 14.5 10.5 12 8 15.5 7.5" fill="#fbbf24"/><line x1="3" y1="21" x2="13" y2="11" stroke="#fde047" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="22" x2="11" y2="16" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    target: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Target"><circle cx="12" cy="12" r="10" fill="#ef4444"/><circle cx="12" cy="12" r="7" fill="#fff"/><circle cx="12" cy="12" r="4" fill="#ef4444"/><circle cx="12" cy="12" r="1.5" fill="#fff"/></svg>',
+    bomb: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Bomb"><circle cx="10" cy="14" r="8" fill="#1e293b"/><path d="M16 8l4-4" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/><polygon points="20 2 22 5 19 6 20 2" fill="#ef4444"/><circle cx="7" cy="11" r="1.5" fill="#94a3b8"/></svg>',
+
+    // Claps & Gestures
+    clap: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#38bdf8" aria-label="Clap"><path d="M19 13.5l-6-6-1.5 1.5 4.5 4.5H6.5c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5h10l-1.5 1.5 1.5 1.5 5-5-2.5-2.5z"/><path d="M12 4l-1.4 1.4 2.6 2.6 1.4-1.4zM7 8l1.4-1.4 2.6 2.6L9.6 10.6z"/></svg>',
+    praise: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Praise"><path d="M5 20V9a2 2 0 0 1 4 0v11m6 0V9a2 2 0 0 1 4 0v11" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" fill="none"/><line x1="3" y1="5" x2="5" y2="6" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/><line x1="21" y1="5" x2="19" y2="6" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="3" x2="12" y2="5" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/></svg>',
+    thumbs_up: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Thumbs Up"><path d="M2 20h4V10H2v10zm20-9c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L13.17 2 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" fill="#38bdf8"/></svg>',
+    thumbs_down: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Thumbs Down"><path d="M22 4h-4v10h4V4zM2 13c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L10.83 22l5.58-5.59c.37-.36.59-.86.59-1.41V5c0-1.1-.9-2-2-2H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2z" fill="#f43f5e"/></svg>',
+    fist_bump: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Fist Bump"><path d="M4 8h10a3 3 0 0 1 3 3v2a3 3 0 0 1-3 3H4V8z" fill="#f59e0b"/><rect x="15" y="9" width="5" height="6" rx="2" fill="#d97706"/><line x1="8" y1="8" x2="8" y2="16" stroke="#b45309" stroke-width="1.5"/><line x1="11" y1="8" x2="11" y2="16" stroke="#b45309" stroke-width="1.5"/></svg>',
+    peace: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Peace"><path d="M9 13V4a1.5 1.5 0 0 1 3 0v7m0-7a1.5 1.5 0 0 1 3 0v9m-7 0v-2a1.5 1.5 0 0 0-3 0v4a5 5 0 0 0 5 5h3a5 5 0 0 0 5-5v-4" stroke="#f59e0b" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>',
+    crossed_fingers: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Crossed Fingers"><path d="M10 13V4a1.5 1.5 0 0 1 3 0v10m-1-8l2 8m-5 1v-2a1.5 1.5 0 0 0-3 0v4a5 5 0 0 0 5 5h3a5 5 0 0 0 5-5v-4" stroke="#f59e0b" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>',
+    salute: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Salute"><circle cx="12" cy="13" r="8" fill="#eab308"/><path d="M5 8h10l3 2" stroke="#b45309" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="9" cy="12" r="1.2" fill="#1f2232"/><circle cx="15" cy="12" r="1.2" fill="#1f2232"/><path d="M9.5 16c1 .8 2 1 3 1s2-.2 3-1" stroke="#1f2232" stroke-width="1.8" fill="none"/></svg>',
+    handshake: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Handshake"><path d="M3 13l5-4 4 3 4-3 5 4-4 4-5-3-5 3-4-4z" fill="#f59e0b"/><line x1="6" y1="11" x2="3" y2="8" stroke="#d97706" stroke-width="2.5" stroke-linecap="round"/><line x1="18" y1="11" x2="21" y2="8" stroke="#d97706" stroke-width="2.5" stroke-linecap="round"/></svg>',
+    heart_hands: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Heart Hands"><path d="M7 8c-2 2-3 4-3 7 0 3 2 5 5 5 2 0 3-1 3-3V9c0-1-1-2-2-2-.8 0-1.5.4-2 1m10-1c2 2 3 4 3 7 0 3-2 5-5 5-2 0-3-1-3-3V9c0-1 1-2 2-2 .8 0 1.5.4 2 1" stroke="#f43f5e" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
+    shaka: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Shaka"><path d="M3 8a1.5 1.5 0 0 1 3 0v4m12-4a1.5 1.5 0 0 1 3 0v5c0 5-4 8-9 8s-7-3-7-6" stroke="#f59e0b" stroke-width="2.5" fill="none" stroke-linecap="round"/><rect x="8" y="10" width="8" height="6" rx="3" fill="#fbbf24"/></svg>',
+    eyes: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Eyes"><ellipse cx="7" cy="12" rx="4.5" ry="6" fill="#fff" stroke="#64748b" stroke-width="1.2"/><ellipse cx="17" cy="12" rx="4.5" ry="6" fill="#fff" stroke="#64748b" stroke-width="1.2"/><circle cx="6" cy="12" r="2.5" fill="#0f172a"/><circle cx="16" cy="12" r="2.5" fill="#0f172a"/><circle cx="5" cy="11" r="0.8" fill="#fff"/><circle cx="15" cy="11" r="0.8" fill="#fff"/></svg>',
+    eye: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Eye"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="#38bdf8" stroke-width="2" fill="none"/><circle cx="12" cy="12" r="3" fill="#0284c7"/><circle cx="12" cy="12" r="1.2" fill="#fff"/></svg>',
+    brain: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Brain"><path d="M9.5 4a3.5 3.5 0 0 0-3.5 3.5c0 .4.1.8.2 1.1A3.5 3.5 0 0 0 4 12a3.5 3.5 0 0 0 2.2 3.3A3.5 3.5 0 0 0 9.5 20c.8 0 1.5-.3 2.1-.7.3.4.4.7.4.7s.1-.3.4-.7c.6.4 1.3.7 2.1.7a3.5 3.5 0 0 0 3.3-4.7A3.5 3.5 0 0 0 20 12a3.5 3.5 0 0 0-2.2-3.4c.1-.3.2-.7.2-1.1A3.5 3.5 0 0 0 14.5 4c-1.2 0-2.2.6-2.8 1.5A3.5 3.5 0 0 0 9.5 4z" fill="#f472b6"/><line x1="12" y1="5" x2="12" y2="19" stroke="#db2777" stroke-width="1.5"/></svg>',
+    flex: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Flex"><path d="M19 14c-1.5 0-3-1-3.5-2.5-.5-1.5-.5-3.5 1-4.5 1-1 3-1 4.5 0s2 3 1.5 4.5c-.5 1.5-2 2.5-3.5 2.5z" fill="#f59e0b"/><path d="M15 11l-4 4-4-2-3 3 3 3 7-1 5-5" stroke="#d97706" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>',
+    pray: '<svg class="reaction-svg" viewBox="0 0 24 24" aria-label="Pray"><path d="M12 3v15M9 7l3-4 3 4M9 18l3 3 3-3" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M10 5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2" fill="#f59e0b" opacity="0.4"/></svg>',
+
+    // Aliases
+    wow: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#a855f7" aria-label="Shock"><circle cx="12" cy="12" r="10" fill="#a855f7"/><circle cx="8.5" cy="9.5" r="1.8" fill="#1f2232"/><circle cx="15.5" cy="9.5" r="1.8" fill="#1f2232"/><ellipse cx="12" cy="15.5" rx="3.2" ry="4" fill="#1f2232"/></svg>',
+    shock: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#a855f7" aria-label="Shock"><circle cx="12" cy="12" r="10" fill="#a855f7"/><circle cx="8.5" cy="9.5" r="1.8" fill="#1f2232"/><circle cx="15.5" cy="9.5" r="1.8" fill="#1f2232"/><ellipse cx="12" cy="15.5" rx="3.2" ry="4" fill="#1f2232"/></svg>',
+    smile: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#eab308" aria-label="Laugh"><circle cx="12" cy="12" r="10" fill="#eab308"/><path d="M7 9.5c.5-1 1.8-1.5 3-1s1.5 1.8 1 2.5M17 9.5c-.5-1-1.8-1.5-3-1s-1.5 1.8-1 2.5" stroke="#1f2232" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M7 13.5c1 2.5 3 4 5 4s4-1.5 5-4H7z" fill="#1f2232"/><path d="M9 13.5c.8 1.2 2 1.8 3 1.8s2.2-.6 3-1.8H9z" fill="#fff"/></svg>',
+    party_popper: '<svg class="reaction-svg" viewBox="0 0 24 24" fill="#ec4899" aria-label="Party"><path d="M3 21l3.5-9 5.5 5.5-9 3.5zm11.5-13.5l1.5-1.5M19 8l2-1M15 15l2 1M18 3l1 2M12 4l1 1" stroke="#ec4899" stroke-width="2.2" stroke-linecap="round"/><circle cx="19" cy="12" r="1.5" fill="#f59e0b"/><circle cx="14" cy="5" r="1.5" fill="#38bdf8"/><circle cx="8" cy="4" r="1.5" fill="#a855f7"/></svg>'
   };
 
   function getReactionDisplay(emoji) {
@@ -6536,6 +6862,9 @@
     }
     if (clean === 'love') return REACTION_SVGS.heart;
     if (clean === 'skull') return REACTION_SVGS.dead;
+    if (clean === 'hype') return REACTION_SVGS.rocket;
+    if (clean === 'wow') return REACTION_SVGS.shock;
+    if (clean === 'smile') return REACTION_SVGS.laugh;
     return `<span class="reaction-tag-custom">[${escapeHtml(clean.toUpperCase())}]</span>`;
   }
 
@@ -8347,14 +8676,8 @@
     startNetworkQualityMonitor();
 
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', () => {
-        if (state.chatOpen && window.innerWidth <= 768 && el.chatSidebar) {
-          el.chatSidebar.style.height = `${window.visualViewport.height}px`;
-          if (el.chatMessages) {
-            el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
-          }
-        }
-      });
+      window.visualViewport.addEventListener('resize', updateChatViewportBounds);
+      window.visualViewport.addEventListener('scroll', updateChatViewportBounds);
     }
 
     const handleOrientationOrResize = () => {
@@ -8389,6 +8712,8 @@
     renderParticipantStrip,
     isPortraitMode,
     toggleChat,
+    appendChatMessage: (...args) => appendChatMessage(...args),
+    updateChatViewportBounds: (...args) => updateChatViewportBounds(...args),
     closeAllDeviceMenus: (...args) => closeAllDeviceMenus && closeAllDeviceMenus(...args)
   };
 

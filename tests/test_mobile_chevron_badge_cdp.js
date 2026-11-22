@@ -189,7 +189,7 @@ async function runTests() {
     await cdp.send('Runtime.enable');
 
     for (let i = 0; i < 50; i++) {
-      const ready = await cdp.eval('document.readyState === "complete"');
+      const ready = await cdp.eval('document.readyState === "complete" && !!document.getElementById("appContainer")');
       if (ready) break;
       await sleep(100);
     }
