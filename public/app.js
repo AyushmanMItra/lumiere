@@ -7606,10 +7606,39 @@
     // Top Invite & Dock Invite
     const copyLink = () => {
       const url = `${window.location.origin}/room/${state.roomId}`;
-      navigator.clipboard?.writeText(url).then(() => {
-        showToast('Invite link copied!');
-      }).catch(() => prompt('Room Link:', url));
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        navigator.clipboard.writeText(url).then(() => {
+          showToast('Invite link copied!');
+        }).catch(() => {
+          fallbackCopyLink(url);
+        });
+      } else {
+        fallbackCopyLink(url);
+      }
     };
+
+    function fallbackCopyLink(text) {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '-9999px';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (successful) {
+          showToast('Invite link copied!');
+          return;
+        }
+      } catch (err) {}
+      prompt('Room Link:', text);
+      showToast('Invite link copied!');
+    }
+
     el.dockInviteBtn.onclick = copyLink;
 
     // Chat Toggles
